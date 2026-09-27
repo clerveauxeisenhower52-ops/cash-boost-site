@@ -1,0 +1,37 @@
+<!doctype html><html lang="fr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cash Boost — Store</title><link rel="stylesheet" href="style.css"></head><body>
+<div class="top">Cash Boost Store</div>
+<header><div class="logo">⚡</div><b class="brand">Cash Boost</b><div class="balance">G <span id="headBal">0.00</span></div><button onclick="cartOpen()">🛒<i id="badge">0</i></button><button>♧</button><button onclick="menu()">☰</button></header>
+
+<section id="home" class="page active"><div class="hero"><div><small>CASH BOOST</small><h1>Vos services digitaux,<br><em>simplement.</em></h1><p>Commandez vos cartes virtuelles, recharges et services en quelques clics.</p><button class="gold" onclick="page('services')">Voir les services</button></div><div class="card"><strong>CASH BOOST</strong><div>•••• •••• •••• 2026</div><small>VIRTUAL <b>CB</b></small></div></div>
+<div class="wrap"><div class="title"><div><small>NOTRE BOUTIQUE</small><h2>Services populaires</h2></div><button onclick="page('services')">Tout voir →</button></div><div class="grid">
+<div class="product" onclick="add('Carte virtuelle Visa',1250)"><div class="art visa">💳</div><div><small>CARTE</small><h3>Carte virtuelle Visa</h3><p>Création de carte virtuelle</p><b>G 1,250.00</b><span>+</span></div></div>
+<div class="product" onclick="add('Carte virtuelle Mastercard',1250)"><div class="art master">💳</div><div><small>CARTE</small><h3>Carte virtuelle Mastercard</h3><p>Création de carte virtuelle</p><b>G 1,250.00</b><span>+</span></div></div>
+<div class="product" onclick="add('Recharge USDT',0)"><div class="art usdt">₿</div><div><small>CRYPTO</small><h3>Recharge USDT</h3><p>Montant personnalisé</p><b>Sur demande</b><span>+</span></div></div>
+</div></div></section>
+
+<section id="services" class="page"><div class="pagehead"><small>SERVICES</small><h1>Nos services</h1><p>Choisissez un service pour commencer votre commande.</p></div><div class="wrap grid">
+<div class="product" onclick="add('Carte virtuelle Visa',1250)"><div class="art visa">💳</div><div><small>CARTE VIRTUELLE</small><h3>Carte virtuelle Visa</h3><p>G 1,250.00</p><b>Ajouter</b><span>+</span></div></div>
+<div class="product" onclick="add('Carte virtuelle Mastercard',1250)"><div class="art master">💳</div><div><small>CARTE VIRTUELLE</small><h3>Carte virtuelle Mastercard</h3><p>G 1,250.00</p><b>Ajouter</b><span>+</span></div></div>
+<div class="product" onclick="add('Recharge de compte',0)"><div class="art recharge">＋</div><div><small>RECHARGE</small><h3>Recharge de compte</h3><p>Montant personnalisé</p><b>Sur demande</b><span>+</span></div></div>
+<div class="product" onclick="add('Recharge USDT',0)"><div class="art usdt">₿</div><div><small>CRYPTO</small><h3>Recharge USDT</h3><p>Montant personnalisé</p><b>Sur demande</b><span>+</span></div></div>
+<div class="product" onclick="add('Compte bancaire virtuel',0)"><div class="art account">🏦</div><div><small>COMPTE</small><h3>Compte bancaire virtuel</h3><p>Selon disponibilité</p><b>Sur demande</b><span>+</span></div></div>
+<div class="product" onclick="add('Binance P2P',0)"><div class="art p2p">↔</div><div><small>ÉCHANGE</small><h3>Binance P2P</h3><p>Assistance disponible</p><b>Sur demande</b><span>+</span></div></div>
+</div></section>
+
+<section id="wallet" class="page"><div class="pagehead center"><h1>MON PORTEFEUILLE</h1></div><div class="wallet">Solde total<strong>G <span id="walBal">3.20</span></strong></div>
+<div class="actions"><button onclick="document.getElementById('topup').classList.toggle('hide')">⊕　Recharger le portefeuille</button><button>⇄　Transfert de portefeuille</button><button>ⓢ　Retrait du portefeuille</button><button>▤　Transactions</button></div>
+<div id="topup" class="panel hide"><h3>Saisir le montant</h3><input id="amt" type="number" placeholder="0.00"><button class="gold" onclick="funds()">AJOUTER DES FONDS</button></div>
+<div class="stats"><div><b>↑</b><strong>G 4,966.00</strong><small>Total top-ups</small></div><div><b>↓</b><strong>G 4,935.00</strong><small>Total spent</small></div><div><b>▭</b><strong>G 3.20</strong><small>Solde disponible</small></div></div>
+<div class="panel"><h3>Transactions récentes</h3><small>Last 10</small><div class="transaction"><b>For order payment #33680</b><strong>G 749.00</strong><small>Achat · 10 sept. 2026</small></div></div></section>
+
+<section id="orders" class="page"><div class="pagehead"><small>COMMANDES</small><h1>Mes commandes</h1></div><div id="ordersList" class="wrap"></div></section>
+<section id="support" class="page"><div class="pagehead"><small>ASSISTANCE</small><h1>Support</h1><p>Besoin d'aide ? Notre équipe peut vous accompagner.</p></div><div class="support"><div>💬</div><h2>Une question ?</h2><p>Contactez Cash Boost pour une commande, un paiement ou une information.</p><button class="gold" onclick="alert('Configurez votre contact dans script.js')">Contacter le support</button></div></section>
+
+<nav><button onclick="page('home')">⌂<small>Accueil</small></button><button onclick="page('services')">▢<small>Services</small></button><button onclick="page('wallet')">▣<small>Portefeuille</small></button><button onclick="page('orders')">▤<small>Commandes</small></button><button onclick="page('support')">♧<small>Support</small></button></nav>
+
+<aside id="drawer"><div class="drawerhead"><h2>Votre panier</h2><button onclick="cartClose()">×</button></div><div id="cartItems"></div><div class="total"><span>Total</span><b id="total">G 0.00</b></div><button class="gold wide" onclick="checkout()">COMMANDER</button></aside><div id="backdrop" onclick="cartClose()"></div>
+
+<div id="modal"><div class="modalbox"><button class="x" onclick="closeCheckout()">×</button><h1>Validation</h1><div class="panel"><h3>Détails de facturation</h3><label>Nom *<input id="ln"></label><label>Prénom *<input id="fn"></label><label>Numéro de Whatsapp *<input id="wa" placeholder="+509XXXXXXXX"></label><label>Adresse e-mail *<input id="mail" type="email"></label></div><div class="panel"><h3>Votre commande</h3><div id="checkItems"></div><div class="total"><b>Total</b><b id="checkTotal">G 0.00</b></div></div><div class="payment panel"><label class="radio"><input type="radio" checked name="pay"> NatCash Automatique</label><div class="payhelp">Veuillez fournir votre numéro NatCash expéditeur afin que notre système puisse vérifier automatiquement votre paiement.<label>Numéro NatCash expéditeur *<input id="nat"></label></div><label class="radio"><input type="radio" name="pay"> MonCash En ligne</label><label class="radio"><input type="radio" name="pay"> Binance Pay</label><label><input type="checkbox" id="terms"> J’ai lu et j’accepte les conditions générales *</label><button class="gold wide" onclick="order()">COMMANDER</button><p id="status"></p></div></div></div>
+<script src="script.js"></script></body></html>
