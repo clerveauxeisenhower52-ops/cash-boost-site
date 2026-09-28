@@ -398,12 +398,74 @@ async function loadAdmin() {
 
   attachProofLinks();
   document.querySelectorAll('.admin-status').forEach(sel => {
-    sel.onchange = async () => {
-      await sb.from('orders').update({status:sel.value}).eq('id',sel.dataset.id);
+  sel.onchange = async () => {
+    const newStatus = sel.value;
+    const orderId = sel.dataset.id;
+
+    // 1. Récupérer les informations de la commande
+    const { data: order, error: fetchError } = await sb
+      .from('orders')
+      .select('id, customer_email, service, amount_usd')
+      .eq('id', orderId)
+      .single();
+
+    if (fetchError || !order) {
+      console.error('Erreur récupération commande:', fetchError);
+      alert('Impossible de récupérer la commande.');
       loadAdmin();
-    };
-  });
-}
+      return;
+    }
+
+    // 2. Mettre à jour le statut
+    const { error: updateError } = await sb
+      .from('orders')
+      .update({ status: newStatus })
+      .eq('id', orderId);
+
+    if (updateError) {
+      console.error('Erreur mise à jour statut:', updateError);
+      alert('Impossible de modifier le statut.');
+      loadAdmin();
+      return;
+    }
+
+    // 3. Envoyer l'e-mail lorsque la commande devient complétée
+    if (newStatus === 'complétée' && order.customer_email) {
+
+      const { data: emailData, error: emailError } =
+        await sb.functions.invoke('notify-email', {
+          body: {
+            to: order.customer_email,
+            service: svcName(order.service),
+            amount: order.amount_usd
+          },
+          headers: {
+            'x-webhook-secret':
+              'be59be71700c072cf506e5a6275bce57aa74e9bc43e75f4e'
+          }
+        });
+
+      if (emailError) {
+        console.error('Erreur envoi e-mail:', emailError);
+        alert(
+          'Commande complétée, mais l’e-mail n’a pas pu être envoyé.'
+        );
+      } else {
+        console.log('Réponse notify-email:', emailData);
+        alert('Commande complétée et e-mail envoyé ✅');
+      }
+
+    } else if (newStatus === 'complétée' && !order.customer_email) {
+
+      alert(
+        'Commande complétée, mais aucun e-mail client n’est enregistré.'
+      );
+    }
+
+    // 4. Actualiser la liste des commandes
+    loadAdmin();
+  };
+});
 
 // =====================================================================
 // SETTINGS + SERVICES
