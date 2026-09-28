@@ -246,6 +246,88 @@ a.wa-notify{display:block;text-align:center;text-decoration:none;margin-top:10px
 .svc-logo-sq{width:auto!important;height:130px!important;border-radius:26px;object-fit:cover!important}
 .svc-plain{display:flex;align-items:center;justify-content:center}
 .svc-initials{font:700 46px "Space Grotesk";color:var(--primary);letter-spacing:1px}
+
+/* ===== CASH BOOST PRO — PROFESSIONAL UI LAYER ===== */
+:root{
+  --bg:#07090c;
+  --surface:#101318;
+  --surface-2:#0c0f14;
+  --surface-3:#171b22;
+  --line:#252b34;
+  --line-soft:rgba(255,255,255,.08);
+  --text:#f7f7f4;
+  --muted:#9ba3af;
+  --primary:#ffd21a;
+  --primary-dark:#e7ad00;
+  --primary-soft:rgba(255,210,26,.11);
+  --success:#35d39a;
+  --danger:#ff6b7a;
+  --warning:#ffc857;
+  --shadow:0 22px 70px rgba(0,0,0,.28);
+  --radius:22px;
+  --nav-h:76px;
+}
+html{scroll-behavior:smooth}
+body{background:
+  radial-gradient(circle at 15% -10%,rgba(255,210,26,.09),transparent 34%),
+  radial-gradient(circle at 90% 15%,rgba(255,255,255,.035),transparent 28%),
+  var(--bg);}
+.app{max-width:1180px}
+.topbar{
+  height:76px;padding:0 max(20px,calc((100vw - 1120px)/2));
+  background:rgba(7,9,12,.84);border-bottom:1px solid rgba(255,255,255,.07);
+}
+.brand{display:flex;align-items:center;gap:11px;font-size:20px;letter-spacing:-.5px}
+.brand::before{content:'$';display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:var(--primary);color:#111;font:800 20px Inter, sans-serif;box-shadow:0 8px 24px rgba(255,210,26,.18)}
+.user-name{color:#fff;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);padding:8px 12px;border-radius:999px;max-width:220px}
+main{max-width:1120px;margin:0 auto;padding:34px 22px 48px}
+.hero{padding:8px 0 26px}
+.hero h1{font-size:clamp(34px,5vw,58px);letter-spacing:-1.8px}
+.hero p{max-width:650px;font-size:15px;color:#aeb5c0}
+.eyebrow{color:var(--primary);font-size:11px;letter-spacing:.15em}
+.card{background:linear-gradient(145deg,rgba(21,25,31,.98),rgba(12,15,20,.98));border:1px solid var(--line-soft);box-shadow:var(--shadow);border-radius:24px}
+#servicesList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.service-card{transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.service-card:hover{transform:translateY(-3px);border-color:rgba(255,210,26,.3);box-shadow:0 28px 80px rgba(0,0,0,.34)}
+.service-visual{height:230px;border-radius:24px 24px 0 0;background:linear-gradient(145deg,#f8fafc,#dfe5eb)}
+.meru-logo-visual{padding:30px 40px}
+.meru-brand-logo{max-height:165px}
+.service-info{padding:22px}
+.service-title h2{font-size:23px}
+.service-info p{font-size:14px;line-height:1.6;min-height:42px}
+.delivery-note{margin-bottom:17px}
+.primary-btn{min-height:52px;border-radius:14px;background:linear-gradient(135deg,#ffe04b,#e9b400);box-shadow:0 12px 28px rgba(255,210,26,.14);transition:transform .16s ease,filter .16s ease}
+.primary-btn:hover:not(:disabled){filter:brightness(1.04);transform:translateY(-1px)}
+.secondary-btn{min-height:50px;border-radius:14px;background:rgba(255,255,255,.025)}
+.home-extra{margin-top:24px;display:grid;gap:18px}
+.trust-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.trust-item{padding:18px;border:1px solid var(--line-soft);border-radius:18px;background:rgba(255,255,255,.025)}
+.trust-icon{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--primary-soft);color:var(--primary);font-weight:800;margin-bottom:10px}
+.trust-item strong{display:block;font-size:14px;margin-bottom:5px}.trust-item span{display:block;color:var(--muted);font-size:12px;line-height:1.45}
+.steps-card{padding:24px}.steps-card h2,.info-card h2{font-size:23px;margin-bottom:16px}.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.step-box{padding:17px;border-radius:17px;background:#0c1015;border:1px solid var(--line-soft)}.step-num{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--primary);color:#111;font-weight:800;font-size:12px;margin-bottom:12px}.step-box strong{font-size:14px}.step-box p{margin:6px 0 0;font-size:12px;color:var(--muted);line-height:1.5}
+.info-card{padding:24px}.faq{display:grid;gap:8px}.faq details{border:1px solid var(--line-soft);border-radius:15px;background:#0c1015;padding:14px 16px}.faq summary{cursor:pointer;font-weight:650;font-size:13px}.faq p{color:var(--muted);font-size:12px;line-height:1.55;margin:9px 0 0}
+.site-footer{margin-top:32px;padding:24px 0 6px;border-top:1px solid var(--line-soft);color:var(--muted);font-size:11px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}.site-footer strong{color:#fff}
+#page-service > .card{max-width:820px;margin:0 auto}.page-title{margin-bottom:10px}.back{font-weight:700;padding:8px 0}.rate{border-radius:18px}
+.section{margin-top:26px}.section-head h2{font-size:18px}.section-head p{font-size:12px}.amount-box{background:#0b0f14;border-radius:16px}.quick button{transition:.16s ease}.quick button:hover{border-color:rgba(255,210,26,.45);color:var(--primary)}
+.summary,.payment-box{background:#0b0f14;border-radius:18px;border-color:var(--line-soft)}
+.order{padding:18px 0}.order-top{font-size:14px}.order-meta{font-size:12px}.status{font-size:10px;padding:5px 9px}
+#page-orders .card{max-width:820px;margin:0 auto}
+.account{padding:24px}.profile-avatar{width:66px;height:66px;border-radius:20px;background:linear-gradient(135deg,var(--primary),#e4ad00);color:#111;box-shadow:0 12px 30px rgba(255,210,26,.14)}
+#adminArea{box-shadow:var(--shadow)}.settings-box{margin:18px 0;padding:18px;border:1px solid var(--line-soft);border-radius:18px;background:#0b0f14}.settings-box h3{margin-bottom:14px}
+.admin-status{background:#0b0f14!important}.wa-notify{display:inline-flex;margin-top:9px;padding:9px 11px;border-radius:10px;background:rgba(53,211,154,.08);color:var(--success);text-decoration:none;font-size:12px;font-weight:700}
+.auth{max-width:480px;margin:0 auto;padding:64px 18px}.auth-brand{margin-bottom:28px}.auth h1{font-size:32px}.auth-sub{font-size:13px}.auth-card{padding:24px}.auth-card h2{font-size:21px!important}.logo{width:72px;height:72px;border-radius:22px;background:linear-gradient(135deg,var(--primary),#e4ad00);box-shadow:0 18px 40px rgba(255,210,26,.16)}
+.bottom{max-width:1180px;height:78px;background:rgba(12,15,20,.94);border-top:1px solid rgba(255,255,255,.08)}.bottom button{font-size:12px}.nav-icon{font-size:21px}
+.proof-viewer{z-index:100}.proof-back{background:#11161d;border-color:#343b46}
+.toast{z-index:110!important}
+@media(max-width:760px){
+  main{padding:24px 15px 35px}.topbar{padding:0 15px}.app{max-width:100%}
+  #servicesList{grid-template-columns:1fr}.service-visual{height:205px}.trust-grid{grid-template-columns:repeat(2,1fr)}.steps{grid-template-columns:1fr}
+  .site-footer{padding-bottom:8px}.hero h1{font-size:38px}.service-info{padding:18px}
+}
+@media(min-width:761px){
+  #page-home .hero{padding-top:24px}.home-extra{grid-template-columns:1.25fr .75fr;align-items:start}.steps-card{height:100%}.info-card{height:100%}
+}
+
 </style>
 </head>
 <body>
@@ -304,12 +386,44 @@ a.wa-notify{display:block;text-align:center;text-decoration:none;margin-top:10px
     <!-- HOME -->
     <section id="page-home">
       <div class="hero">
-        <div class="eyebrow">Services</div>
-        <h1>Échange</h1>
-        <p>Choisis le service que tu veux utiliser.</p>
+        <div class="eyebrow">CASH BOOST · SERVICES DIGITAUX</div>
+        <h1>Simple. Rapide.<br><span style="color:var(--primary)">Cash Boost.</span></h1>
+        <p>Recharge tes services digitaux en quelques étapes, suis ta commande et reçois une confirmation directement sur ton téléphone.</p>
       </div>
 
       <div id="servicesList"></div>
+
+      <div class="home-extra">
+        <section class="card steps-card">
+          <h2>Comment ça marche ?</h2>
+          <div class="steps">
+            <div class="step-box"><div class="step-num">1</div><strong>Choisis ton service</strong><p>Sélectionne le service disponible et le montant dont tu as besoin.</p></div>
+            <div class="step-box"><div class="step-num">2</div><strong>Effectue le paiement</strong><p>Utilise le moyen de paiement indiqué et ajoute ta preuve de transaction.</p></div>
+            <div class="step-box"><div class="step-num">3</div><strong>Reçois ta recharge</strong><p>Nous traitons ta commande et tu peux suivre son statut dans ton espace.</p></div>
+          </div>
+        </section>
+
+        <section class="card info-card">
+          <h2>Pourquoi Cash Boost ?</h2>
+          <div class="trust-grid">
+            <div class="trust-item"><div class="trust-icon">✓</div><strong>Processus clair</strong><span>Chaque commande affiche son montant, son paiement et son statut.</span></div>
+            <div class="trust-item"><div class="trust-icon">▣</div><strong>Suivi commande</strong><span>Retrouve tes commandes depuis ton compte.</span></div>
+            <div class="trust-item"><div class="trust-icon">⌁</div><strong>Preuve conservée</strong><span>La preuve de transaction est liée à ta commande.</span></div>
+            <div class="trust-item"><div class="trust-icon">24</div><strong>Assistance</strong><span>Un espace est prévu pour les demandes d'aide et le suivi.</span></div>
+          </div>
+        </section>
+
+        <section class="card info-card">
+          <h2>Questions fréquentes</h2>
+          <div class="faq">
+            <details><summary>Comment suivre ma commande ?</summary><p>Ouvre l'onglet « Commandes » après connexion pour voir le statut de chaque commande.</p></details>
+            <details><summary>Quel montant dois-je payer ?</summary><p>Le total affiché dans le récapitulatif de commande est le montant à envoyer.</p></details>
+            <details><summary>Que faire si j'ai fait une erreur ?</summary><p>Ne multiplie pas les paiements. Contacte l'assistance avec les informations de ta commande.</p></details>
+          </div>
+        </section>
+      </div>
+
+      <footer class="site-footer"><div><strong>Cash Boost</strong><br>Services digitaux simples et accessibles.</div><div>© 2026 Cash Boost · Toutes les commandes sont soumises aux conditions du service.</div></footer>
     </section>
 
     <!-- MERU -->
@@ -317,7 +431,7 @@ a.wa-notify{display:block;text-align:center;text-decoration:none;margin-top:10px
       <div class="page-title">
         <button id="backHome" class="back">← Retour aux échanges</button>
       </div>
-      <h1 id="svcTitle" style="font-size:26px;margin:0 0 14px"></h1>
+      <h1 id="svcTitle" style="font-size:30px;margin:0 0 14px"></h1>
       <div class="card" style="padding:16px">
         <div class="rate">
           <small>Taux actuel</small>
@@ -411,7 +525,7 @@ a.wa-notify{display:block;text-align:center;text-decoration:none;margin-top:10px
             <strong>Commande envoyée ✓</strong>
             <div style="color:var(--muted);font-size:11px;margin-top:4px">Tu peux suivre son statut dans « Commandes ».</div>
           </div>
-          <div class="note">Vérifie le montant et la preuve de transaction avant de confirmer.</div>
+          <div class="note">Vérifie attentivement le montant et la preuve avant de confirmer la commande.</div>
           <a class="wa-btn hidden" href="#" target="_blank" rel="noopener">💬 Un problème ? Écris-nous sur WhatsApp</a>
         </div>
       </div>
@@ -837,7 +951,7 @@ $('submitOrder').onclick = async () => {
     user_id:user.id, amount_usd:qty, total_htg:total, merutag, service:currentService.id, customer_phone: phone || null,
     full_name:profile?.full_name || user.email,
     payment_method:$('payMethod').value,
-    payment_ref:null,
+    payment_reference:null,
     payment_proof_path:path
   });
 
