@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0d" id="metaThemeColor">
+<meta name="google-site-verification" content="JXgNYi2TDMrWXqCeZ-QYOQn1AVTaTkhXEdPCXeXBE50" />
+
+<title>Cash Boost — Recharge Meru, Plasma One & plus en Haïti</title>
+<meta name="description" content="Recharge ton compte Meru, Plasma One et plus avec MonCash ou NatCash. Livraison en 5 à 60 minutes. Paiement sécurisé, support WhatsApp 24/7.">
+<meta name="keywords" content="Cash Boost, Meru, Plasma One, MonCash, NatCash, recharge, Haïti, crypto">
+<meta name="author" content="Cash Boost">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Cash Boost — Recharge rapide et fiable">
+<meta property="og:description" content="Recharge Meru, Plasma One et plus avec MonCash ou NatCash.">
+<meta property="og:image" content="icon-512.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Cash Boost — Recharge rapide">
+<meta name="twitter:description" content="Meru, Plasma One et plus. Paiement MonCash ou NatCash.">
+
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cash Boost">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+
+<!-- Bouton thème flottant (toujours visible) -->
+<button id="themeToggle" class="theme-toggle" type="button" aria-label="Changer de thème">
+  <span class="theme-icon" aria-hidden="true">🌙</span>
+</button>
+
+<!-- =====================================================================
+     LANDING VIEW — page marketing pour les visiteurs non connectés
+     ===================================================================== -->
+<div id="landingView" class="landing">
+
+  <header class="landing-header">
+    <div class="landing-header-inner">
+      <a class="landing-brand" href="#top">
+        <span class="brand-mark">CB</span>
+        <span class="brand-text">Cash Boost</span>
+      </a>
+      <nav class="landing-nav" aria-label="Navigation marketing">
+        <a href="#services">Services</a>
+        <a href="#how">Comment ça marche</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <div class="landing-actions">
+        <button id="landingLogin" class="btn-ghost" type="button">Se connecter</button>
+        <button id="landingStart" class="btn-primary-sm" type="button">Commencer</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero-landing" id="top">
+    <div class="hero-bg-glow" aria-hidden="true"></div>
+    <div class="hero-content reveal">
+      <span class="pill">
+        <span class="pill-dot"></span>
+        Nouveau · Plasma One disponible
+      </span>
+      <h1 class="hero-title">
+        Recharge <span class="gradient-text">rapidement</span><br>
+        et <span class="gradient-text">en toute sécurité</span>.
+      </h1>
+      <p class="hero-sub">
+        Meru, Plasma One et bien plus. Paiement MonCash ou NatCash.
+        Livraison en quelques minutes, suivi en temps réel.
+      </p>
+      <div class="hero-cta">
+        <button class="btn-primary-lg" id="heroCta" type="button">Commencer maintenant</button>
+        <a class="btn-ghost-lg" href="#services">Voir les services</a>
+      </div>
+      <ul class="trust-row">
+        <li>✓ Paiement sécurisé</li>
+        <li>✓ Support WhatsApp 24/7</li>
+        <li>✓ Livraison en 5 à 60 min</li>
+      </ul>
+    </div>
+
+    <div class="hero-visual reveal">
+      <div class="phone-mockup">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-topbar">
+            <span class="phone-brand">Cash Boost</span>
+            <span class="phone-dot"></span>
+          </div>
+          <div class="phone-card">
+            <div class="phone-visual">
+              <div class="phone-logo">M</div>
+            </div>
+            <div class="phone-info">
+              <div class="phone-line w-60"></div>
+              <div class="phone-line w-40"></div>
+              <button class="phone-btn">Recharger</button>
+            </div>
+          </div>
+          <div class="phone-badge">
+            <span>✓ Recharge effectuée</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-float hero-float-1">💸 +18% cashback</div>
+      <div class="hero-float hero-float-2">⚡ 5 min</div>
+    </div>
+  </section>
+
+  <section class="stats-bar reveal">
+    <div class="stat">
+      <strong data-count="2500" data-suffix="+">0</strong>
+      <span>Commandes traitées</span>
+    </div>
+    <div class="stat">
+      <strong data-count="5" data-suffix=" min">0</strong>
+      <span>Délai moyen</span>
+    </div>
+    <div class="stat">
+      <strong data-count="4.9" data-suffix="/5" data-decimals="1">0</strong>
+      <span>Satisfaction</span>
+    </div>
+    <div class="stat">
+      <strong data-count="24" data-suffix="/7">0</strong>
+      <span>Support WhatsApp</span>
+    </div>
+  </section>
+
+  <section id="services" class="landing-section">
+    <div class="section-head-centered reveal">
+      <span class="eyebrow">Services</span>
+      <h2>Tout ce qu'il te faut, en un seul endroit</h2>
+      <p>Choisis ton service, entre ton montant, paie. C'est tout.</p>
+    </div>
+    <div id="landingServices" class="landing-services-grid"></div>
+  </section>
+
+  <section id="how" class="landing-section">
+    <div class="section-head-centered reveal">
+      <span class="eyebrow">Comment ça marche</span>
+      <h2>3 étapes, 2 minutes</h2>
+      <p>Pas de formulaire interminable. Pas de surprise.</p>
+    </div>
+    <div class="how-grid">
+      <div class="how-card reveal">
+        <div class="how-num">01</div>
+        <h3>Choisis ton service</h3>
+        <p>Meru, Plasma One, et d'autres à venir. Tu vois le taux réel avant de payer.</p>
+      </div>
+      <div class="how-card reveal">
+        <div class="how-num">02</div>
+        <h3>Entre ton montant</h3>
+        <p>Indique ton identifiant (e-mail, tag) et le montant. Le total s'affiche en temps réel.</p>
+      </div>
+      <div class="how-card reveal">
+        <div class="how-num">03</div>
+        <h3>Paie & reçois</h3>
+        <p>Envoie via MonCash ou NatCash. On te prévient sur WhatsApp dès que c'est prêt.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-section testimonials">
+    <div class="section-head-centered reveal">
+      <span class="eyebrow">Témoignages</span>
+      <h2>Ils nous font confiance</h2>
+      <p>Plus de 2 500 commandes livrées avec succès.</p>
+    </div>
+    <div class="testimonials-grid">
+      <blockquote class="testimonial reveal">
+        <div class="stars">★★★★★</div>
+        <p>« Recharge Meru en moins de 10 minutes. Service au top, je recommande à 100%. »</p>
+        <footer>— Marie L., Port-au-Prince</footer>
+      </blockquote>
+      <blockquote class="testimonial reveal">
+        <div class="stars">★★★★★</div>
+        <p>« Le support WhatsApp répond vite. Très pro. J'utilise pour mes parents à l'étranger. »</p>
+        <footer>— Jean-Baptiste P., Cap-Haïtien</footer>
+      </blockquote>
+      <blockquote class="testimonial reveal">
+        <div class="stars">★★★★★</div>
+        <p>« Taux clair, pas de frais cachés. Je sais exactement ce que je paie. Parfait. »</p>
+        <footer>— Wideline C., Delmas</footer>
+      </blockquote>
+    </div>
+  </section>
+
+  <section id="faq" class="landing-section">
+    <div class="section-head-centered reveal">
+      <span class="eyebrow">FAQ</span>
+      <h2>Questions fréquentes</h2>
+    </div>
+    <div class="faq-list">
+      <details class="faq-item reveal">
+        <summary>Comment payer ma recharge ?</summary>
+        <p>Tu paies avec MonCash ou NatCash. Envoie le montant exact au numéro affiché, puis ajoute une capture d'écran comme preuve. On valide et on te livre.</p>
+      </details>
+      <details class="faq-item reveal">
+        <summary>Combien de temps prend une recharge ?</summary>
+        <p>En général 5 à 60 minutes. Tu reçois une notification WhatsApp dès que c'est complété. Pour les grosses commandes, ça peut prendre un peu plus.</p>
+      </details>
+      <details class="faq-item reveal">
+        <summary>Y a-t-il des frais cachés ?</summary>
+        <p>Non. Le taux affiché sur chaque service inclut déjà les frais de service. Le total que tu vois est celui que tu paies.</p>
+      </details>
+      <details class="faq-item reveal">
+        <summary>Que faire si ma commande est bloquée ?</summary>
+        <p>Ouvre l'onglet « Commandes » pour voir le statut, ou écris-nous sur WhatsApp. On répond 24/7.</p>
+      </details>
+      <details class="faq-item reveal">
+        <summary>Mes informations sont-elles en sécurité ?</summary>
+        <p>Oui. Tes données sont stockées chez Supabase (hébergement sécurisé), et les preuves de paiement sont dans un bucket privé accessible seulement à toi et à l'admin.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="final-cta reveal">
+    <h2>Prêt à recharger ?</h2>
+    <p>Crée ton compte gratuitement et commence en 2 minutes.</p>
+    <button class="btn-primary-lg" id="finalCta" type="button">Créer un compte</button>
+  </section>
+
+  <footer class="landing-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="brand-mark">CB</span>
+        <div>
+          <strong>Cash Boost</strong>
+          <p>Recharge rapide et fiable en Haïti.</p>
+        </div>
+      </div>
+      <div class="footer-links">
+        <a href="#services">Services</a>
+        <a href="#how">Comment ça marche</a>
+        <a href="#faq">FAQ</a>
+        <a id="footerWhatsapp" href="#" target="_blank" rel="noopener">WhatsApp</a>
+      </div>
+      <p class="footer-copy">© 2026 Cash Boost. Tous droits réservés.</p>
+    </div>
+  </footer>
+
+</div>
+
+<!-- =====================================================================
+     AUTH VIEW
+     ===================================================================== -->
+<div id="authView" class="app hidden">
+  <main class="auth">
+    <button id="authBack" class="auth-back" type="button">← Retour</button>
+
+    <div class="auth-brand">
+      <img class="logo" src="icon-192.png" alt="Cash Boost" width="62" height="62">
+      <h1>Cash Boost</h1>
+      <p class="auth-sub">Recharge tes services simplement et rapidement.</p>
+    </div>
+
+    <div id="loginCard" class="card auth-card">
+      <h2 id="authTitle" class="auth-card-title">Se connecter</h2>
+
+      <div id="nameField" class="field hidden">
+        <label for="authName">Nom complet</label>
+        <input id="authName" type="text" placeholder="Ton nom" autocomplete="name">
+      </div>
+
+      <div class="field">
+        <label for="authEmail">E-mail</label>
+        <input id="authEmail" type="email" placeholder="toi@mail.com" autocomplete="email" inputmode="email">
+      </div>
+
+      <div class="field">
+        <label for="authPass">Mot de passe</label>
+        <input id="authPass" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+
+      <button id="authSubmit" class="primary-btn" type="button">Se connecter</button>
+      <div id="authMsg" class="msg" role="alert" aria-live="polite"></div>
+
+      <div id="forgotRow" class="toggle">
+        <button id="forgotBtn" class="link" type="button">Mot de passe oublié ?</button>
+      </div>
+
+      <div class="toggle">
+        <span id="authToggleLabel">Pas encore de compte ?</span>
+        <button id="authToggle" class="link" type="button">Créer un compte</button>
+      </div>
+
+      <a class="wa-btn hidden" href="#" target="_blank" rel="noopener">💬 Un problème ? Écris-nous sur WhatsApp</a>
+    </div>
+
+    <div id="resetCard" class="card auth-card hidden">
+      <h2 class="auth-card-title">Nouveau mot de passe</h2>
+      <div class="field">
+        <label for="newPass">Nouveau mot de passe</label>
+        <input id="newPass" type="password" placeholder="••••••••" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label for="newPass2">Confirmer le mot de passe</label>
+        <input id="newPass2" type="password" placeholder="••••••••" autocomplete="new-password">
+      </div>
+      <button id="resetSubmit" class="primary-btn" type="button">Enregistrer le mot de passe</button>
+      <div id="resetMsg" class="msg" role="alert" aria-live="polite"></div>
+    </div>
+  </main>
+</div>
+
+<!-- =====================================================================
+     APP VIEW
+     ===================================================================== -->
+<div id="appView" class="app hidden">
+  <header class="topbar">
+    <div class="brand">Cash Boost</div>
+    <div id="userName" class="user-name"></div>
+  </header>
+
+  <main>
+    <!-- HOME -->
+    <section id="page-home" class="page">
+      <div class="hero">
+        <div class="eyebrow">Services</div>
+        <h1>Échange</h1>
+        <p>Choisis le service que tu veux recharger.</p>
+      </div>
+      <div id="servicesList" class="services-list"></div>
+    </section>
+
+    <!-- SERVICE -->
+    <section id="page-service" class="page hidden">
+      <div class="page-title">
+        <button id="backHome" class="back" type="button">← Retour aux échanges</button>
+      </div>
+      <h1 id="svcTitle" class="svc-title"></h1>
+
+      <div class="card card-pad">
+        <div class="rate">
+          <small>Taux actuel</small>
+          <strong id="rateDisplay">1 USD = 140 HTG</strong>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <span class="step">1</span>
+            <div><h2>Choisir le montant</h2><p id="minText">Minimum : 5 USD</p></div>
+          </div>
+          <div class="field">
+            <label for="qty">Montant à recharger (USD)</label>
+            <div class="amount-box">
+              <button type="button" id="dec" aria-label="Diminuer">−</button>
+              <div class="amount-mid">
+                <input id="qty" type="number" min="0" step="1" inputmode="decimal" placeholder="0">
+                <span>USD</span>
+              </div>
+              <button type="button" id="inc" aria-label="Augmenter">+</button>
+            </div>
+            <div class="quick">
+              <button type="button" data-amount="5">$5</button>
+              <button type="button" data-amount="10">$10</button>
+              <button type="button" data-amount="20">$20</button>
+              <button type="button" data-amount="50">$50</button>
+            </div>
+          </div>
+
+          <div class="summary">
+            <div class="sumrow"><span id="sumLabel">Montant</span><strong id="summaryUsd">—</strong></div>
+            <div class="sumrow"><span>Taux affiché</span><strong id="rateRow">140 HTG / USD</strong></div>
+            <div class="sumrow"><span>Frais</span><strong class="fee-included">Inclus</strong></div>
+            <div class="sumrow total"><span>Total à payer</span><strong id="total">—</strong></div>
+            <div class="fee-note">Le montant final inclut les frais de service.</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <span class="step">2</span>
+            <div><h2 id="svcInfoTitle">Informations</h2><p>Indique où recevoir la recharge</p></div>
+          </div>
+          <div class="field">
+            <label id="svcFieldLabel" for="merutag">E-mail ou MeruTag</label>
+            <input id="merutag" type="text" placeholder="ex. toi@mail.com ou @merutag">
+          </div>
+          <div class="field">
+            <label for="custPhone">Numéro WhatsApp</label>
+            <input id="custPhone" type="tel" inputmode="tel" placeholder="ex. 37 12 34 56" autocomplete="tel">
+            <p class="field-help">Obligatoire : nous t'écrivons sur WhatsApp quand ta recharge est prête.</p>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <span class="step">3</span>
+            <div><h2>Effectuer le paiement</h2><p>Puis ajoute la preuve de transaction</p></div>
+          </div>
+
+          <div class="field">
+            <label for="payMethod">Moyen de paiement</label>
+            <select id="payMethod" aria-label="Moyen de paiement">
+              <option value="MonCash">MonCash</option>
+              <option value="NatCash">NatCash</option>
+            </select>
+          </div>
+
+          <div class="payment-box">
+            <div class="payment-hint">Envoie exactement le total à :</div>
+            <div class="payment-line">
+              <div>
+                <div id="payName" class="payment-name">Wollens Clerveaux</div>
+                <div id="payNumber" class="payment-number">46467495</div>
+              </div>
+              <button id="copyPay" type="button" class="copy">Copier</button>
+            </div>
+          </div>
+
+          <div class="field field-mt">
+            <label for="payProof">Preuve de transaction</label>
+            <input id="payProof" type="file" accept="image/*">
+            <div class="file-help">Capture d'écran ou photo. Image uniquement, 5 Mo max.</div>
+            <div id="proofPreview" class="proof-preview">
+              <img id="proofPreviewImg" alt="Aperçu de la preuve">
+            </div>
+          </div>
+
+          <button id="submitOrder" class="primary-btn" type="button">Confirmer ma commande</button>
+          <div id="orderMsg" class="msg" role="alert" aria-live="polite"></div>
+          <div id="orderSuccess" class="success-box">
+            <strong>Commande envoyée ✓</strong>
+            <div class="success-sub">Suis son statut dans « Commandes ».</div>
+          </div>
+          <p class="note">Vérifie le montant et la preuve avant de confirmer.</p>
+          <a class="wa-btn hidden" href="#" target="_blank" rel="noopener">💬 Un problème ? Écris-nous sur WhatsApp</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ORDERS -->
+    <section id="page-orders" class="page hidden">
+      <div class="hero">
+        <div class="eyebrow">Historique</div>
+        <h1>Commandes</h1>
+        <p>Retrouve ici l'état de tes recharges.</p>
+      </div>
+      <div class="card list-card">
+        <div id="ordersList" aria-live="polite"></div>
+      </div>
+      <a class="wa-btn hidden" href="#" target="_blank" rel="noopener">💬 Un problème ? Écris-nous sur WhatsApp</a>
+    </section>
+
+    <!-- ACCOUNT -->
+    <section id="page-account" class="page hidden">
+      <div class="hero">
+        <div class="eyebrow">Compte</div>
+        <h1>Mon compte</h1>
+      </div>
+
+      <div class="card account">
+        <div id="avatar" class="profile-avatar">CB</div>
+        <h2 id="accountName" class="account-name">Client</h2>
+        <p id="accountEmail" class="account-email"></p>
+        <button id="logout" class="secondary-btn" type="button" style="margin-top:8px">Se déconnecter</button>
+      </div>
+
+      <div id="pushCard" class="card account card-mt">
+        <h2 class="account-section-title">Notifications</h2>
+        <p id="pushInfo" class="account-text">Reçois une alerte quand ta recharge est complétée, même site fermé.</p>
+        <button id="pushBtn" type="button" class="primary-btn" style="margin-top:6px">Activer les notifications</button>
+        <div id="pushMsg" class="msg" role="alert" aria-live="polite"></div>
+      </div>
+
+      <div id="adminArea" class="card account admin hidden">
+        <h2 class="account-section-title">Administration</h2>
+        <p class="account-text">Gestion des commandes clients.</p>
+
+        <div class="settings-box">
+          <h3>Paramètres du site</h3>
+          <div class="field">
+            <label for="setWhatsapp">Numéro WhatsApp (avec indicatif)</label>
+            <input id="setWhatsapp" type="tel" inputmode="tel" placeholder="509XXXXXXXX">
+          </div>
+          <div id="servicesAdmin"></div>
+          <button id="addSvcBtn" type="button" class="secondary-btn" style="margin:4px 0 12px">＋ Ajouter un service</button>
+          <div id="newSvcBox" class="svc-edit hidden"></div>
+          <button id="saveSettings" type="button" class="primary-btn">Enregistrer</button>
+          <div id="settingsMsg" class="msg" role="alert" aria-live="polite"></div>
+        </div>
+
+        <div id="adminList"></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom" aria-label="Navigation principale">
+    <button data-page="home" class="active" type="button"><span class="nav-icon" aria-hidden="true">⌂</span>Accueil</button>
+    <button data-page="orders" type="button"><span class="nav-icon" aria-hidden="true">▣</span>Commandes</button>
+    <button data-page="account" type="button"><span class="nav-icon" aria-hidden="true">♙</span>Compte</button>
+  </nav>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<div id="proofViewer" class="proof-viewer" aria-hidden="true" role="dialog" aria-label="Aperçu de la preuve">
+  <div class="proof-viewer-top">
+    <button type="button" id="proofBack" class="proof-back">← Retour</button>
+    <div class="proof-viewer-title">Preuve de paiement</div>
+  </div>
+  <div class="proof-viewer-img-wrap">
+    <img id="proofViewerImg" class="proof-viewer-img" alt="Preuve de paiement">
+  </div>
+</div>
+
+</body>
+                </html>
