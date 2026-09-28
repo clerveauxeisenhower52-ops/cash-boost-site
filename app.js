@@ -1014,7 +1014,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const total = qty * EFFECTIVE_RATE;
     const {error} = await sb.from('orders').insert({
       user_id:user.id, amount_usd:qty, total_htg:total, merutag,
-      service:currentService.id, customer_phone: phone || null,
+      service:currentService.id, customer_phone: phone || null, customer_email: user.email || null,
       full_name:profile?.full_name || user.email,
       payment_method:$('payMethod').value,
       payment_ref:null,
