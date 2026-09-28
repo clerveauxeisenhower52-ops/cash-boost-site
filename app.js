@@ -430,7 +430,7 @@ function renderServices() {
   const el = $('servicesList');
   const list = SERVICES.filter(s => s.visible !== false);
   if (!list.length) {
-    el.innerHTML = '<div class="card" style="padding:18px;text-align:center;color:var(--muted)">Aucun service disponible.</div>';
+    el.innerHTML = '<div class="card" style="padding:18px;text-align:center;color:var(--muted);grid-column:1/-1">Aucun service disponible.</div>';
     return;
   }
   el.innerHTML = list.map(s => {
@@ -439,13 +439,11 @@ function renderServices() {
     const visual = logo
       ? `<div class="service-visual meru-logo-visual"><img class="meru-brand-logo${s.id === 'meru' ? '' : ' svc-logo-sq'}" src="${logo}" alt="Logo ${esc(s.name)}"></div>`
       : `<div class="service-visual svc-plain"><span class="svc-initials">${esc(initials(s.name))}</span></div>`;
-    return `<div class="card service-card">
+    return `<div class="service-card">
       ${visual}
       <div class="service-info">
-        <div class="service-title"><h2>${esc(s.name)}</h2><span class="badge">${ready ? 'Disponible' : 'Bientôt'}</span></div>
-        <p>${esc(s.description || '')}</p>
-        ${s.delivery ? `<div class="delivery-note">${esc(s.delivery)}</div>` : ''}
-        <button class="primary-btn" data-open="${esc(s.id)}" ${ready ? '' : 'disabled'}>${ready ? 'Recharger ' + esc(s.name) : 'Bientôt disponible'}</button>
+        <div class="service-title"><h2>${esc(s.name)}</h2></div>
+        <button class="primary-btn" data-open="${esc(s.id)}" ${ready ? '' : 'disabled'}>${ready ? 'Commander' : 'Bientôt'}</button>
       </div>
     </div>`;
   }).join('');
