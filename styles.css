@@ -674,6 +674,8 @@ a.wa-notify { margin-top: 10px; padding: 12px 16px; }
 .svc-title { font-size: 26px; margin: 0 0 14px; }
 
 #payMethod {
+  appearance: none;
+  -webkit-appearance: none;
   background-repeat: no-repeat;
   background-position: 14px center;
   background-size: 34px 34px;
