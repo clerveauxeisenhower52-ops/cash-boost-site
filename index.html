@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cash Boost | Recharge Instantanée & Espace Client</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0d1117">
+    <style>
+        :root {
+            --bg-color: #0b0e14;
+            --card-bg: #161b22;
+            --accent-gold: #d4af37;
+            --accent-glow: #ffcc00;
+            --text-color: #f0f6fc;
+            --text-muted: #8b949e;
+            --border-color: #30363d;
+            --success: #238636;
+            --warning: #d29922;
+            --danger: #da3633;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-color); padding-bottom: 80px; }
+
+        /* Header */
+        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(22, 27, 34, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border-color); }
+        .logo { font-weight: 800; font-size: 1.2rem; color: var(--accent-gold); display: flex; align-items: center; gap: 8px; }
+        .user-actions { display: flex; gap: 10px; }
+        .btn-icon { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; }
+
+        /* Containers */
+        .container { padding: 20px; max-width: 600px; margin: 0 auto; }
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+
+        /* Rates banner */
+        .rate-badge { background: rgba(212, 175, 55, 0.1); border: 1px solid var(--accent-gold); color: var(--accent-gold); padding: 10px 15px; border-radius: 12px; font-weight: 600; text-align: center; margin-bottom: 20px; }
+
+        /* Forms */
+        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px; margin-top: 12px; }
+        input, select { width: 100%; padding: 12px; background: #0d1117; border: 1px solid var(--border-color); border-radius: 8px; color: #fff; font-size: 1rem; }
+        input:focus { border-color: var(--accent-gold); outline: none; }
+
+        .btn-primary { width: 100%; padding: 14px; background: linear-gradient(135deg, #d4af37, #aa820a); border: none; border-radius: 10px; color: #000; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 15px; }
+        .btn-secondary { width: 100%; padding: 10px; background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); border-radius: 8px; margin-top: 8px; cursor: pointer; }
+
+        /* Navigation Bottom */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; padding: 10px 0; z-index: 99; }
+        .nav-item { color: var(--text-muted); text-decoration: none; font-size: 0.75rem; text-align: center; cursor: pointer; }
+        .nav-item.active { color: var(--accent-gold); font-weight: bold; }
+
+        /* Orders List */
+        .order-item { border-bottom: 1px solid var(--border-color); padding: 12px 0; display: flex; justify-content: space-between; align-items: center; }
+        .order-item:last-child { border-bottom: none; }
+        .status { padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; }
+        .status-pending { background: rgba(210, 153, 34, 0.2); color: var(--warning); }
+        .status-success { background: rgba(35, 134, 54, 0.2); color: var(--success); }
+
+        /* Modal Auth */
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 200; justify-content: center; align-items: center; padding: 20px; }
+        .modal.active { display: flex; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">⚡ CASH BOOST</div>
+        <div class="user-actions">
+            <button class="btn-icon" id="userBtn" onclick="toggleAuthModal()">👤 Connexion</button>
+            <button class="btn-icon" onclick="openAdmin()">⚙️ Admin</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="rate-badge">
+            Taux Actuel : 1 USD = <span id="currentRateDisplay">132.50</span> HTG
+        </div>
+
+        <!-- ONGLET 1 : ACCUEIL / COMMANDER -->
+        <div id="tab-home" class="tab-content">
+            <div class="card">
+                <h3>🛒 Passer une commande</h3>
+                <form id="orderForm" onsubmit="handleOrder(event)">
+                    <label>Service souhaité</label>
+                    <select id="serviceSelect" onchange="calculateTotal()">
+                        <option value="MERU" data-min="2">Recharge MERU (Min. $2)</option>
+                        <option value="PLASMA" data-min="5">Recharge PLASMA ONE (Min. $5)</option>
+                    </select>
+
+                    <label>Montant en USD ($)</label>
+                    <input type="number" id="usdAmount" value="10" min="1" oninput="calculateTotal()">
+
+                    <label>Identifiant du compte / Tag du joueur</label>
+                    <input type="text" id="accountId" placeholder="Ex: @votre_tag_meru" required>
+
+                    <label>Méthode de paiement</label>
+                    <select id="paymentMethod">
+                        <option value="MonCash">MonCash</option>
+                        <option value="NatCash">NatCash</option>
+                    </select>
+
+                    <div style="margin-top: 15px; padding: 12px; background: #0d1117; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>Total en Gourdes :</span>
+                            <strong style="color: var(--accent-gold);" id="htgTotalDisplay">0.00 HTG</strong>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Payer & Valider la commande</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ONGLET 2 : MES COMMANDES -->
+        <div id="tab-orders" class="tab-content hidden">
+            <div class="card">
+                <h3>📜 Historique de mes commandes</h3>
+                <div id="ordersList" style="margin-top: 15px;">
+                    <p style="color: var(--text-muted); text-align: center;">Connectez-vous pour voir vos commandes.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ONGLET 3 : PROFIL CLIENT -->
+        <div id="tab-profile" class="tab-content hidden">
+            <div class="card">
+                <h3>👤 Mon Profil</h3>
+                <div id="profileDetails" style="margin-top: 15px;">
+                    <!-- Profil rempli dynamiquement -->
+                </div>
+                <button class="btn-secondary" onclick="logout()">Se déconnecter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL AUTHENTIFICATION (COMPTE CLIENT) -->
+    <div class="modal" id="authModal">
+        <div class="card" style="width: 100%; max-width: 400px; position: relative;">
+            <button onclick="toggleAuthModal()" style="position: absolute; right: 15px; top: 15px; background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer;">✕</button>
+            
+            <div id="loginBox">
+                <h3>Connexion Client</h3>
+                <form onsubmit="handleLogin(event)">
+                    <label>Numéro WhatsApp ou Email</label>
+                    <input type="text" id="loginUser" required placeholder="Ex: +50930000000">
+                    <label>Mot de passe</label>
+                    <input type="password" id="loginPass" required>
+                    <button type="submit" class="btn-primary">Se connecter</button>
+                </form>
+                <button class="btn-secondary" onclick="switchAuthMode('signup')">Pas de compte ? S'inscrire</button>
+            </div>
+
+            <div id="signupBox" class="hidden">
+                <h3>Créer un compte Client</h3>
+                <form onsubmit="handleSignup(event)">
+                    <label>Nom complet</label>
+                    <input type="text" id="regName" required>
+                    <label>Numéro WhatsApp</label>
+                    <input type="tel" id="regPhone" placeholder="+509..." required>
+                    <label>Mot de passe</label>
+                    <input type="password" id="regPass" required>
+                    <button type="submit" class="btn-primary">Créer mon compte</button>
+                </form>
+                <button class="btn-secondary" onclick="switchAuthMode('login')">Déjà un compte ? Se connecter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVIGATION BASSE -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('home', this)">
+            <div>🏠</div>
+            <div>Accueil</div>
+        </div>
+        <div class="nav-item" onclick="switchTab('orders', this)">
+            <div>📜</div>
+            <div>Mes Commandes</div>
+        </div>
+        <div class="nav-item" onclick="switchTab('profile', this)">
+            <div>👤</div>
+            <div>Mon Profil</div>
+        </div>
+    </div>
+
+    <script>
+        let currentRate = 132.50;
+        let currentUser = JSON.parse(localStorage.getItem('cashboost_user')) || null;
+        let orders = JSON.parse(localStorage.getItem('cashboost_orders')) || [];
+
+        function init() {
+            calculateTotal();
+            updateUserUI();
+            renderOrders();
+        }
+
+        function calculateTotal() {
+            const usd = parseFloat(document.getElementById('usdAmount').value) || 0;
+            const htg = usd * currentRate;
+            document.getElementById('htgTotalDisplay').innerText = htg.toFixed(2) + " HTG";
+        }
+
+        function switchTab(tabName, element) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+            if(element) element.classList.add('active');
+        }
+
+        function toggleAuthModal() {
+            document.getElementById('authModal').classList.toggle('active');
+        }
+
+        function switchAuthMode(mode) {
+            if(mode === 'signup') {
+                document.getElementById('loginBox').classList.add('hidden');
+                document.getElementById('signupBox').classList.remove('hidden');
+            } else {
+                document.getElementById('signupBox').classList.add('hidden');
+                document.getElementById('loginBox').classList.remove('hidden');
+            }
+        }
+
+        function handleSignup(e) {
+            e.preventDefault();
+            currentUser = {
+                name: document.getElementById('regName').value,
+                phone: document.getElementById('regPhone').value
+            };
+            localStorage.setItem('cashboost_user', JSON.stringify(currentUser));
+            updateUserUI();
+            toggleAuthModal();
+            alert("Compte créé avec succès !");
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const phone = document.getElementById('loginUser').value;
+            currentUser = { name: "Client " + phone.slice(-4), phone: phone };
+            localStorage.setItem('cashboost_user', JSON.stringify(currentUser));
+            updateUserUI();
+            toggleAuthModal();
+            alert("Connexion réussie !");
+        }
+
+        function logout() {
+            localStorage.removeItem('cashboost_user');
+            currentUser = null;
+            updateUserUI();
+            switchTab('home');
+        }
+
+        function updateUserUI() {
+            const btn = document.getElementById('userBtn');
+            const profileDetails = document.getElementById('profileDetails');
+
+            if (currentUser) {
+                btn.innerText = "👤 " + currentUser.name;
+                profileDetails.innerHTML = `
+                    <p><strong>Nom :</strong> ${currentUser.name}</p>
+                    <p style="margin-top:5px;"><strong>Téléphone :</strong> ${currentUser.phone}</p>
+                `;
+            } else {
+                btn.innerText = "👤 Connexion";
+                profileDetails.innerHTML = `<p style="color: var(--text-muted);">Non connecté.</p>`;
+            }
+        }
+
+        function handleOrder(e) {
+            e.preventDefault();
+            if (!currentUser) {
+                alert("Veuillez créer un compte ou vous connecter pour passer une commande.");
+                toggleAuthModal();
+                return;
+            }
+
+            const service = document.getElementById('serviceSelect').value;
+            const usd = document.getElementById('usdAmount').value;
+            const htg = (usd * currentRate).toFixed(2);
+            const accountId = document.getElementById('accountId').value;
+            const payment = document.getElementById('paymentMethod').value;
+
+            const newOrder = {
+                id: 'CB-' + Math.floor(100000 + Math.random() * 900000),
+                userPhone: currentUser.phone,
+                service: service,
+                amountUsd: usd,
+                amountHtg: htg,
+                accountId: accountId,
+                payment: payment,
+                status: 'En attente',
+                date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString()
+            };
+
+            orders.unshift(newOrder);
+            localStorage.setItem('cashboost_orders', JSON.stringify(orders));
+            renderOrders();
+
+            // Redirection WhatsApp
+            const msg = `Bonjour Cash Boost, je viens de passer la commande ${newOrder.id}%0AService: ${service}%0AMontant: $${usd} (${htg} HTG)%0AIdentifiant: ${accountId}%0APaiement: ${payment}`;
+            window.open(`https://wa.me/50900000000?text=${msg}`, '_blank');
+
+            switchTab('orders');
+        }
+
+        function renderOrders() {
+            const container = document.getElementById('ordersList');
+            if (!currentUser) {
+                container.innerHTML = `<p style="color: var(--text-muted); text-align: center;">Connectez-vous pour accéder à vos commandes.</p>`;
+                return;
+            }
+
+            const userOrders = orders.filter(o => o.userPhone === currentUser.phone);
+
+            if (userOrders.length === 0) {
+                container.innerHTML = `<p style="color: var(--text-muted); text-align: center;">Aucune commande effectuée pour le moment.</p>`;
+                return;
+            }
+
+            container.innerHTML = userOrders.map(o => `
+                <div class="order-item">
+                    <div>
+                        <strong>${o.service} - $${o.amountUsd}</strong>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">${o.id} • ${o.date}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">Compte: ${o.accountId}</div>
+                    </div>
+                    <div>
+                        <span class="status status-pending">${o.status}</span>
+                        <div style="font-size: 0.85rem; font-weight: bold; margin-top: 4px; text-align: right;">${o.amountHtg} HTG</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openAdmin() {
+            const pin = prompt("Code PIN Administration :");
+            if (pin === "1234" || pin === "2026") {
+                const newRate = prompt("Nouveau taux USD / HTG :", currentRate);
+                if (newRate) {
+                    currentRate = parseFloat(newRate);
+                    document.getElementById('currentRateDisplay').innerText = currentRate.toFixed(2);
+                    calculateTotal();
+                    alert("Taux mis à jour à " + currentRate + " HTG");
+                }
+            } else {
+                alert("Code PIN Incorrect !");
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
