@@ -2472,8 +2472,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   updateOpeningHoursNotice();
   setInterval(updateOpeningHoursNotice, 60_000);
   sb.auth.onAuthStateChange(handleAuth);
-  // Splash screen supprimé plus rapidement (1.5s)
-  setTimeout(()=>{if($('authView').classList.contains('hidden')&&$('appView').classList.contains('hidden'))showAuth();hideSplash();},1500);
+  // Splash screen supprimé après 9 secondes
+setTimeout(()=>{if($('authView').classList.contains('hidden')&&$('appView').classList.contains('hidden'))showAuth();hideSplash();},9000);
 
   function syncOnline(){const b=$('offlineBar');if(b)b.hidden=navigator.onLine;}
   window.addEventListener('online',syncOnline);window.addEventListener('offline',syncOnline);syncOnline();
