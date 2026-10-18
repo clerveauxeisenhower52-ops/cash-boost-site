@@ -1220,7 +1220,7 @@ function walletRenderOp(){
   const len=codeLenFor(walletOp),inp=$('walletCode');
   inp.maxLength=len;
   $('walletCodeLabel').textContent=(walletOp==='NatCash'?'TransCode':'Txn ID')+' ('+len+' chiffres)';
-  inp.placeholder=walletOp==='NatCash'?'Ex. 26072853633942':'Ex. 260728536339';
+  inp.placeholder=walletOp==='NatCash'?'Ex. 26072853633942':'Ex. 003559350571';
   if(inp.value.length>len) inp.value=inp.value.slice(0,len);
 }
 async function loadWallet(){
