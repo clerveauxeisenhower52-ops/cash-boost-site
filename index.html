@@ -1420,7 +1420,6 @@ async function walletCopy(v,msg){
   catch(_){const t=document.createElement('textarea');t.value=v;t.style.cssText='position:fixed;opacity:0';document.body.appendChild(t);t.select();try{document.execCommand('copy');}catch(__){}t.remove();}
   showToast(msg||'Numéro copié');
 }
-function vibe(p){ try{ if(navigator.vibrate) navigator.vibrate(p||30); }catch(_){} }
 function walletCodeRefresh(){
   const need=codeLenFor(walletOp),inp=$('walletCode'); if(!inp)return;
   const n=inp.value.replace(/\D/g,'').length,c=$('walletCodeCount'),b=$('walletVerify');
@@ -1489,7 +1488,7 @@ async function walletDeposit(auto){
       wspHide();
       if(Number.isFinite(Number(res.balance))) walletBal=Number(res.balance);
       showToast('✅ '+fmt(res.amount)+' HTG ajoutés à ton portefeuille');
-      beep(); vibe([30,40,30]); loadWallet();
+      beep(); loadWallet();
       walletShowSuccess(res.amount,walletBal); break;
     case 'not_found':
       walletAutoStart(); break;
@@ -1554,10 +1553,10 @@ function setupWalletRealtime(uid){
       if(tx.id&&!notifyOnce('wtx:'+tx.id))return;
       if(tx.type==='transfer_in'){
         showToast('💸 Tu as reçu '+fmt(Math.abs(Number(tx.amount_htg)||0))+' HTG'+(tx.reference?' de '+tx.reference:''));
-        beep(true); vibe([30,40,30]);
+        beep(true);
       }else if(tx.type==='refund'){
         showToast('↩️ Remboursement de '+fmt(Math.abs(Number(tx.amount_htg)||0))+' HTG');
-        beep(true); vibe(30);
+        beep(true);
       }
       loadWallet();
     }).subscribe();
@@ -1661,7 +1660,7 @@ async function walletTrSend(){
       setMsg('walletTrMsg','');
       if(Number.isFinite(Number(res.balance))) walletBal=Number(res.balance);
       showToast('✅ '+fmt(a)+' HTG envoyés à '+who);
-      beep(); vibe([30,40,30]); loadWallet();
+      beep(); loadWallet();
       walletTrShowSuccess(a,who,walletBal); break;
     }
     case 'insufficient_funds': setMsg('walletTrMsg','Solde insuffisant.','err'); break;
