@@ -1,5 +1,10 @@
 // =====================================================================
-// CASH BOOST — Service Worker v4
+// CASH BOOST — Service Worker v5
+// v5 : les librairies externes (Supabase, QR code) sont mises en cache.
+//  - Sans ça, hors ligne, la librairie Supabase ne se chargeait pas et l'appli
+//    ne pouvait pas démarrer, même avec le mode hors ligne de auth.js.
+//  - Les URLs jsdelivr sont épinglées sur une version précise : une fois en cache,
+//    elles ne changent jamais (cache d'abord).
 // v4 : le site est découpé en plusieurs fichiers (.js / .css).
 //  - Tous les fichiers du site sont pré-mis en cache (mode hors ligne fiable).
 //  - JS et CSS : réseau d'abord, cache en secours (plus de versions mélangées
@@ -8,7 +13,7 @@
 // =====================================================================
 
 // ⚠️ À changer quand tu modifies CE fichier ou veux vider le cache de tous les clients.
-const CACHE_NAME = 'cashboost-v4';
+const CACHE_NAME = 'cashboost-v5';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -69,15 +74,33 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Ignore les APIs externes
+  // Ignore les APIs externes (jamais mises en cache)
   if (
     req.method !== 'GET' ||
     url.hostname.includes('supabase.co') ||
     url.hostname.includes('callmebot.com') ||
     url.hostname.includes('fonts.googleapis.com') ||
-    url.hostname.includes('fonts.gstatic.com') ||
-    url.hostname.includes('cdn.jsdelivr.net')
+    url.hostname.includes('fonts.gstatic.com')
   ) return;
+
+  // LIBRAIRIES jsdelivr : version épinglée (ex. @2.45.0) = fichier immuable → cache d'abord.
+  // Version non épinglée : réseau d'abord, cache en secours.
+  if (url.hostname === 'cdn.jsdelivr.net') {
+    const pinned = /@\d+\.\d+\.\d+/.test(url.pathname);
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const cached = await cache.match(req);
+      if (pinned && cached) return cached;
+      try {
+        const res = await fetch(req);
+        if (res && (res.status === 200 || res.type === 'opaque')) cache.put(req, res.clone());
+        return res;
+      } catch (_) {
+        return cached || Response.error();
+      }
+    })());
+    return;
+  }
 
   const isHTML = req.mode === 'navigate' ||
                  req.destination === 'document' ||
