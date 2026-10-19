@@ -177,18 +177,33 @@ function orderTimeline(o,review){
 async function redoOrder(o){
   await openService(o.service);
   if(!currentService||currentService.id!==o.service)return;
-  $('qty').value=o.amount_usd;
+  // Free Fire : amount_usd est un coût interne, pas une quantité à ressaisir
+  if(o.service!=='Free Fire')$('qty').value=o.amount_usd;
   if(o.merutag)$('merutag').value=o.merutag;
   if(o.payment_method&&['MonCash','NatCash'].includes(o.payment_method))$('payMethod').value=o.payment_method;
   updatePayInfo();updateTotal();updateWalletStatus();
   showToast('Commande préremplie · vérifie ton solde puis confirme');
 }
+// Colonnes strictement nécessaires à l'affichage : on ne charge plus « * »
+// (ocr_data, image_forensics, fraud_type, payout_nonce… n'ont rien à faire dans le navigateur du client)
+const MY_ORDER_COLS='id,amount_usd,total_htg,merutag,status,created_at,payment_method,payment_proof_path,service,tx_hash,payout_status,pack_id,client_message,auto_validation_reason';
 async function loadMyOrders(){
   const el=$('ordersList');
   el.innerHTML='<div class="skeleton-order"></div><div class="skeleton-order"></div>';
   const {data:{user}}=await sb.auth.getUser();if(!user)return;
-  const {data,error}=await sb.from('orders').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
+  const {data,error}=await sb.from('orders').select(MY_ORDER_COLS).eq('user_id',user.id).order('created_at',{ascending:false});
   if(error){el.innerHTML='<div class="order-meta">Impossible de charger les commandes.</div>';return;}
+  // Libellés des packs Free Fire (ex. « 100 💎 ») ; si la lecture échoue, on affiche un libellé générique
+  const packLabels={};
+  {
+    const ids=[...new Set((data||[]).map(o=>o.pack_id).filter(Boolean))];
+    if(ids.length){
+      try{
+        const {data:pk}=await sb.from('freefire_packs').select('id,label').in('id',ids);
+        (pk||[]).forEach(p=>{packLabels[p.id]=p.label;});
+      }catch(_){}
+    }
+  }
   {
     const pend=(data||[]).filter(o=>o.status!=='complétée' && o.status!=='rejetée').length;
     const nb=document.querySelector('.bottom button[data-page="orders"] .nav-icon');
@@ -208,14 +223,19 @@ async function loadMyOrders(){
     const rejected=o.status==='rejetée';
     const svc=SERVICES.find(x=>x.id===o.service);
     const canReorder=svc&&serviceReady(svc);
-    const txLink = o.tx_hash ? `<div class="order-meta">TX : <a href="https://plasmascan.to/tx/${esc(o.tx_hash)}" target="_blank" rel="noopener" class="proof-link" style="margin-top:4px" title="${esc(o.tx_hash)}">${esc(String(o.tx_hash).slice(0,10))}…${esc(String(o.tx_hash).slice(-8))} 🔗</a></div>` : '';
+    // Lien TX uniquement pour un vrai hash blockchain (0x + 64 hexa) : les références internes de livraison ne sont jamais montrées
+    const hasChainTx = o.tx_hash && /^0x[a-fA-F0-9]{64}$/.test(String(o.tx_hash));
+    const txLink = hasChainTx ? `<div class="order-meta">TX : <a href="https://plasmascan.to/tx/${esc(o.tx_hash)}" target="_blank" rel="noopener" class="proof-link" style="margin-top:4px" title="${esc(o.tx_hash)}">${esc(String(o.tx_hash).slice(0,10))}…${esc(String(o.tx_hash).slice(-8))} 🔗</a></div>` : '';
     const cr=clientReason(o);
     const review=rejected&&cr.review;
     const rejMsg = rejected&&cr.text ? (review?`<div class="order-meta">${esc(cr.text)}</div>`:`<div class="order-meta" style="color:var(--danger)">❌ ${esc(cr.text)}</div>`) : '';
     const statusClass = done?'done':((rejected&&!review)?'rejected':'pending');
     const statusText = done?'✓ Complétée':(review?'⏳ En vérification':(rejected?'❌ Rejetée':'⏳ En attente'));
+    // Free Fire : on montre le pack acheté, jamais le coût d'achat stocké dans amount_usd
+    const isFF = o.service==='Free Fire';
+    const topLeft = isFF ? (packLabels[o.pack_id]||'Pack Free Fire') : (esc(o.amount_usd)+' USD');
     return `<div class="order" data-oid="${esc(o.id)}">
-      <div class="order-top"><strong>${esc(o.amount_usd)} USD</strong><strong>${fmt(o.total_htg)} HTG</strong></div>
+      <div class="order-top"><strong>${isFF?esc(topLeft):topLeft}</strong><strong>${fmt(o.total_htg)} HTG</strong></div>
       <div class="order-meta">${esc(svcName(o.service))} · <span class="order-ago">${timeAgo(o.created_at)}</span> · <span class="tag-ellipsis" title="${esc(o.merutag)}">${esc(o.merutag)}</span></div>
       <div class="order-meta">${esc(o.payment_method||'')} · <span class="status ${statusClass}">${statusText}</span></div>
       ${orderTimeline(o,review)}
@@ -271,4 +291,3 @@ async function loadWalletBalance() {
     if ($('walletGas')) $('walletGas').textContent = "Erreur";
   }
 }
-
