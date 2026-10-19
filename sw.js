@@ -1,26 +1,46 @@
 // =====================================================================
-// CASH BOOST — Service Worker v3
-// Correctif : l'ancien nom de cache changeait à chaque démarrage du worker
-// (Date.now()), donc plusieurs copies du site s'accumulaient et, hors ligne,
-// le navigateur resservait la PLUS ANCIENNE. Le nom est maintenant fixe.
+// CASH BOOST — Service Worker v4
+// v4 : le site est découpé en plusieurs fichiers (.js / .css).
+//  - Tous les fichiers du site sont pré-mis en cache (mode hors ligne fiable).
+//  - JS et CSS : réseau d'abord, cache en secours (plus de versions mélangées
+//    entre un index.html neuf et d'anciens scripts).
+//  - Images : cache d'abord, mise à jour en arrière-plan.
 // =====================================================================
 
-// ⚠️ À changer seulement quand tu modifies CE fichier ou veux vider le cache de tous les clients.
-const CACHE_NAME = 'cashboost-v3';
+// ⚠️ À changer quand tu modifies CE fichier ou veux vider le cache de tous les clients.
+const CACHE_NAME = 'cashboost-v4';
 const CORE_ASSETS = [
   './',
   './index.html',
+  './404.html',
   './manifest.json',
   './icon-192.png',
-  './icon-512.png'
+  './icon-512.png',
+  './design.css',
+  './styles.css',
+  './wallet-blue.css',
+  './base.js',
+  './ui.js',
+  './app.js',
+  './auth.js',
+  './compte.js',
+  './commandes.js',
+  './portefeuille.js',
+  './admin.js',
+  './animations.js',
+  './freefire.js',
+  './notifications.js',
+  './usdt.js'
 ];
-const HTML_TIMEOUT_MS = 5000; // connexion trop lente : on affiche la dernière version connue
+const NETWORK_TIMEOUT_MS = 5000; // connexion trop lente : on utilise la dernière version connue
 
-// INSTALL
+// INSTALL : chaque fichier est ajouté séparément, un échec n'empêche pas les autres
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS).catch(() => {}))
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(CORE_ASSETS.map((asset) => cache.add(asset).catch(() => {})))
+    )
   );
 });
 
@@ -65,6 +85,8 @@ self.addEventListener('fetch', (event) => {
                  url.pathname === '/' ||
                  url.pathname.endsWith('/');
 
+  const isCode = url.pathname.endsWith('.js') || url.pathname.endsWith('.css');
+
   // PAGE : réseau d'abord (toujours la dernière version), sinon dernière version connue
   if (isHTML) {
     event.respondWith((async () => {
@@ -79,7 +101,7 @@ self.addEventListener('fetch', (event) => {
         return res;
       });
       const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('timeout')), HTML_TIMEOUT_MS));
+        setTimeout(() => reject(new Error('timeout')), NETWORK_TIMEOUT_MS));
       try {
         return await Promise.race([network, timeout]);
       } catch (_) {
@@ -91,7 +113,28 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // AUTRES FICHIERS (CSS, JS, images) : cache d'abord, mis à jour en arrière-plan
+  // JS / CSS : réseau d'abord (même version que la page), sinon cache
+  if (isCode) {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const network = fetch(req).then((res) => {
+        if (res && res.status === 200 && res.type === 'basic') cache.put(req, res.clone());
+        return res;
+      });
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), NETWORK_TIMEOUT_MS));
+      try {
+        return await Promise.race([network, timeout]);
+      } catch (_) {
+        const cached = await cache.match(req, { ignoreSearch: true });
+        if (cached) return cached;
+        return network.catch(() => Response.error());
+      }
+    })());
+    return;
+  }
+
+  // IMAGES et autres fichiers : cache d'abord, mis à jour en arrière-plan
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
     const cached = await cache.match(req);
