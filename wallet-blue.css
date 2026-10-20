@@ -1,49 +1,73 @@
-/* Portefeuille : thème bleu électrique → cyan (variables locales, le reste du site reste doré) */
+/* ═══════════════════════════════════════════════════════════════
+   COULEUR DE MARQUE UNIQUE — tout le site se règle dans ce bloc.
+   Actuel : bleu → cyan (couleur d'origine du site).
+   Pour passer à l'or / noir (comme le logo), remplace les lignes « BRAND » par :
+     --brand-a:#ffdc3d; --brand-b:#f2bf00; --brand-b-rgb:252,207,2; --brand-rgb:252,207,2;
+     --brand-light-rgb:143,108,0; --brand-ink:#0a090e; --brand-deep:#f2bf00;
+     --brand-text:#f6d96a; --brand-text-light:#8f6c00; --brand-card-a:#16161e; --brand-card-b:#0f0f15;
+   (le fichier garde son nom pour rester dans le cache hors ligne de sw.js)
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  --brand-a:#3b82f6;                 /* BRAND : début du dégradé */
+  --brand-b:#22d3ee;                 /* BRAND : fin du dégradé */
+  --brand-b-rgb:34,211,238;          /* BRAND : fin du dégradé (halos, ombres) */
+  --brand-rgb:59,130,246;            /* BRAND : couleur principale (thème sombre) */
+  --brand-light-rgb:37,99,235;       /* BRAND : couleur principale, thème clair */
+  --brand-ink:#04101f;               /* BRAND : texte posé sur la couleur de marque */
+  --brand-deep:#2563eb;              /* BRAND : variante foncée (thème sombre) */
+  --brand-text:#7dd3fc;              /* BRAND : texte coloré, thème sombre */
+  --brand-text-light:#1d4ed8;        /* BRAND : texte coloré, thème clair */
+  --brand-card-a:#0f1a30;            /* BRAND : fond de la carte portefeuille (haut) */
+  --brand-card-b:#0a1020;            /* BRAND : fond de la carte portefeuille (bas) */
+  --brand-grad:linear-gradient(100deg,var(--brand-a) 0%,var(--brand-b) 100%);
+}
 :root,[data-theme="dark"]{
-  --primary:#3b82f6;--primary-dark:#2563eb;--primary-light:#22d3ee;
-  --primary-soft:rgba(59,130,246,0.12);--primary-line:rgba(59,130,246,0.35);--primary-glow:rgba(34,211,238,0.35);
-  --shadow-btn:0 6px 18px rgba(34,211,238,0.28);
+  --primary:rgb(var(--brand-rgb));--primary-dark:var(--brand-deep);--primary-light:var(--brand-b);
+  --primary-soft:rgba(var(--brand-rgb),0.12);--primary-line:rgba(var(--brand-rgb),0.35);--primary-glow:rgba(var(--brand-b-rgb),0.35);
+  --shadow-btn:0 6px 18px rgba(var(--brand-b-rgb),0.28);
+  --gold-text:var(--brand-text);
 }
 [data-theme="light"]{
-  --primary:#2563eb;--primary-dark:#1d4ed8;--primary-light:#22d3ee;
-  --primary-soft:rgba(37,99,235,0.08);--primary-line:rgba(37,99,235,0.28);
+  --primary:rgb(var(--brand-light-rgb));--primary-dark:var(--brand-text-light);--primary-light:var(--brand-b);
+  --primary-soft:rgba(var(--brand-light-rgb),0.08);--primary-line:rgba(var(--brand-light-rgb),0.28);
+  --gold-text:var(--brand-text-light);
 }
-/* Boutons principaux : dégradé bleu → cyan, sur tout le site */
-.primary-btn,.btn-primary-sm,.btn-primary-lg{background:linear-gradient(100deg,#3b82f6 0%,#22d3ee 100%);color:#04101f;box-shadow:0 8px 22px rgba(34,211,238,0.30);}
-.primary-btn:hover:not(:disabled){box-shadow:0 12px 30px rgba(34,211,238,0.42);}
+/* Boutons principaux : dégradé de marque, sur tout le site */
+.primary-btn,.btn-primary-sm,.btn-primary-lg{background:var(--brand-grad);color:var(--brand-ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 22px -8px rgba(var(--brand-b-rgb),.5);}
+.primary-btn:hover:not(:disabled){box-shadow:0 12px 30px rgba(var(--brand-b-rgb),0.42);}
 .service-info .primary-btn{background:var(--text-strong);color:var(--bg);box-shadow:none;}
-.service-info .primary-btn:hover:not(:disabled){background:linear-gradient(100deg,#3b82f6,#22d3ee);color:#04101f;}
+.service-info .primary-btn:hover:not(:disabled){background:var(--brand-grad);color:var(--brand-ink);}
 .service-info .primary-btn:disabled{background:var(--surface-elev);color:var(--muted-2);}
-.brand-mark,.profile-avatar,.testimonial footer::before{background:linear-gradient(135deg,#3b82f6,#22d3ee);color:#04101f;}
-.admin-tab.active{background:linear-gradient(100deg,#3b82f6,#22d3ee);color:#04101f;}
+.brand-mark,.profile-avatar,.testimonial footer::before{background:var(--brand-grad);color:var(--brand-ink);}
+.admin-tab.active{background:var(--brand-grad);color:var(--brand-ink);}
 /* Boutons secondaires du portefeuille : plus lisibles en mode sombre */
-[data-theme="dark"] #page-wallet .wallet-act{background:rgba(59,130,246,0.10);border-color:rgba(59,130,246,0.35);}
-[data-theme="dark"] #page-wallet .wallet-act:hover{background:rgba(59,130,246,0.18);}
-[data-theme="dark"] #page-wallet .wallet-idrow,[data-theme="dark"] #page-wallet .wallet-eye{background:rgba(59,130,246,0.08);border-color:rgba(59,130,246,0.28);}
-[data-theme="light"] #page-wallet .wallet-act{background:rgba(37,99,235,0.05);border-color:rgba(37,99,235,0.22);}
-.hdr-wallet-ic{background:linear-gradient(135deg,#3b82f6,#22d3ee);color:#04101f;}
-.hdr-wallet{border-color:rgba(59,130,246,0.35);}
-/* Carte du solde : fond bleu nuit avec halo */
+[data-theme="dark"] #page-wallet .wallet-act{background:rgba(var(--brand-rgb),0.10);border-color:rgba(var(--brand-rgb),0.35);}
+[data-theme="dark"] #page-wallet .wallet-act:hover{background:rgba(var(--brand-rgb),0.18);}
+[data-theme="dark"] #page-wallet .wallet-idrow,[data-theme="dark"] #page-wallet .wallet-eye{background:rgba(var(--brand-rgb),0.08);border-color:rgba(var(--brand-rgb),0.28);}
+[data-theme="light"] #page-wallet .wallet-act{background:rgba(var(--brand-light-rgb),0.05);border-color:rgba(var(--brand-light-rgb),0.22);}
+.hdr-wallet-ic{background:var(--brand-grad);color:var(--brand-ink);}
+.hdr-wallet{border-color:rgba(var(--brand-rgb),0.35);}
+/* Carte du solde : fond de marque avec halo */
 [data-theme="dark"] #page-wallet > .card.card-pad{
-  background:radial-gradient(420px 260px at 100% 0%,rgba(34,211,238,0.14),transparent 70%),linear-gradient(160deg,#0f1a30 0%,#0a1020 100%);
-  border-color:rgba(59,130,246,0.30);
+  background:radial-gradient(420px 260px at 100% 0%,rgba(var(--brand-b-rgb),0.14),transparent 70%),linear-gradient(160deg,var(--brand-card-a) 0%,var(--brand-card-b) 100%);
+  border-color:rgba(var(--brand-rgb),0.30);
 }
 [data-theme="light"] #page-wallet > .card.card-pad{
-  background:radial-gradient(420px 260px at 100% 0%,rgba(34,211,238,0.16),transparent 70%),#ffffff;
-  border-color:rgba(37,99,235,0.22);
+  background:radial-gradient(420px 260px at 100% 0%,rgba(var(--brand-b-rgb),0.16),transparent 70%),#ffffff;
+  border-color:rgba(var(--brand-light-rgb),0.22);
 }
 #page-wallet .wallet-act:hover,#page-wallet .wallet-op.active{border-color:var(--primary);}
-#page-wallet .wallet-stat.s1 b{color:#3b82f6;}
-#page-wallet .wallet-stat.s3 b{color:#22d3ee;}
+#page-wallet .wallet-stat.s1 b{color:var(--brand-a);}
+#page-wallet .wallet-stat.s3 b{color:var(--brand-b);}
 #page-wallet .wtx-chip.active{background:var(--primary-soft);border-color:var(--primary-line);}
 /* Onglet Portefeuille actif dans la barre du bas */
 .bottom button[data-page="wallet"].active{color:var(--primary);}
-.bottom button[data-page="wallet"].active::before{background:linear-gradient(90deg,#3b82f6,#22d3ee);}
+.bottom button[data-page="wallet"].active::before{background:var(--brand-grad);}
 .bottom button[data-page="wallet"].active .nav-icon{background:var(--primary-soft);border-radius:12px;width:44px;height:30px;}
-/* Restes de jaune (design.css) : on force le bleu partout */
+/* Restes de couleurs écrites en dur (design.css) : on force la couleur de marque partout */
 .eyebrow,.hero .eyebrow,.section-head-centered .eyebrow{color:var(--primary) !important;}
 .bottom button.active,.bottom button.active span{color:var(--primary) !important;}
-.bottom button.active::before{background:linear-gradient(90deg,#3b82f6,#22d3ee) !important;}
+.bottom button.active::before{background:var(--brand-grad) !important;}
 .bottom button.active .nav-icon{background:var(--primary-soft);border-radius:12px;width:44px;height:30px;}
 .theme-toggle{border-color:var(--primary-line) !important;}
 .theme-toggle:hover{border-color:var(--primary) !important;}
@@ -52,30 +76,24 @@
 /* Barre du bas : fond uni identique sur toutes les pages */
 .bottom{background:#0d0d12 !important;background-image:none !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important;}
 [data-theme="light"] .bottom{background:#ffffff !important;}
-/* design.css : couleurs dorées écrites en dur */
-[data-theme="dark"]{--gold-text:#7dd3fc;}
-[data-theme="light"]{--gold-text:#1d4ed8;--primary-line:rgba(37,99,235,.28);}
-.service-visual{background:radial-gradient(circle at 50% 0%,rgba(59,130,246,.18),transparent 70%),linear-gradient(145deg,#1a1a24,#0f0f16);}
+.service-visual{background:radial-gradient(circle at 50% 0%,rgba(var(--brand-rgb),.18),transparent 70%),linear-gradient(145deg,#1a1a24,#0f0f16);}
 .pay-step-num{background:var(--primary) !important;}
-[data-theme="light"] .proof-tip{background:linear-gradient(135deg,rgba(37,99,235,.07),transparent 80%);}
-.reorder-btn:hover{background:linear-gradient(100deg,#3b82f6,#22d3ee);color:#04101f;}
-.primary-btn,.btn-primary-lg,.btn-primary-sm{box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 22px -8px rgba(34,211,238,.5);}
+[data-theme="light"] .proof-tip{background:linear-gradient(135deg,rgba(var(--brand-light-rgb),.07),transparent 80%);}
+.reorder-btn:hover{background:var(--brand-grad);color:var(--brand-ink);}
 .ob .primary-btn.is-wait{background:var(--surface-elev);color:var(--text);box-shadow:none;}
 /* Avis « hors horaires » : reste ambré, c'est un avertissement */
 [data-theme="dark"] .opening-hours-notice:not(.is-open){color:#fbbf24;}
 [data-theme="dark"] .opening-hours-notice:not(.is-open) strong{color:#fde68a;}
 
-/* ── Accueil : héro (grand titre, bouton, illustration animée) ── */
-.cbh{position:relative;padding:18px 2px 8px;margin-bottom:8px;overflow:hidden}
-.cbh-glow{position:absolute;top:-120px;left:50%;width:520px;height:520px;transform:translateX(-50%);background:radial-gradient(circle,rgba(34,211,238,.28),rgba(59,130,246,.12) 45%,transparent 70%);filter:blur(30px);pointer-events:none;z-index:0}
+/* ── Accueil : héro compact (titre court, petite illustration) ── */
+.cbh{position:relative;padding:8px 2px 4px;margin-bottom:6px;overflow:hidden}
+.cbh-glow{position:absolute;top:-150px;left:50%;width:380px;height:380px;transform:translateX(-50%);background:radial-gradient(circle,rgba(var(--brand-b-rgb),.28),rgba(var(--brand-rgb),.12) 45%,transparent 70%);filter:blur(30px);pointer-events:none;z-index:0}
 .cbh>*:not(.cbh-glow){position:relative;z-index:1}
-.cbw{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:6px 0 18px;padding:16px 18px;border-radius:22px;border:1px solid var(--primary-line);background:linear-gradient(120deg,rgba(59,130,246,.22),rgba(34,211,238,.10) 70%,transparent),var(--surface)}
-.cbw small{display:block;color:var(--muted);font-size:12px;margin-bottom:2px}
-.cbw strong{font:700 24px 'Space Grotesk',sans-serif;letter-spacing:-.02em}
-.cbw-btn{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:14px;padding:11px 16px;background:linear-gradient(100deg,#3b82f6,#22d3ee);color:#04101f;font:700 14px 'Space Grotesk',sans-serif}
-.cbw-btn:active{transform:scale(.96)}
+/* Solde et bouton Recharger retirés de l'accueil : le solde reste dans la pastille du haut.
+   Le bloc est seulement masqué (il reste dans la page pour ne pas casser le script). */
+.cbw{display:none !important}
 .service-card{position:relative}
-.service-card:not(.soon)::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,#3b82f6,#22d3ee);z-index:1}
+.service-card:not(.soon)::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--brand-grad);z-index:1}
 .service-card:not(.soon):active{transform:scale(.985)}
 .service-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .svc-fast{font-size:11px;font-weight:600;color:var(--primary-light);background:var(--primary-soft);border-radius:99px;padding:2px 8px}
@@ -83,7 +101,7 @@
 .cbt{margin-top:30px}
 .cbt-list{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:10px}
 .cbt-list li{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border:1px solid var(--line-strong);border-radius:18px;background:var(--surface)}
-.cbt-list i{flex:0 0 26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:800;font-size:13px;color:#04101f;background:linear-gradient(135deg,#3b82f6,#22d3ee)}
+.cbt-list i{flex:0 0 26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:800;font-size:13px;color:var(--brand-ink);background:var(--brand-grad)}
 .cbt-list span{color:var(--muted);font-size:14px;line-height:1.45}
 .cbt-list b{display:block;color:var(--text);font-size:15px;margin-bottom:2px}
 .cb-rv{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
@@ -91,33 +109,42 @@
 .cbs-card{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
 .cbs-card.in{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){.cb-rv,.cbs-card{opacity:1 !important;transform:none !important;transition:none !important}}
-.cbh-title{display:flex;flex-direction:column;font-size:clamp(40px,12.5vw,60px);line-height:1;letter-spacing:-.05em;font-weight:700;margin:0 0 16px}
+/* Titre court : « Recharge. Paie. » sur une ligne (la 3e phrase est masquée) */
+.cbh-title{display:flex;flex-direction:row;flex-wrap:wrap;column-gap:.28em;font-size:clamp(28px,8.5vw,38px);line-height:1.05;letter-spacing:-.04em;font-weight:700;margin:0 0 8px}
 .cbh-title span{display:block}
-.cbh-title .g{background:linear-gradient(100deg,#3b82f6,#22d3ee);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.cbh-sub{max-width:460px;color:var(--muted);font-size:15px;line-height:1.55;margin:0 0 22px}
-.cbh-btn{display:inline-flex;align-items:center;gap:10px;border:0;border-radius:16px;padding:15px 24px;background:linear-gradient(100deg,#3b82f6,#22d3ee);color:#04101f;font:700 15px 'Space Grotesk',sans-serif;box-shadow:0 10px 26px -8px rgba(34,211,238,.55)}
+.cbh-title span:nth-child(3){display:none}
+.cbh-title .g{background:var(--brand-grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.cbh-sub{max-width:460px;color:var(--muted);font-size:13.5px;line-height:1.45;margin:0 0 14px}
+.cbh-btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:14px;padding:12px 20px;background:var(--brand-grad);color:var(--brand-ink);font:700 14px 'Space Grotesk',sans-serif;box-shadow:0 10px 26px -8px rgba(var(--brand-b-rgb),.55)}
 .cbh-btn:active{transform:scale(.97)}
-.cbh-art{position:relative;width:min(300px,82vw);aspect-ratio:1;margin:30px auto 8px}
-.cbh-ring{position:absolute;inset:6%;border-radius:50%;background:radial-gradient(circle,rgba(34,211,238,.16),rgba(59,130,246,.06) 60%,transparent 72%);border:1px solid rgba(59,130,246,.25)}
-.cbh-ring::before{content:"";position:absolute;inset:14%;border-radius:50%;border:1px dashed rgba(34,211,238,.35)}
-.cbh-orbit{position:absolute;inset:0;animation:cbhSpin 28s linear infinite}
-.cbh-chip{position:absolute;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--primary-light);background:var(--surface-elev);border:1px solid var(--primary-line);box-shadow:0 8px 20px -10px rgba(34,211,238,.5);animation:cbhSpin 28s linear infinite reverse}
+/* Illustration réduite (~140 px au lieu de 300 px), qui tourne et pulse */
+.cbh-art{position:relative;width:min(140px,38vw);aspect-ratio:1;margin:14px auto 2px}
+.cbh-ring{position:absolute;inset:6%;border-radius:50%;background:radial-gradient(circle,rgba(var(--brand-b-rgb),.16),rgba(var(--brand-rgb),.06) 60%,transparent 72%);border:1px solid rgba(var(--brand-rgb),.25)}
+.cbh-ring::before{content:"";position:absolute;inset:14%;border-radius:50%;border:1px dashed rgba(var(--brand-b-rgb),.35)}
+.cbh-orbit{position:absolute;inset:0;animation:cbhSpin 14s linear infinite}
+.cbh-chip{position:absolute;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--primary-light);background:var(--surface-elev);border:1px solid var(--primary-line);box-shadow:0 8px 20px -10px rgba(var(--brand-b-rgb),.5);animation:cbhSpin 14s linear infinite reverse}
+.cbh-chip svg{width:16px;height:16px}
 .cbh-chip.c1{top:2%;left:10%}
 .cbh-chip.c2{top:8%;right:4%}
 .cbh-chip.c3{bottom:6%;right:10%}
 .cbh-chip.c4{bottom:2%;left:6%}
-.cbh-core{position:absolute;top:50%;left:50%;width:96px;height:96px;margin:-48px 0 0 -48px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#3b82f6,#22d3ee);box-shadow:0 0 0 10px rgba(34,211,238,.12),0 0 50px rgba(34,211,238,.45);animation:cbhPulse 3s ease-in-out infinite}
-.cbh-core svg{width:46px;height:46px}
+.cbh-core{position:absolute;top:50%;left:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--brand-grad);box-shadow:0 0 0 6px rgba(var(--brand-b-rgb),.12),0 0 34px rgba(var(--brand-b-rgb),.45);animation:cbhPulse 2.6s ease-in-out infinite}
+.cbh-core svg{width:28px;height:28px}
 @keyframes cbhSpin{to{transform:rotate(360deg)}}
-@keyframes cbhPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
-@media(prefers-reduced-motion:reduce){.cbh-orbit,.cbh-chip,.cbh-core{animation:none !important}}
+@keyframes cbhPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+/* Le mouvement reste actif même si le téléphone réduit les animations (design.css les coupe sinon) */
+@media(prefers-reduced-motion:reduce){
+  .cbh-orbit{animation:cbhSpin 14s linear infinite !important}
+  .cbh-chip{animation:cbhSpin 14s linear infinite reverse !important}
+  .cbh-core{animation:cbhPulse 2.6s ease-in-out infinite !important}
+}
 
 /* ── Accueil : parcours en trois étapes ── */
 .cbs{margin-top:34px}
 .cbs-title{font-size:clamp(28px,8vw,38px);line-height:1.05;letter-spacing:-.04em;margin:6px 0 10px}
 .cbs-sub{color:var(--muted);font-size:15px;line-height:1.55;margin:0 0 18px}
 .cbs-card{position:relative;margin-bottom:14px;padding:20px 20px 18px;border:1px solid var(--line-strong);border-radius:24px;background:linear-gradient(180deg,var(--surface-elev),var(--surface));overflow:hidden}
-.cbs-card::before{content:"";position:absolute;top:0;left:18px;right:40%;height:3px;border-radius:0 0 3px 3px;background:linear-gradient(90deg,#3b82f6,#22d3ee)}
+.cbs-card::before{content:"";position:absolute;top:0;left:18px;right:40%;height:3px;border-radius:0 0 3px 3px;background:var(--brand-grad)}
 .cbs-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:34px}
 .cbs-num{font:700 15px 'Space Grotesk',sans-serif;letter-spacing:.14em;color:var(--primary)}
 .cbs-ic{width:56px;height:56px;border-radius:18px;display:flex;align-items:center;justify-content:center;color:var(--primary-light);background:var(--primary-soft);border:1px solid var(--primary-line)}
@@ -125,6 +152,6 @@
 .cbs-card h3{font-size:22px;letter-spacing:-.03em;margin:0 0 8px}
 .cbs-card p{color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 16px}
 .cbs-tag{display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 8px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line-strong);font-size:12px;font-weight:600;color:var(--text)}
-.cbs-tag i{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#22d3ee)}
+.cbs-tag i{width:10px;height:10px;border-radius:50%;background:var(--brand-grad)}
 [data-theme="light"] .cbs-ic{color:var(--primary)}
 @media(min-width:900px){.cbs-card{max-width:680px}}
