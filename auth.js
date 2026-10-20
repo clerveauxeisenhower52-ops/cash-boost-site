@@ -108,16 +108,33 @@ async function enterOffline(user){
   $('userName').textContent=name;$('accountName').textContent=name;$('accountEmail').textContent=user.email||'';$('avatar').textContent=initials(name);
   showPage('home',false);
 }
+// Au rechargement, Supabase peut annoncer « pas de session » avant d'avoir relu celle enregistrée sur le téléphone.
+// Si une session est enregistrée, on garde l'écran de démarrage (5 s max) au lieu d'afficher la page de connexion.
+let graceTimer=null,graceExpired=false;
 async function handleAuth(e,s){
-  try{await _handleAuth(e,s);}
+  let wait=false;
+  try{wait=(await _handleAuth(e,s))==='wait';}
   catch(_){if($('authView').classList.contains('hidden')&&$('appView').classList.contains('hidden'))showAuth();}
-  finally{hideSplash();}
+  finally{if(!wait)hideSplash();}
 }
 async function _handleAuth(_e,session){
+  if(session&&graceTimer){clearTimeout(graceTimer);graceTimer=null;}
+  if(session)graceExpired=false;
   if(_e==='PASSWORD_RECOVERY')recoveryMode=true;
   if(session&&recoveryMode){$('authView').classList.remove('hidden');$('appView').classList.add('hidden');$('loginCard').classList.add('hidden');$('resetCard').classList.remove('hidden');return;}
   if(!session){
     if(!navigator.onLine){ const u=cachedAuthUser(); if(u){ await enterOffline(u); return; } }
+    if(_e!=='SIGNED_OUT'&&!graceExpired&&cachedAuthUser()){
+      if(!graceTimer){
+        try{const {data:{session:s2}}=await sb.auth.getSession(); if(s2) return await _handleAuth('SIGNED_IN',s2);}catch(_){}
+        if(!graceTimer)graceTimer=setTimeout(()=>{
+          graceTimer=null;graceExpired=true;
+          if($('authView').classList.contains('hidden')&&$('appView').classList.contains('hidden')){cleanupRealtime();showLanding();}
+          hideSplash();
+        },5000);
+      }
+      return 'wait';
+    }
     cleanupRealtime();showLanding();return;
   }
   if(navigator.onLine) offlineMode=false;
