@@ -1,6 +1,52 @@
 /* Cash Boost UI enhancements: client-side only; existing order/payment logic remains untouched. */
 (function(){
   'use strict';
+
+  // ── Onglet « Services » à côté d'Accueil ──
+  // La liste des services quitte l'accueil et vit dans sa propre page, accessible depuis la barre du bas.
+  // Exécuté tout de suite (le HTML est déjà chargé), avant que app.js ne branche les boutons de la barre.
+  function setupServicesTab(){
+    const home=document.getElementById('page-home');
+    const list=document.getElementById('servicesList');
+    const nav=document.querySelector('nav.bottom');
+    if(!home||!list||!nav||document.getElementById('page-services'))return;
+
+    const page=document.createElement('section');
+    page.id='page-services';page.className='page hidden';
+    const hero=home.querySelector(':scope > .hero');
+    if(hero)page.appendChild(hero);
+    page.appendChild(list);
+    home.after(page);
+
+    const homeBtn=nav.querySelector('button[data-page="home"]');
+    const btn=document.createElement('button');
+    btn.type='button';btn.setAttribute('data-page','services');
+    btn.innerHTML='<span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg></span>Services';
+    if(homeBtn)homeBtn.after(btn);else nav.prepend(btn);
+
+    const st=document.createElement('style');
+    st.textContent='.bottom{grid-template-columns:repeat(5,1fr) !important}.bottom button{min-width:0;font-size:10.5px}';
+    document.head.appendChild(st);
+
+    const baseShow=window.showPage;
+    window.showPage=function(p,rem=true){
+      const sp=document.getElementById('page-services');
+      if(p==='services'){
+        ['home','service','orders','wallet','account'].forEach(x=>{const e=document.getElementById('page-'+x);if(e)e.classList.add('hidden');});
+        if(sp)sp.classList.remove('hidden');
+        document.querySelectorAll('.bottom button').forEach(b=>b.classList.toggle('active',b.dataset.page==='services'));
+        if(rem){try{localStorage.setItem('cashboost_last_page','services');}catch(_){}}
+        window.scrollTo({top:0,behavior:'smooth'});
+        return;
+      }
+      if(sp)sp.classList.add('hidden');
+      baseShow(p,rem);
+      // La page de commande d'un service dépend de l'onglet Services
+      if(p==='service')document.querySelectorAll('.bottom button').forEach(b=>b.classList.toggle('active',b.dataset.page==='services'));
+    };
+  }
+  setupServicesTab();
+
   // Accueil : toutes les cartes de service gardent le même format vertical
   // (admin.js met « wide » sur la dernière carte quand le nombre est impair ; on retire cette classe).
   function keepCardsVertical(){
@@ -9,6 +55,13 @@
     const strip=()=>list.querySelectorAll('.service-card.wide').forEach(c=>c.classList.remove('wide'));
     strip();
     new MutationObserver(strip).observe(list,{childList:true,subtree:true});
+  }
+  // Les boutons « Retour aux services », « Explorer les services », « Faire une recharge » ramènent à l'onglet Services
+  // (ce gestionnaire passe après ceux de app.js, donc il a le dernier mot).
+  function routeToServices(){
+    document.addEventListener('click',e=>{
+      if(e.target.closest('#backHome,#svClose,#emptyGo,#cbhExplore'))window.showPage('services');
+    });
   }
   function addSearchAndFilters(){
     const services=document.getElementById('servicesList');
@@ -32,6 +85,6 @@
       new MutationObserver(apply).observe(orders,{childList:true,subtree:true});
     }
   }
-  function init(){keepCardsVertical();addSearchAndFilters();}
+  function init(){keepCardsVertical();routeToServices();addSearchAndFilters();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
