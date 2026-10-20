@@ -134,7 +134,7 @@
   function renderPacks(){
     const pr=packs.map(x=>x.price_htg);
     $('ffRange').textContent=packs.length?fmt(Math.min(...pr))+' – '+fmt(Math.max(...pr))+' HTG':'Aucun pack disponible';
-    $('ffPacks').innerHTML=packs.map(x=>'<button type="button" class="ff-pack'+(String(x.id)===String(sel)?' sel':'')+'" data-pack="'+esc(x.id)+'"><span class="ff-pack-l">'+esc(x.label)+'</span><span class="ff-pack-p">'+esc(fmt(x.price_htg))+' HTG</span></button>').join('');
+    $('ffPacks').innerHTML=packs.map(x=>'<button type="button" class="ff-pack'+(String(x.id)===String(sel)?' sel':'')+'" data-pack="'+esc(x.id)+'"><span class="ff-pack-l">'+esc(x.label)+'</span></button>').join('');
   }
 
   function paint(){
