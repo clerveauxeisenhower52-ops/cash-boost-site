@@ -62,6 +62,17 @@ function startSplashProgress(){
 }
 function hideSplash(){splashReady=true;}
 startSplashProgress();
+// FILET DE SÉCURITÉ : placé ici, hors de DOMContentLoaded, pour fonctionner même si app.js plante
+// (bibliothèque Supabase non chargée, erreur JavaScript, réseau très lent…).
+// Sans lui, l'écran de démarrage pouvait rester bloqué indéfiniment.
+setTimeout(()=>{
+  try{
+    const a=$('authView'),p=$('appView');
+    if(a&&p&&a.classList.contains('hidden')&&p.classList.contains('hidden'))showAuth();
+    if(typeof window.supabase==='undefined')setMsg('authMsg','Problème de connexion. Vérifie ton internet puis recharge la page.','err');
+  }catch(_){}
+  hideSplash();
+},9000);
 // ---------- Mode hors ligne ----------
 // Hors connexion, un jeton expiré ne peut pas être renouvelé : l'appli croyait l'utilisateur déconnecté
 // et affichait la page de connexion. On garde maintenant l'utilisateur dans l'appli avec les dernières données connues.
@@ -126,4 +137,3 @@ async function _handleAuth(_e,session){
   }
   loadMyOrders();loadAdmin();setupAdminRealtime();setupClientRealtime(session.user.id);setupWalletRealtime(session.user.id);loadWallet();refreshPushUI();
 }
-
