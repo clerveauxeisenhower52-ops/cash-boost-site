@@ -1,33 +1,40 @@
 /* ═══════════════════════════════════════════════════════════════
-   COULEUR DE MARQUE UNIQUE — tout le site se règle ici (bloc ci-dessous).
-   Actuel : or / noir (comme le logo et l'écran de démarrage).
-   Pour repasser au bleu, remplace les 5 lignes marquées « BRAND » par :
-     --brand-a:#3b82f6; --brand-b:#22d3ee; --brand-rgb:59,130,246;
-     --brand-light-rgb:37,99,235; --brand-ink:#04101f;
+   COULEUR DE MARQUE UNIQUE — tout le site se règle dans ce bloc.
+   Actuel : bleu → cyan (couleur d'origine du site).
+   Pour passer à l'or / noir (comme le logo), remplace les lignes « BRAND » par :
+     --brand-a:#ffdc3d; --brand-b:#f2bf00; --brand-b-rgb:252,207,2; --brand-rgb:252,207,2;
+     --brand-light-rgb:143,108,0; --brand-ink:#0a090e; --brand-deep:#f2bf00;
+     --brand-text:#f6d96a; --brand-text-light:#8f6c00; --brand-card-a:#16161e; --brand-card-b:#0f0f15;
    (le fichier garde son nom pour rester dans le cache hors ligne de sw.js)
    ═══════════════════════════════════════════════════════════════ */
 :root{
-  --brand-a:#ffdc3d;                 /* BRAND : début du dégradé */
-  --brand-b:#f2bf00;                 /* BRAND : fin du dégradé */
-  --brand-rgb:252,207,2;             /* BRAND : couleur principale (thème sombre) */
-  --brand-light-rgb:143,108,0;       /* BRAND : même couleur, plus foncée pour le thème clair */
-  --brand-ink:#0a090e;               /* BRAND : texte posé sur la couleur de marque */
+  --brand-a:#3b82f6;                 /* BRAND : début du dégradé */
+  --brand-b:#22d3ee;                 /* BRAND : fin du dégradé */
+  --brand-b-rgb:34,211,238;          /* BRAND : fin du dégradé (halos, ombres) */
+  --brand-rgb:59,130,246;            /* BRAND : couleur principale (thème sombre) */
+  --brand-light-rgb:37,99,235;       /* BRAND : couleur principale, thème clair */
+  --brand-ink:#04101f;               /* BRAND : texte posé sur la couleur de marque */
+  --brand-deep:#2563eb;              /* BRAND : variante foncée (thème sombre) */
+  --brand-text:#7dd3fc;              /* BRAND : texte coloré, thème sombre */
+  --brand-text-light:#1d4ed8;        /* BRAND : texte coloré, thème clair */
+  --brand-card-a:#0f1a30;            /* BRAND : fond de la carte portefeuille (haut) */
+  --brand-card-b:#0a1020;            /* BRAND : fond de la carte portefeuille (bas) */
   --brand-grad:linear-gradient(100deg,var(--brand-a) 0%,var(--brand-b) 100%);
 }
 :root,[data-theme="dark"]{
-  --primary:rgb(var(--brand-rgb));--primary-dark:var(--brand-b);--primary-light:var(--brand-a);
-  --primary-soft:rgba(var(--brand-rgb),0.12);--primary-line:rgba(var(--brand-rgb),0.35);--primary-glow:rgba(var(--brand-rgb),0.35);
-  --shadow-btn:0 6px 18px rgba(var(--brand-rgb),0.28);
-  --gold-text:var(--brand-a);
+  --primary:rgb(var(--brand-rgb));--primary-dark:var(--brand-deep);--primary-light:var(--brand-b);
+  --primary-soft:rgba(var(--brand-rgb),0.12);--primary-line:rgba(var(--brand-rgb),0.35);--primary-glow:rgba(var(--brand-b-rgb),0.35);
+  --shadow-btn:0 6px 18px rgba(var(--brand-b-rgb),0.28);
+  --gold-text:var(--brand-text);
 }
 [data-theme="light"]{
-  --primary:rgb(var(--brand-light-rgb));--primary-dark:rgb(var(--brand-light-rgb));--primary-light:rgb(var(--brand-light-rgb));
+  --primary:rgb(var(--brand-light-rgb));--primary-dark:var(--brand-text-light);--primary-light:var(--brand-b);
   --primary-soft:rgba(var(--brand-light-rgb),0.08);--primary-line:rgba(var(--brand-light-rgb),0.28);
-  --gold-text:rgb(var(--brand-light-rgb));
+  --gold-text:var(--brand-text-light);
 }
 /* Boutons principaux : dégradé de marque, sur tout le site */
-.primary-btn,.btn-primary-sm,.btn-primary-lg{background:var(--brand-grad);color:var(--brand-ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 22px -8px rgba(var(--brand-rgb),.5);}
-.primary-btn:hover:not(:disabled){box-shadow:0 12px 30px rgba(var(--brand-rgb),0.42);}
+.primary-btn,.btn-primary-sm,.btn-primary-lg{background:var(--brand-grad);color:var(--brand-ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 22px -8px rgba(var(--brand-b-rgb),.5);}
+.primary-btn:hover:not(:disabled){box-shadow:0 12px 30px rgba(var(--brand-b-rgb),0.42);}
 .service-info .primary-btn{background:var(--text-strong);color:var(--bg);box-shadow:none;}
 .service-info .primary-btn:hover:not(:disabled){background:var(--brand-grad);color:var(--brand-ink);}
 .service-info .primary-btn:disabled{background:var(--surface-elev);color:var(--muted-2);}
@@ -40,17 +47,18 @@
 [data-theme="light"] #page-wallet .wallet-act{background:rgba(var(--brand-light-rgb),0.05);border-color:rgba(var(--brand-light-rgb),0.22);}
 .hdr-wallet-ic{background:var(--brand-grad);color:var(--brand-ink);}
 .hdr-wallet{border-color:rgba(var(--brand-rgb),0.35);}
-/* Carte du solde : fond neutre avec halo de marque */
+/* Carte du solde : fond de marque avec halo */
 [data-theme="dark"] #page-wallet > .card.card-pad{
-  background:radial-gradient(420px 260px at 100% 0%,rgba(var(--brand-rgb),0.14),transparent 70%),linear-gradient(160deg,var(--surface-elev) 0%,var(--surface) 100%);
+  background:radial-gradient(420px 260px at 100% 0%,rgba(var(--brand-b-rgb),0.14),transparent 70%),linear-gradient(160deg,var(--brand-card-a) 0%,var(--brand-card-b) 100%);
   border-color:rgba(var(--brand-rgb),0.30);
 }
 [data-theme="light"] #page-wallet > .card.card-pad{
-  background:radial-gradient(420px 260px at 100% 0%,rgba(var(--brand-rgb),0.16),transparent 70%),#ffffff;
+  background:radial-gradient(420px 260px at 100% 0%,rgba(var(--brand-b-rgb),0.16),transparent 70%),#ffffff;
   border-color:rgba(var(--brand-light-rgb),0.22);
 }
 #page-wallet .wallet-act:hover,#page-wallet .wallet-op.active{border-color:var(--primary);}
-#page-wallet .wallet-stat.s1 b,#page-wallet .wallet-stat.s3 b{color:var(--primary);}
+#page-wallet .wallet-stat.s1 b{color:var(--brand-a);}
+#page-wallet .wallet-stat.s3 b{color:var(--brand-b);}
 #page-wallet .wtx-chip.active{background:var(--primary-soft);border-color:var(--primary-line);}
 /* Onglet Portefeuille actif dans la barre du bas */
 .bottom button[data-page="wallet"].active{color:var(--primary);}
@@ -68,7 +76,7 @@
 /* Barre du bas : fond uni identique sur toutes les pages */
 .bottom{background:#0d0d12 !important;background-image:none !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important;}
 [data-theme="light"] .bottom{background:#ffffff !important;}
-.service-visual{background:radial-gradient(circle at 50% 0%,rgba(var(--brand-rgb),.16),transparent 70%),linear-gradient(145deg,#1a1a24,#0f0f16);}
+.service-visual{background:radial-gradient(circle at 50% 0%,rgba(var(--brand-rgb),.18),transparent 70%),linear-gradient(145deg,#1a1a24,#0f0f16);}
 .pay-step-num{background:var(--primary) !important;}
 [data-theme="light"] .proof-tip{background:linear-gradient(135deg,rgba(var(--brand-light-rgb),.07),transparent 80%);}
 .reorder-btn:hover{background:var(--brand-grad);color:var(--brand-ink);}
@@ -79,7 +87,7 @@
 
 /* ── Accueil : héro compact (titre court, petite illustration) ── */
 .cbh{position:relative;padding:8px 2px 4px;margin-bottom:6px;overflow:hidden}
-.cbh-glow{position:absolute;top:-150px;left:50%;width:380px;height:380px;transform:translateX(-50%);background:radial-gradient(circle,rgba(var(--brand-rgb),.24),rgba(var(--brand-rgb),.08) 45%,transparent 70%);filter:blur(30px);pointer-events:none;z-index:0}
+.cbh-glow{position:absolute;top:-150px;left:50%;width:380px;height:380px;transform:translateX(-50%);background:radial-gradient(circle,rgba(var(--brand-b-rgb),.28),rgba(var(--brand-rgb),.12) 45%,transparent 70%);filter:blur(30px);pointer-events:none;z-index:0}
 .cbh>*:not(.cbh-glow){position:relative;z-index:1}
 /* Solde : il n'est affiché qu'en haut (pastille). Ici il ne reste que le bouton Recharger. */
 .cbw{display:block;margin:4px 0 14px;padding:0;border:0;border-radius:0;background:none}
@@ -108,22 +116,21 @@
 .cbh-title span{display:block}
 .cbh-title span:nth-child(3){display:none}
 .cbh-title .g{background:var(--brand-grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-[data-theme="light"] .cbh-title .g{background:linear-gradient(100deg,#b88700,#8f6c00);-webkit-background-clip:text;background-clip:text}
 .cbh-sub{max-width:460px;color:var(--muted);font-size:13.5px;line-height:1.45;margin:0 0 14px}
-.cbh-btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:14px;padding:12px 20px;background:var(--brand-grad);color:var(--brand-ink);font:700 14px 'Space Grotesk',sans-serif;box-shadow:0 10px 26px -8px rgba(var(--brand-rgb),.55)}
+.cbh-btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:14px;padding:12px 20px;background:var(--brand-grad);color:var(--brand-ink);font:700 14px 'Space Grotesk',sans-serif;box-shadow:0 10px 26px -8px rgba(var(--brand-b-rgb),.55)}
 .cbh-btn:active{transform:scale(.97)}
 /* Illustration réduite (~140 px au lieu de 300 px) */
 .cbh-art{position:relative;width:min(140px,38vw);aspect-ratio:1;margin:14px auto 2px}
-.cbh-ring{position:absolute;inset:6%;border-radius:50%;background:radial-gradient(circle,rgba(var(--brand-rgb),.16),rgba(var(--brand-rgb),.06) 60%,transparent 72%);border:1px solid rgba(var(--brand-rgb),.25)}
-.cbh-ring::before{content:"";position:absolute;inset:14%;border-radius:50%;border:1px dashed rgba(var(--brand-rgb),.35)}
+.cbh-ring{position:absolute;inset:6%;border-radius:50%;background:radial-gradient(circle,rgba(var(--brand-b-rgb),.16),rgba(var(--brand-rgb),.06) 60%,transparent 72%);border:1px solid rgba(var(--brand-rgb),.25)}
+.cbh-ring::before{content:"";position:absolute;inset:14%;border-radius:50%;border:1px dashed rgba(var(--brand-b-rgb),.35)}
 .cbh-orbit{position:absolute;inset:0;animation:cbhSpin 28s linear infinite}
-.cbh-chip{position:absolute;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--primary-light);background:var(--surface-elev);border:1px solid var(--primary-line);box-shadow:0 8px 20px -10px rgba(var(--brand-rgb),.5);animation:cbhSpin 28s linear infinite reverse}
+.cbh-chip{position:absolute;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--primary-light);background:var(--surface-elev);border:1px solid var(--primary-line);box-shadow:0 8px 20px -10px rgba(var(--brand-b-rgb),.5);animation:cbhSpin 28s linear infinite reverse}
 .cbh-chip svg{width:16px;height:16px}
 .cbh-chip.c1{top:2%;left:10%}
 .cbh-chip.c2{top:8%;right:4%}
 .cbh-chip.c3{bottom:6%;right:10%}
 .cbh-chip.c4{bottom:2%;left:6%}
-.cbh-core{position:absolute;top:50%;left:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--brand-grad);box-shadow:0 0 0 6px rgba(var(--brand-rgb),.12),0 0 34px rgba(var(--brand-rgb),.45);animation:cbhPulse 3s ease-in-out infinite}
+.cbh-core{position:absolute;top:50%;left:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--brand-grad);box-shadow:0 0 0 6px rgba(var(--brand-b-rgb),.12),0 0 34px rgba(var(--brand-b-rgb),.45);animation:cbhPulse 3s ease-in-out infinite}
 .cbh-core svg{width:28px;height:28px}
 @keyframes cbhSpin{to{transform:rotate(360deg)}}
 @keyframes cbhPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
