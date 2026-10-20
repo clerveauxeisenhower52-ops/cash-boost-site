@@ -70,9 +70,8 @@
     <div class="section-head"><span class="step">1</span><div><h2>Choisir le pack</h2><p id="ffRange">Choisis la valeur de ton pack</p></div></div>
     <div id="ffPacks" class="ff-packs"></div>
     <div class="summary">
-      <div class="sumrow"><span>Pack</span><strong id="ffSumPack">—</strong></div
+      <div class="sumrow"><span>Pack</span><strong id="ffSumPack">—</strong></div>
       <div class="sumrow total"><span>Total à payer</span><strong id="ffSumTotal">—</strong></div>
-      <div class="fee-note">Le montant final inclut les frais de service.</div>
     </div>
   </div>
   <div class="section" id="ffSecAcc">
