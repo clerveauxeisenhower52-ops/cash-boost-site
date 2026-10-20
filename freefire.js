@@ -58,7 +58,7 @@
   function build(){
     pg.innerHTML=`
 <div class="page-title"><button id="ffBack" class="back" type="button">← Retour aux services</button></div>
-<h1 class="svc-title">Recharger Free Fire<span class="svc-badge svc-badge-auto">Auto</span></h1>
+<h1 class="svc-title">TopUp Free Fire<span class="svc-badge svc-badge-auto">Auto</span></h1>
 <div id="ffProgress" class="op" aria-label="Progression de la commande">
   <button type="button" class="op-step" data-go="ffSecPack"><i>1</i><span>Pack</span></button>
   <button type="button" class="op-step" data-go="ffSecAcc"><i>2</i><span>Compte</span></button>
