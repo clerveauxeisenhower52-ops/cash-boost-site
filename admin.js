@@ -187,14 +187,16 @@ function renderServices(){
     const ready=serviceReady(s),logo=s.logo||SERVICE_LOGOS[s.id];
     const visual=logo?`<div class="service-visual meru-logo-visual"><img class="meru-brand-logo${s.id==='meru'?'':' svc-logo-sq'}" src="${logo}" alt="Logo ${esc(s.name)}"></div>`:`<div class="service-visual"><span class="svc-initials">${esc(initials(s.name))}</span></div>`;
     // "Plasma One — Traitement Automatisé" -> titre court + badge Auto / Manuel
+    // Free Fire est entièrement automatique (vérification du compte, paiement par solde, recharge) -> badge Auto
     const parts=String(s.name).split(/\s+[—–-]\s+/),variant=parts.slice(1).join(' ');
-    const badgeKind=/autom/i.test(variant)?'auto':(/manuel/i.test(variant)?'manuel':'');
+    const badgeKind=(s.id==='Free Fire'||/autom/i.test(variant))?'auto':(/manuel/i.test(variant)?'manuel':'');
     const badgeTxt=badgeKind==='auto'?'Auto':(badgeKind==='manuel'?'Manuel':'');
     const title=esc(badgeKind?parts[0]:s.name)+(badgeKind?`<span class="svc-badge svc-badge-${badgeKind}">${badgeTxt}</span>`:'');
     // Dernière carte seule sur sa ligne -> pleine largeur
     const idxInGroup=ready?i:i-nbReady,groupSize=ready?nbReady:nbSoon;
     const wide=(groupSize%2===1&&idxInGroup===groupSize-1)?' wide':'';
-    const meta=ready?`<p class="service-meta"><span>Dès ${Number(s.min_qty)||1} USD</span><span class="svc-fast">⚡ Rapide</span></p>`:'';
+    // Pas de « Dès X USD » ni de « ⚡ Rapide » sous le nom du service
+    const meta='';
     return `<div class="service-card${ready?'':' soon'}${wide}">${visual}<div class="service-info"><div class="service-title"><h2>${title}</h2>${meta}</div><button class="primary-btn" data-open="${esc(s.id)}" ${ready?'':'disabled'}>${ready?'Commander':'Bientôt'}</button></div></div>`;
   }).join('');
   el.querySelectorAll('[data-open]').forEach(b=>{b.onclick=()=>openService(b.dataset.open);});
