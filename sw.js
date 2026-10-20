@@ -1,5 +1,9 @@
 // =====================================================================
-// CASH BOOST — Service Worker v5
+// CASH BOOST — Service Worker v6
+// v6 : la librairie Supabase est servie depuis NOTRE copie (supabase.min.js).
+//  - Si jsdelivr est lent ou inaccessible (réseau faible), l'appli démarre quand même.
+//  - La copie est pré-mise en cache : elle marche aussi hors ligne.
+//  - Si la copie locale est introuvable, on retombe sur jsdelivr.
 // v5 : les librairies externes (Supabase, QR code) sont mises en cache.
 //  - Sans ça, hors ligne, la librairie Supabase ne se chargeait pas et l'appli
 //    ne pouvait pas démarrer, même avec le mode hors ligne de auth.js.
@@ -13,7 +17,7 @@
 // =====================================================================
 
 // ⚠️ À changer quand tu modifies CE fichier ou veux vider le cache de tous les clients.
-const CACHE_NAME = 'cashboost-v5';
+const CACHE_NAME = 'cashboost-v6';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -24,6 +28,7 @@ const CORE_ASSETS = [
   './design.css',
   './styles.css',
   './wallet-blue.css',
+  './supabase.min.js',
   './base.js',
   './ui.js',
   './app.js',
@@ -83,7 +88,34 @@ self.addEventListener('fetch', (event) => {
     url.hostname.includes('fonts.gstatic.com')
   ) return;
 
-  // LIBRAIRIES jsdelivr : version épinglée (ex. @2.45.0) = fichier immuable → cache d'abord.
+  // LIBRAIRIE SUPABASE : on sert notre copie locale (même version épinglée que dans index.html).
+  // Cache d'abord, puis notre serveur, et en dernier recours jsdelivr.
+  if (url.hostname === 'cdn.jsdelivr.net' && url.pathname.includes('/@supabase/supabase-js@')) {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const local = await cache.match('./supabase.min.js');
+      if (local) return local;
+      try {
+        const res = await fetch('./supabase.min.js');
+        if (res && res.status === 200) {
+          cache.put('./supabase.min.js', res.clone());
+          return res;
+        }
+      } catch (_) {}
+      const cached = await cache.match(req);
+      if (cached) return cached;
+      try {
+        const res = await fetch(req);
+        if (res && (res.status === 200 || res.type === 'opaque')) cache.put(req, res.clone());
+        return res;
+      } catch (_) {
+        return Response.error();
+      }
+    })());
+    return;
+  }
+
+  // AUTRES LIBRAIRIES jsdelivr : version épinglée (ex. @1.5.4) = fichier immuable → cache d'abord.
   // Version non épinglée : réseau d'abord, cache en secours.
   if (url.hostname === 'cdn.jsdelivr.net') {
     const pinned = /@\d+\.\d+\.\d+/.test(url.pathname);
