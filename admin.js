@@ -194,7 +194,8 @@ function renderServices(){
     // Dernière carte seule sur sa ligne -> pleine largeur
     const idxInGroup=ready?i:i-nbReady,groupSize=ready?nbReady:nbSoon;
     const wide=(groupSize%2===1&&idxInGroup===groupSize-1)?' wide':'';
-    const meta=ready?`<p class="service-meta"><span>Dès ${Number(s.min_qty)||1} USD</span><span class="svc-fast">⚡ Rapide</span></p>`:'';
+    // Pas de « Dès X USD » ni de « ⚡ Rapide » sous le nom du service
+    const meta='';
     return `<div class="service-card${ready?'':' soon'}${wide}">${visual}<div class="service-info"><div class="service-title"><h2>${title}</h2>${meta}</div><button class="primary-btn" data-open="${esc(s.id)}" ${ready?'':'disabled'}>${ready?'Commander':'Bientôt'}</button></div></div>`;
   }).join('');
   el.querySelectorAll('[data-open]').forEach(b=>{b.onclick=()=>openService(b.dataset.open);});
