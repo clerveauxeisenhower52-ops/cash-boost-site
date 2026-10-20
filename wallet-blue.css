@@ -89,11 +89,9 @@
 .cbh{position:relative;padding:8px 2px 4px;margin-bottom:6px;overflow:hidden}
 .cbh-glow{position:absolute;top:-150px;left:50%;width:380px;height:380px;transform:translateX(-50%);background:radial-gradient(circle,rgba(var(--brand-b-rgb),.28),rgba(var(--brand-rgb),.12) 45%,transparent 70%);filter:blur(30px);pointer-events:none;z-index:0}
 .cbh>*:not(.cbh-glow){position:relative;z-index:1}
-/* Solde : il n'est affiché qu'en haut (pastille). Ici il ne reste que le bouton Recharger. */
-.cbw{display:block;margin:4px 0 14px;padding:0;border:0;border-radius:0;background:none}
-.cbw .cbw-l{display:none}
-.cbw-btn{display:flex;width:100%;align-items:center;justify-content:center;gap:8px;border:0;border-radius:14px;padding:13px 16px;background:var(--brand-grad);color:var(--brand-ink);font:700 15px 'Space Grotesk',sans-serif}
-.cbw-btn:active{transform:scale(.97)}
+/* Solde et bouton Recharger retirés de l'accueil : le solde reste dans la pastille du haut.
+   Le bloc est seulement masqué (il reste dans la page pour ne pas casser le script). */
+.cbw{display:none !important}
 .service-card{position:relative}
 .service-card:not(.soon)::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--brand-grad);z-index:1}
 .service-card:not(.soon):active{transform:scale(.985)}
