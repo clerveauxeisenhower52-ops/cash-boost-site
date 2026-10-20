@@ -117,22 +117,27 @@
 .cbh-sub{max-width:460px;color:var(--muted);font-size:13.5px;line-height:1.45;margin:0 0 14px}
 .cbh-btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:14px;padding:12px 20px;background:var(--brand-grad);color:var(--brand-ink);font:700 14px 'Space Grotesk',sans-serif;box-shadow:0 10px 26px -8px rgba(var(--brand-b-rgb),.55)}
 .cbh-btn:active{transform:scale(.97)}
-/* Illustration réduite (~140 px au lieu de 300 px) */
+/* Illustration réduite (~140 px au lieu de 300 px), qui tourne et pulse */
 .cbh-art{position:relative;width:min(140px,38vw);aspect-ratio:1;margin:14px auto 2px}
 .cbh-ring{position:absolute;inset:6%;border-radius:50%;background:radial-gradient(circle,rgba(var(--brand-b-rgb),.16),rgba(var(--brand-rgb),.06) 60%,transparent 72%);border:1px solid rgba(var(--brand-rgb),.25)}
 .cbh-ring::before{content:"";position:absolute;inset:14%;border-radius:50%;border:1px dashed rgba(var(--brand-b-rgb),.35)}
-.cbh-orbit{position:absolute;inset:0;animation:cbhSpin 28s linear infinite}
-.cbh-chip{position:absolute;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--primary-light);background:var(--surface-elev);border:1px solid var(--primary-line);box-shadow:0 8px 20px -10px rgba(var(--brand-b-rgb),.5);animation:cbhSpin 28s linear infinite reverse}
+.cbh-orbit{position:absolute;inset:0;animation:cbhSpin 14s linear infinite}
+.cbh-chip{position:absolute;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--primary-light);background:var(--surface-elev);border:1px solid var(--primary-line);box-shadow:0 8px 20px -10px rgba(var(--brand-b-rgb),.5);animation:cbhSpin 14s linear infinite reverse}
 .cbh-chip svg{width:16px;height:16px}
 .cbh-chip.c1{top:2%;left:10%}
 .cbh-chip.c2{top:8%;right:4%}
 .cbh-chip.c3{bottom:6%;right:10%}
 .cbh-chip.c4{bottom:2%;left:6%}
-.cbh-core{position:absolute;top:50%;left:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--brand-grad);box-shadow:0 0 0 6px rgba(var(--brand-b-rgb),.12),0 0 34px rgba(var(--brand-b-rgb),.45);animation:cbhPulse 3s ease-in-out infinite}
+.cbh-core{position:absolute;top:50%;left:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--brand-grad);box-shadow:0 0 0 6px rgba(var(--brand-b-rgb),.12),0 0 34px rgba(var(--brand-b-rgb),.45);animation:cbhPulse 2.6s ease-in-out infinite}
 .cbh-core svg{width:28px;height:28px}
 @keyframes cbhSpin{to{transform:rotate(360deg)}}
-@keyframes cbhPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
-@media(prefers-reduced-motion:reduce){.cbh-orbit,.cbh-chip,.cbh-core{animation:none !important}}
+@keyframes cbhPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+/* Le mouvement reste actif même si le téléphone réduit les animations (design.css les coupe sinon) */
+@media(prefers-reduced-motion:reduce){
+  .cbh-orbit{animation:cbhSpin 14s linear infinite !important}
+  .cbh-chip{animation:cbhSpin 14s linear infinite reverse !important}
+  .cbh-core{animation:cbhPulse 2.6s ease-in-out infinite !important}
+}
 
 /* ── Accueil : parcours en trois étapes ── */
 .cbs{margin-top:34px}
