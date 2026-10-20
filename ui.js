@@ -1,6 +1,15 @@
 /* Cash Boost UI enhancements: client-side only; existing order/payment logic remains untouched. */
 (function(){
   'use strict';
+  // Accueil : toutes les cartes de service gardent le même format vertical
+  // (admin.js met « wide » sur la dernière carte quand le nombre est impair ; on retire cette classe).
+  function keepCardsVertical(){
+    const list=document.getElementById('servicesList');
+    if(!list)return;
+    const strip=()=>list.querySelectorAll('.service-card.wide').forEach(c=>c.classList.remove('wide'));
+    strip();
+    new MutationObserver(strip).observe(list,{childList:true,subtree:true});
+  }
   function addSearchAndFilters(){
     const services=document.getElementById('servicesList');
     if(services && !document.getElementById('serviceSearch')){
@@ -23,5 +32,6 @@
       new MutationObserver(apply).observe(orders,{childList:true,subtree:true});
     }
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addSearchAndFilters,{once:true});else addSearchAndFilters();
+  function init(){keepCardsVertical();addSearchAndFilters();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
