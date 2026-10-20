@@ -22,7 +22,7 @@ function walletRenderOp(){
   const len=codeLenFor(walletOp),inp=$('walletCode');
   inp.maxLength=len;
   $('walletCodeLabel').textContent=(walletOp==='NatCash'?'TransCode':'Txn ID')+' ('+len+' chiffres)';
-  inp.placeholder=walletOp==='NatCash'?'Ex. 26072853633942':'Ex. 260728536339';
+  inp.placeholder=walletOp==='NatCash'?'Ex. 26072853633942':'Ex. 003560896244';
   const hint=$('walletStepHint');
   if(hint) hint.innerHTML=walletOp==='NatCash'
     ?'Ouvre ton SMS NatCash et copie le <b>TransCode</b> (14 chiffres). Ton portefeuille sera crédité instantanément.'
