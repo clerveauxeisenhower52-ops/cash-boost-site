@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#08080b" id="metaThemeColor">
+<title>Cash Boost — Recharge Meru, Plasma One & plus en Haïti</title>
+<meta name="description" content="Recharge ton compte Meru, Plasma One et plus avec MonCash ou NatCash. Livraison en 5 min à 2h.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Cash Boost — Recharge Meru, Plasma One en Haïti">
+<meta property="og:description" content="Recharge Meru et Plasma One en 5 minutes avec MonCash ou NatCash.">
+<meta property="og:image" content="icon-512.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cash Boost">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="design.css?v=20261019-push">
+<link rel="stylesheet" href="wallet-blue.css">
+</head>
+<body>
+
+<button id="themeToggle" class="theme-toggle" type="button" aria-label="Changer de thème">
+  <span class="theme-icon" aria-hidden="true">🌙</span>
+</button>
+
+<!-- Nouvel écran de démarrage (style Izy-Store) -->
+<div id="bootSplash" class="boot-splash" aria-hidden="true">
+  <div class="splash-content">
+    <div class="splash-mark"><img src="icon-512.png" alt="Cash Boost" class="splash-logo"></div>
+    <h1 class="splash-title">Cash Boost</h1>
+    <p class="splash-tag">Recharge rapide et sécurisée</p>
+  </div>
+</div>
+
+<div id="authView" class="app hidden">
+  <main class="auth">
+    <button id="authBack" class="auth-back hidden" type="button" aria-hidden="true">← Retour</button>
+    <div class="auth-brand">
+      <img class="logo" src="icon-192.png" alt="Cash Boost" width="62" height="62">
+      <h1>Cash Boost</h1>
+      <p class="auth-sub">Recharge tes services simplement et rapidement.</p>
+    </div>
+    <div id="loginCard" class="card auth-card">
+      <div class="auth-tabs" role="tablist">
+        <button id="tabLogin" class="auth-tab active" type="button" role="tab" aria-selected="true">Connexion</button>
+        <button id="tabSignup" class="auth-tab" type="button" role="tab" aria-selected="false">Créer un compte</button>
+      </div>
+      <h2 id="authTitle" class="auth-card-title">Se connecter</h2>
+      <button id="googleSignIn" class="google-btn" type="button">
+        <svg width="18" height="18" viewBox="0 0 48 48">
+          <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+          <path fill="#FF3D00" d="m6.306 14.691 6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
+          <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
+          <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+        </svg>
+        <span>Continuer avec Google</span>
+      </button>
+      <p id="googleHint" class="google-hint hidden">Plus rapide et plus sûr : pas de mot de passe à retenir.</p>
+      <button id="passkeyLoginBtn" class="google-btn passkey-btn hidden" type="button"><span aria-hidden="true">🔑</span><span>Empreinte ou code du téléphone</span></button>
+      <div class="auth-divider"><span>ou</span></div>
+      <div id="nameField" class="field hidden"><label for="authName">Nom complet</label><input id="authName" type="text" placeholder="Ton nom" autocomplete="name"></div>
+      <div class="field"><label for="authEmail">E-mail</label><div class="pw-wrap"><input id="authEmail" type="email" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="toi@mail.com" autocomplete="username"><span id="emailOk" class="ok-mark hidden" aria-hidden="true">✓</span></div><div id="emailHint" class="hint hidden"></div></div>
+      <div id="phoneField" class="field hidden"><label for="authPhone">Numéro WhatsApp <span class="opt">(recommandé)</span></label><input id="authPhone" type="tel" inputmode="tel" enterkeyhint="next" placeholder="ex. 37 12 34 56" autocomplete="tel"><div class="field-note">Pour te prévenir dès que ta commande est prête.</div></div>
+      <div class="field"><label for="authPass">Mot de passe</label><div class="pw-wrap"><input id="authPass" type="password" placeholder="Ton mot de passe" autocomplete="current-password"><button id="pwToggle" class="pw-toggle" type="button" aria-label="Afficher le mot de passe">Afficher</button></div><div id="forgotRow" class="forgot-inline"><button id="forgotBtn" class="link" type="button">Mot de passe oublié ?</button></div><div id="pwMeter" class="pw-meter hidden"><div class="pw-bar"><i id="pwFill"></i></div><small id="pwLabel"></small></div></div>
+      <label id="termsRow" class="terms hidden"><input id="authTerms" type="checkbox"><span>J'accepte les <button type="button" class="link" data-legal="terms">conditions d'utilisation</button> et la <button type="button" class="link" data-legal="privacy">politique de confidentialité</button>.</span></label>
+      <button id="authSubmit" class="primary-btn" type="button">Se connecter</button>
+      <div id="authMsg" class="msg"></div>
+      <p id="authReassure" class="auth-reassure">🔒 Connexion sécurisée</p>
+      <a class="wa-btn hidden" href="#" target="_blank" rel="noopener">💬 Un problème ? Écris-nous sur WhatsApp</a>
+    </div>
+    <div id="checkCard" class="card auth-card hidden">
+      <div class="check-ico">✉️</div>
+      <h2 class="auth-card-title check-title">Vérifie ta boîte mail</h2>
+      <p class="check-text">On a envoyé un lien de confirmation à <strong id="checkEmail"></strong>. Pense à regarder aussi les courriers indésirables.</p>
+      <a id="openMail" class="primary-btn check-link hidden" href="https://mail.google.com/" target="_blank" rel="noopener">Ouvrir Gmail</a>
+      <button id="resendBtn" class="ghost-btn" type="button">Renvoyer l'e-mail</button>
+      <div id="checkMsg" class="msg"></div>
+      <div class="toggle"><button id="checkBack" class="link" type="button">Changer d'e-mail</button></div>
+    </div>
+    <div id="resetCard" class="card auth-card hidden">
+      <h2 class="auth-card-title">Nouveau mot de passe</h2>
+      <div class="field"><label for="newPass">Nouveau mot de passe</label><input id="newPass" type="password" placeholder="••••••••"></div>
+      <div class="field"><label for="newPass2">Confirmer</label><input id="newPass2" type="password" placeholder="••••••••"></div>
+      <button id="resetSubmit" class="primary-btn" type="button">Enregistrer</button>
+      <div id="resetMsg" class="msg"></div>
+    </div>
+  </main>
+</div>
+
+<div id="legalModal" class="legal-modal hidden" role="dialog" aria-modal="true" aria-labelledby="legalTitle">
+  <div class="legal-sheet">
+    <div class="legal-head"><strong id="legalTitle"></strong><button id="legalClose" type="button" aria-label="Fermer">✕</button></div>
+    <div id="legalBody" class="legal-body"></div>
+  </div>
+</div>
+
+<div id="appView" class="app hidden">
+  <header class="topbar">
+    <div class="brand">Cash Boost</div>
+    <button id="hdrWallet" type="button" class="hdr-wallet" aria-label="Ouvrir mon portefeuille"><span class="hdr-wallet-ic" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span id="hdrWalletAmt">0 HTG</span></button>
+    <div id="userName" class="user-name"></div>
+  </header>
+  <main>
+    <section id="page-home" class="page">
+      <div class="cbh">
+        <div class="cbh-glow" aria-hidden="true"></div>
+        <h2 class="cbh-title"><span>Vos recharges,</span><span class="g">en toute simplicité.</span></h2>
+        <p class="cbh-sub">Plasma One, Binance, Netflix, Meru et plus encore. Paie avec ton portefeuille Cash Boost et suis ta livraison en temps réel.</p>
+        <button type="button" class="cbh-btn" id="cbhExplore">Explorer les services <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <div class="cbh-art" aria-hidden="true">
+          <div class="cbh-ring"></div>
+          <div class="cbh-orbit">
+            <span class="cbh-chip c1"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span>
+            <span class="cbh-chip c2"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8M7.5 8a2.5 2.5 0 1 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 1 1 0 5"/></svg></span>
+            <span class="cbh-chip c3"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4M21 7H8M7 21l-4-4 4-4M3 17h13"/></svg></span>
+            <span class="cbh-chip c4"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg></span>
+          </div>
+          <div class="cbh-core"><svg width="54" height="54" viewBox="0 0 24 24" fill="#04101f" stroke="#04101f" stroke-width="1.2" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></div>
+        </div>
+      </div>
+      <div class="cbw cb-rv">
+        <div class="cbw-l"><small>Mon solde</small><strong id="homeBal">0 HTG</strong></div>
+        <button type="button" class="cbw-btn" id="homeRecharge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Recharger</button>
+      </div>
+      <div class="hero"><div class="eyebrow">Services</div><h1>Que veux-tu recharger ?</h1><p>Paiement par MonCash ou NatCash · livraison rapide.</p></div>
+      <div id="servicesList" class="services-list"></div>
+      <div class="trust cb-rv">
+        <div class="trust-item"><span class="trust-ico">⚡</span><strong>Rapide</strong><small id="trustSpeed">5 min à 2h</small></div>
+        <div class="trust-item"><span class="trust-ico">🔒</span><strong>Sécurisé</strong><small>Paiement vérifié</small></div>
+        <a class="trust-item" id="trustSupport" href="#" target="_blank" rel="noopener"><span class="trust-ico">💬</span><strong>Support</strong><small>WhatsApp</small></a>
+      </div>
+      <div class="cbt cb-rv">
+        <div class="eyebrow">Pourquoi Cash Boost</div>
+        <h2 class="cbs-title">Fait pour être fiable.</h2>
+        <ul class="cbt-list">
+          <li><i>✓</i><span><b>Paiement vérifié</b>Chaque dépôt est contrôlé avant d'être crédité.</span></li>
+          <li><i>✓</i><span><b>Suivi de commande</b>Le statut de chaque commande est visible dans l'app.</span></li>
+          <li><i>✓</i><span><b>Support humain</b>Une équipe joignable sur WhatsApp en cas de besoin.</span></li>
+        </ul>
+      </div>
+      <div class="cbs">
+        <div class="eyebrow">Un parcours fluide</div>
+        <h2 class="cbs-title">Du choix à la livraison.</h2>
+        <p class="cbs-sub">Une commande claire, un paiement sécurisé et un suivi à chaque étape.</p>
+        <div class="cbs-card">
+          <div class="cbs-top"><span class="cbs-num">01</span><span class="cbs-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span></div>
+          <small class="cbs-kicker">Catalogue</small>
+          <h3>Choisis ton service</h3>
+          <p>Sélectionne la recharge ou la carte dont tu as besoin et indique le montant.</p>
+          <span class="cbs-tag"><i></i>Recharges · Cartes · Crypto</span>
+        </div>
+        <div class="cbs-card">
+          <div class="cbs-top"><span class="cbs-num">02</span><span class="cbs-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg></span></div>
+          <small class="cbs-kicker">Validation</small>
+          <h3>Paie avec ton portefeuille</h3>
+          <p>Renseigne les informations puis valide : le montant est débité de ton solde Cash Boost.</p>
+          <span class="cbs-tag"><i></i>Paiement par solde</span>
+        </div>
+        <div class="cbs-card">
+          <div class="cbs-top"><span class="cbs-num">03</span><span class="cbs-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></span></div>
+          <small class="cbs-kicker">Traitement</small>
+          <h3>Suis ta livraison</h3>
+          <p>Consulte le statut de ta commande dans « Commandes » jusqu'à la réception de ta recharge.</p>
+          <span class="cbs-tag"><i></i>Suivi en temps réel</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-service" class="page hidden">
+      <div class="page-title"><button id="backHome" class="back" type="button">← Retour aux services</button></div>
+      <h1 id="svcTitle" class="svc-title"></h1>
+      <div id="orderProgress" class="op" aria-label="Progression de la commande">
+        <button type="button" class="op-step" data-go="secAmount"><i>1</i><span>Montant</span></button>
+        <button type="button" class="op-step" data-go="secInfo"><i>2</i><span>Infos</span></button>
+        <button type="button" class="op-step" data-go="secPay"><i>3</i><span>Paiement</span></button>
+      </div>
+      <div class="ob"><div class="ob-total"><small>Total à payer</small><strong id="obTotal">—</strong></div><button id="obConfirm" type="button" class="primary-btn">Confirmer</button></div>
+      <div class="card card-pad">
+        
+        <div id="openingHoursNotice" class="opening-hours-notice" hidden>
+            <strong id="ohTitle">Hors heures d'ouverture</strong><br>
+            <span id="ohBody">Les recharges passées en dehors de <strong>8h00 – 21h30</strong> (heure d'Haïti) peuvent subir un <strong>retard de plusieurs heures</strong>.</span>
+        </div>
+
+        <div id="svcStatus" class="svc-status" role="status"><span class="svc-status-dot" aria-hidden="true"></span><span id="svcStatusText">Taux : 1 USD = 140 HTG</span></div>
+        <div class="rate"><small>Taux actuel</small><strong id="rateDisplay">1 USD = 140 HTG</strong></div>
+        <div class="section" id="secAmount">
+          <div class="section-head"><span class="step">1</span><div><h2>Choisir le montant</h2><p id="minText">Minimum : 5 USD</p></div></div>
+          <div class="field">
+            <label for="qty">Montant à recharger (USD)</label>
+            <div class="amount-box">
+              <button type="button" id="dec" aria-label="Diminuer le montant">−</button>
+              <div class="amount-mid"><input id="qty" type="number" min="0" step="1" inputmode="numeric" pattern="[0-9]*" enterkeyhint="next" aria-label="Montant en USD" placeholder="0"><span>USD</span></div>
+              <button type="button" id="inc" aria-label="Augmenter le montant">+</button>
+            </div>
+            <div class="quick">
+              <button type="button" data-amount="5">$5</button>
+              <button type="button" data-amount="10">$10</button>
+              <button type="button" data-amount="20">$20</button>
+              <button type="button" data-amount="50">$50</button>
+            </div>
+          </div>
+          <div class="summary">
+            <div class="sumrow"><span id="sumLabel">Montant</span><strong id="summaryUsd">—</strong></div>
+            <div class="sumrow"><span>Taux affiché</span><strong id="rateRow">140 HTG / USD</strong></div>
+            <div class="sumrow"><span>Frais</span><strong class="fee-included">Inclus</strong></div>
+            <div class="sumrow total"><span>Total à payer</span><strong id="total">—</strong></div>
+            <div class="fee-note">Le montant final inclut les frais de service.</div>
+          </div>
+        </div>
+
+        <div id="svcHowTo" class="howto hidden">
+          <strong>Comment utiliser ta carte</strong>
+          <ol>
+            <li>Va sur <b>netflix.com/redeem</b> et connecte-toi à ton compte.</li>
+            <li>Entre le <b>code PIN à 11 chiffres</b> que tu recevras sur WhatsApp.</li>
+            <li>Choisis « Utiliser une carte-cadeau ou un code promotionnel » dans ton compte.</li>
+          </ol>
+          <p>Le solde de la carte est ensuite ajouté à ton compte Netflix.</p>
+        </div>
+
+        <div class="section" id="secInfo">
+          <div class="section-head"><span class="step">2</span><div><h2 id="svcInfoTitle">Informations</h2><p>Indique où recevoir la recharge</p></div></div>
+          <div class="field">
+            <label id="svcFieldLabel" for="merutag">E-mail ou MeruTag</label>
+            <input id="merutag" type="text" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="next" placeholder="ex. toi@mail.com ou @merutag" autocomplete="username">
+            <div id="walletTools" class="wallet-tools" hidden><button type="button" id="walletPaste" class="wallet-paste">Coller</button><span id="walletStatus" class="wallet-status" aria-live="polite"></span></div>
+            <p class="field-help" id="merutagHelp">Sauvegardé automatiquement pour la prochaine fois.</p>
+            <div id="savedHint" class="saved-hint">✓ Tag mémorisé — prérempli pour toi</div>
+            <p class="field-help" id="netWarn" style="display:none;color:var(--danger);font-weight:600">⚠️ Colle une adresse du réseau <b>Plasma</b>. Une adresse d'un autre réseau (BSC, Tron, Ethereum…) fait perdre tes USDT définitivement, sans remboursement possible.</p>
+          </div>
+          <div class="field">
+            <label for="custPhone">Numéro WhatsApp</label>
+            <input id="custPhone" type="tel" inputmode="tel" enterkeyhint="done" placeholder="ex. 37 12 34 56" autocomplete="tel">
+            <p class="field-help">Obligatoire · aussi sauvegardé pour la prochaine commande</p>
+          </div>
+        </div>
+
+        <div class="section" id="secPay">
+          <div class="section-head"><span class="step">3</span><div><h2>Paiement par portefeuille</h2><p>Le montant est débité de ton solde</p></div></div>
+          <select id="payMethod" hidden>
+            <option value="MonCash">MonCash</option>
+            <option value="NatCash">NatCash</option>
+          </select>
+          <div id="payWalletCard" class="pay-wallet-card selected">
+            <span class="pay-wallet-ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H5a2 2 0 0 1 0-4h13v4"/><path d="M3 5v14a2 2 0 0 0 2 2h15V7"/><circle cx="16.5" cy="14" r="1.2"/></svg></span>
+            <span class="pay-wallet-info"><span class="pay-wallet-name">Paiement par portefeuille</span><span class="pay-wallet-desc" id="payWalletDesc">Solde : …</span></span>
+            <button type="button" class="pay-wallet-add" data-act="addfunds">+ Fonds</button>
+          </div>
+          <div id="payWalletHint" class="pay-wallet-hint hidden" role="status"></div>
+          <label class="pay-method-card selected" data-method="MonCash">
+            <div class="pay-method-logo"><img src="moncash.png" alt="MonCash" onerror="this.style.display='none'"></div>
+            <div class="pay-method-info"><span class="pay-method-name">MonCash</span><span class="pay-method-desc">Paiement Digicel</span></div>
+            <span class="pay-method-check">✓</span>
+          </label>
+          <label class="pay-method-card" data-method="NatCash">
+            <div class="pay-method-logo"><img src="natcash.png" alt="NatCash" onerror="this.style.display='none'"></div>
+            <div class="pay-method-info"><span class="pay-method-name">NatCash</span><span class="pay-method-desc">Paiement Natcom</span></div>
+            <span class="pay-method-check">✓</span>
+          </label>
+          <div class="pay-instructions">
+            <div class="pay-step"><span class="pay-step-num" aria-hidden="true"></span><span>Ouvre ton app <strong id="payAppName">MonCash</strong></span></div>
+            <div class="pay-step"><span class="pay-step-num" aria-hidden="true"></span><span>Envoie exactement ce montant :</span></div>
+            <div class="pay-amount"><strong id="payAmountBig" class="is-empty">Choisis d'abord un montant</strong></div>
+            <div class="pay-step"><span class="pay-step-num" aria-hidden="true"></span><span>à ce numéro :</span></div>
+            <div class="pay-recipient">
+              <div class="pay-recipient-logo"><img id="payRecipientLogo" src="moncash.png" alt=""></div>
+              <div class="pay-recipient-info"><div id="payName" class="pay-recipient-name">Wollens Clerveaux</div><div id="payNumber" class="pay-recipient-number">46467495</div></div>
+              <button id="copyPay" type="button" class="pay-copy-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Copier</span></button>
+            </div>
+            <div class="pay-qr-box">
+              <img id="payQrImg" class="pay-qr-img" src="moncash-qr.jpg" alt="QR MonCash" hidden>
+              <canvas id="payQrCanvas" width="160" height="160" aria-label="QR code de paiement" hidden></canvas>
+              <p class="pay-qr-hint">Scanne avec <strong id="payQrApp">MonCash</strong> pour envoyer l'argent instantanément</p>
+            </div>
+            <button id="copyAmount" type="button" class="pay-copy-btn pay-copy-wide"><span id="copyAmountLabel">Copier le montant exact</span><b id="copyAmountVal"></b></button>
+            <div class="pay-step"><span class="pay-step-num" aria-hidden="true"></span><span>Reviens ici avec ta capture d'écran</span></div>
+          </div>
+          <div class="field field-mt">
+            <label>Preuve de transaction</label>
+            
+            <div id="transcodeSection" class="field hidden" style="margin-top:16px; padding:16px; border:1px solid var(--primary-line); border-radius:14px; background:var(--primary-soft);">
+              <label for="transcodeInput" style="color:var(--text-strong); font-size:15px;">Code de transaction (Reçu par SMS)</label>
+<input id="transcodeInput" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Tape le code (12 ou 14 chiffres)" autocomplete="off" style="background:var(--surface); font-size:18px; font-weight:bold; letter-spacing:1px;">
+<p id="transcodeHelp" class="field-help" style="color:var(--text)">Ouvre ton SMS MonCash (Txn ID) ou NatCash (TransCode) et copie le numéro de transaction. Tes USDT seront envoyés instantanément.</p>
+            </div>
+
+            <input id="payProof" type="file" accept="image/*" hidden>
+            <input id="payProofCamera" type="file" accept="image/*" capture="environment" hidden>
+            <div id="proofUploadZone" class="proof-upload-zone">
+              <div class="proof-upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+              <div class="proof-upload-title">Ajoute ta preuve de paiement</div>
+              <div class="proof-upload-desc">Choisis la capture d'écran de ton paiement</div>
+              <div class="proof-upload-buttons">
+                <button type="button" id="btnGallery" class="proof-btn proof-btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Galerie</button>
+                <button type="button" id="btnCamera" class="proof-btn proof-btn-secondary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Prendre une photo</button>
+              </div>
+            </div>
+            <div id="proofPreview" class="proof-preview">
+              <div class="proof-preview-header"><button type="button" id="removeProof" class="proof-remove" aria-label="Retirer">×</button></div>
+              <img id="proofPreviewImg" alt="Aperçu">
+            </div>
+            <div class="file-help">Image uniquement · 5 Mo max</div>
+          </div>
+          <div class="security-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Paiement sécurisé · Aucun débit automatique</span>
+          </div>
+          <button id="submitOrder" class="primary-btn" type="button">
+            <span id="submitOrderText">Payer avec mon solde</span>
+            <span id="submitOrderSpinner" class="spinner hidden"></span>
+          </button>
+          <div id="orderMsg" class="msg"></div>
+          <div id="orderSuccess" class="success-box">
+            <strong><span class="success-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>Commande envoyée !</strong>
+            <div class="success-sub">Suis son statut dans « Commandes ».</div>
+          </div>
+          <p class="note">Vérifie le montant avant de confirmer.</p>
+          <a class="wa-btn hidden" href="#" target="_blank" rel="noopener">💬 Un problème ? Écris-nous sur WhatsApp</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-orders" class="page hidden">
+      <div class="hero"><div class="eyebrow">Historique</div><h1>Commandes</h1><p>Retrouve ici l'état de tes recharges.</p></div>
+      <div id="totalCard" class="card total-card">
+        <div class="total-title">Total achats</div>
+        <div class="total-row"><span>HTG</span><strong id="totalAchats">G 0</strong></div>
+        <p class="total-note">Commandes complétées uniquement</p>
+      </div>
+      <div class="card list-card"><div id="ordersList"></div></div>
+      <a class="wa-btn hidden" href="#" target="_blank" rel="noopener">💬 Un problème ? Écris-nous sur WhatsApp</a>
+    </section>
+
+    <section id="page-wallet" class="page hidden">
+      <div class="hero"><div class="eyebrow">Portefeuille</div><h1>Mon portefeuille</h1><p>Ajoute des fonds avec MonCash ou NatCash.</p></div>
+      <div class="card card-pad">
+        <div class="wallet-top"><span class="wallet-label">Solde disponible</span><button id="walletEye" type="button" class="wallet-eye" aria-label="Masquer ou afficher le solde">👁</button></div>
+        <div class="wallet-idrow"><span class="wallet-id-label">ID Cash Boost</span><strong id="walletMyId" class="wallet-id">CB-········</strong><button id="walletCopyId" type="button" class="wallet-copy" aria-label="Copier mon ID"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg></button></div>
+        <div id="walletBalance" class="wallet-balance">0 HTG</div>
+        <button id="walletAddBtn" type="button" class="primary-btn">＋ Ajouter des fonds</button>
+        <button id="walletSendBtn" type="button" class="wallet-act"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>Transfert interne</button>
+        <button id="walletBuyBtn" type="button" class="wallet-act"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Acheter avec mon solde</button>
+      </div>
+      <div class="wallet-stats">
+        <div class="wallet-stat s1"><b id="walletStatOrders">0</b><span>Commandes</span></div>
+        <div class="wallet-stat s2"><b id="walletStatDeposits">0</b><span>Dépôts</span></div>
+        <div class="wallet-stat s3"><b id="walletStatMoves">0</b><span>Mouvements</span></div>
+        <div class="wallet-stat s4"><b id="walletStatPending">0</b><span>En attente</span></div>
+      </div>
+      <div id="walletDeposit" class="wallet-modal hidden" role="dialog" aria-modal="true" aria-labelledby="walletSheetTitle">
+        <div class="wallet-sheet" id="walletSheet">
+          <div class="wallet-sheet-head">
+            <h2 id="walletSheetTitle">Ajouter des fonds</h2>
+            <button id="walletClose" type="button" class="wallet-close" aria-label="Fermer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          </div>
+          <div id="walletNeed" class="wallet-need" role="status" hidden></div>
+          <section class="wallet-step">
+            <div class="wallet-step-head">
+              <span class="wallet-step-num" aria-hidden="true">01</span>
+              <div><h3>Choisis ton compte</h3><p>Envoie ton dépôt vers MonCash ou NatCash.</p></div>
+            </div>
+            <div class="wallet-ops" id="walletOps" role="radiogroup" aria-label="Compte de dépôt">
+              <button type="button" class="wallet-op active" data-op="MonCash" role="radio" aria-checked="true"><span class="wallet-radio" aria-hidden="true"></span><span class="wallet-op-txt">MonCash<small>Compte de dépôt</small></span></button>
+              <button type="button" class="wallet-op" data-op="NatCash" role="radio" aria-checked="false"><span class="wallet-radio" aria-hidden="true"></span><span class="wallet-op-txt">NatCash<small>Compte de dépôt</small></span></button>
+            </div>
+            <div class="wallet-acc">
+              <small>Nom du compte</small><strong id="walletAccName">—</strong>
+              <small>Numéro du compte</small>
+              <div class="wallet-acc-row"><span id="walletAccNum" class="wallet-acc-num">—</span><button id="walletCopyNum" type="button" class="wallet-copy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>Copier</button></div>
+            </div>
+            <div id="walletQrBox" class="wallet-qr" hidden>
+              <button type="button" id="walletQrBtn" class="wallet-qr-toggle">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v.01M14 21h3M21 17v4"/></svg>
+                <span>Afficher le QR Code <span id="walletQrApp">MonCash</span></span>
+              </button>
+              <img id="walletQrImg" alt="QR MonCash" hidden>
+            </div>
+          </section>
+          <section class="wallet-step">
+            <div class="wallet-step-head">
+              <span class="wallet-step-num" aria-hidden="true">02</span>
+              <div><h3>Confirme ton dépôt</h3><p id="walletStepHint">Ouvre ton SMS MonCash et copie le <b>Txn ID</b> (12 chiffres). Ton portefeuille sera crédité instantanément.</p></div>
+            </div>
+            <div class="field">
+              <label for="walletCode" id="walletCodeLabel">Txn ID (12 chiffres)</label>
+              <input id="walletCode" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off" placeholder="Ex. 260728536339">
+              <small id="walletCodeCount" class="wallet-count" aria-live="polite">0/12</small>
+            </div>
+            <button id="walletVerify" type="button" class="primary-btn" disabled>Vérifier et créditer</button>
+            <div id="walletSteps" class="wsp" aria-live="polite" hidden>
+              <div class="wsp-item" data-s="wait"><span class="wsp-ic" aria-hidden="true"></span><div class="wsp-tx"><b>1. Vérification du paiement</b><p>Le système vérifie que le paiement est réellement confirmé.</p></div></div>
+              <div class="wsp-item" data-s="wait"><span class="wsp-ic" aria-hidden="true"></span><div class="wsp-tx"><b>2. Crédit du portefeuille</b><p>Le système ajoute automatiquement le montant payé à ton solde.</p></div></div>
+              <div class="wsp-item" data-s="wait"><span class="wsp-ic" aria-hidden="true"></span><div class="wsp-tx"><b>3. Confirmation du rechargement</b><p>Ton solde est actualisé et tu reçois la confirmation.</p></div></div>
+            </div>
+            <div id="walletMsg" class="msg" role="status"></div>
+            <div class="wallet-note"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg><span>Un code ne peut être réclamé qu'une seule fois.</span></div>
+          </section>
+          <div class="wallet-success" role="status" aria-live="polite">
+            <div class="wallet-succ-ic"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+            <h3>Dépôt réussi</h3>
+            <div class="wallet-succ-amt" id="walletSuccAmt">+0 HTG</div>
+            <p class="wallet-succ-bal">Nouveau solde : <b id="walletSuccBal">0 HTG</b></p>
+            <div class="push-nudge hidden" data-push-nudge data-msg="Active les notifications pour être prévenu à chaque dépôt et recharge.">
+              <p class="push-nudge-t"></p>
+              <ol class="push-nudge-steps hidden"><li>Ouvre ce site dans <b>Safari</b>.</li><li>Touche <b>Partager</b>, puis <b>Sur l’écran d’accueil</b>.</li><li>Ouvre Cash Boost depuis l’écran d’accueil et active les notifications dans ton compte.</li></ol>
+              <div class="push-nudge-act"><button type="button" class="primary-btn" data-push-act="enable">Activer</button><button type="button" class="push-nudge-later" data-push-act="later">Plus tard</button></div>
+            </div>
+            <button id="walletSuccTx" type="button" class="primary-btn">Voir mes transactions</button>
+            <button id="walletSuccBack" type="button" class="wallet-succ-sec hidden">Retour à ma commande</button>
+            <button id="walletSuccClose" type="button" class="wallet-succ-close">Fermer</button>
+          </div>
+        </div>
+      </div>
+      <div id="walletQrLight" class="wallet-modal hidden" role="dialog" aria-modal="true" aria-label="QR code MonCash">
+        <div class="wallet-sheet wallet-qr-sheet">
+          <div class="wallet-sheet-head">
+            <h2>QR MonCash</h2>
+            <button id="walletQrLightClose" type="button" class="wallet-close" aria-label="Fermer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          </div>
+          <img id="walletQrBig" alt="QR MonCash">
+          <p class="wallet-qr-note">Scanne ce code avec MonCash. Pour le garder dans ta galerie : appuie longuement sur le QR (« Télécharger l'image »), ou fais une capture d'écran.</p>
+        </div>
+      </div>
+      <div id="walletTransfer" class="wallet-modal hidden" role="dialog" aria-modal="true" aria-labelledby="walletTrTitle">
+        <div class="wallet-sheet" id="walletTrSheet">
+          <div class="wallet-sheet-head">
+            <h2 id="walletTrTitle">Transfert interne</h2>
+            <button id="walletTrClose" type="button" class="wallet-close" aria-label="Fermer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          </div>
+          <section class="wallet-step">
+            <div class="wallet-step-head">
+              <span class="wallet-step-num" aria-hidden="true">01</span>
+              <div><h3>Choisis le destinataire</h3><p>Demande-lui son ID Cash Boost.</p></div>
+            </div>
+            <div class="field">
+              <label for="walletTrTo">ID du destinataire</label>
+              <input id="walletTrTo" type="text" autocomplete="off" autocapitalize="characters" maxlength="14" placeholder="Ex. CB-00000050">
+            </div>
+            <div id="walletTrName" class="wallet-tr-name" aria-live="polite"></div>
+          </section>
+          <section class="wallet-step">
+            <div class="wallet-step-head">
+              <span class="wallet-step-num" aria-hidden="true">02</span>
+              <div><h3>Montant à envoyer</h3><p>Le montant est retiré de ton solde tout de suite.</p></div>
+            </div>
+            <div class="field">
+              <label for="walletTrAmt">Montant (HTG)</label>
+              <input id="walletTrAmt" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="Ex. 500">
+            </div>
+            <button id="walletTrSend" type="button" class="primary-btn" disabled>Envoyer</button>
+            <div id="walletTrMsg" class="msg" role="status"></div>
+            <div class="wallet-note"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg><span>Un transfert est instantané et ne peut pas être annulé.</span></div>
+          </section>
+          <div class="wallet-success" role="status" aria-live="polite">
+            <div class="wallet-succ-ic"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+            <h3>Transfert envoyé</h3>
+            <div class="wallet-succ-amt out" id="walletTrSuccAmt">0 HTG</div>
+            <p class="wallet-succ-bal">À <b id="walletTrSuccTo">—</b><br>Nouveau solde : <b id="walletTrSuccBal">0 HTG</b></p>
+            <button id="walletTrSuccTx" type="button" class="primary-btn">Voir mes transactions</button>
+            <button id="walletTrSuccClose" type="button" class="wallet-succ-close">Fermer</button>
+          </div>
+        </div>
+      </div>
+      <div class="card list-card card-mt"><div class="wallet-list-title">Transactions</div>
+        <div class="wtx-tools">
+          <div id="walletFilters" class="wtx-chips" role="group" aria-label="Filtrer les transactions">
+            <button type="button" class="wtx-chip active" data-f="all">Tout</button>
+            <button type="button" class="wtx-chip" data-f="deposit">Dépôts</button>
+            <button type="button" class="wtx-chip" data-f="purchase">Achats</button>
+            <button type="button" class="wtx-chip" data-f="transfer">Transferts</button>
+          </div>
+          <input id="walletSearch" class="wtx-search" type="search" inputmode="search" autocomplete="off" placeholder="Rechercher : montant, date, référence" aria-label="Rechercher une transaction">
+        </div>
+        <div id="walletTxCount" class="wtx-count hidden"></div>
+        <div id="walletTx"></div>
+        <button id="walletMore" type="button" class="link wtx-more hidden">Voir plus</button>
+      </div>
+    </section>
+
+    <section id="page-account" class="page hidden">
+      <div class="hero"><div class="eyebrow">Compte</div><h1>Mon compte</h1><p>Gère ton identité et la sécurité de ton compte Cash Boost.</p></div>
+      <div class="card account">
+        <div id="avatar" class="profile-avatar">CB</div>
+        <h2 id="accountName" class="account-name">Client</h2>
+        <p id="accountEmail" class="account-email"></p>
+        <button id="logout" class="secondary-btn" type="button" style="margin-top:8px">Se déconnecter</button>
+      </div>
+      <button id="accGoOrders" type="button" class="acc-pill">Voir mes commandes <span aria-hidden="true">→</span></button>
+      <div class="acc-stats">
+        <div class="card acc-stat">
+          <span class="acc-ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg></span>
+          <strong id="accTotalBuy">0 HTG</strong><small>Achats au total</small>
+        </div>
+        <div class="card acc-stat">
+          <span class="acc-ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+          <strong id="accSince">—</strong><small>Membre depuis</small>
+        </div>
+      </div>
+      <div id="emailCard" class="card account card-mt acc-form">
+        <div class="acc-head"><span class="acc-ic dark" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><div><h2 class="account-section-title">Adresse email</h2><p class="account-text">Un lien de vérification sera envoyé à la nouvelle adresse.</p></div></div>
+        <div class="field"><label for="accNewEmail">Nouvelle adresse email</label><input id="accNewEmail" type="email" autocomplete="email" inputmode="email"></div>
+        <div class="field"><label for="accEmailPwd">Mot de passe actuel</label><input id="accEmailPwd" type="password" autocomplete="current-password"></div>
+        <button id="accEmailBtn" type="button" class="primary-btn">Modifier mon email</button>
+        <div id="accEmailMsg" class="msg" role="status"></div>
+      </div>
+      <div id="pwdCard" class="card account card-mt acc-form">
+        <div class="acc-head"><span class="acc-ic dark" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span><div><h2 class="account-section-title">Mot de passe</h2><p class="account-text">Utilise au moins 12 caractères avec majuscules, minuscules et chiffres.</p></div></div>
+        <div class="field"><label for="accPwdOld">Mot de passe actuel</label><input id="accPwdOld" type="password" autocomplete="current-password"></div>
+        <div class="field"><label for="accPwdNew">Nouveau mot de passe</label><input id="accPwdNew" type="password" autocomplete="new-password"></div>
+        <div class="field"><label for="accPwdNew2">Confirmer le nouveau mot de passe</label><input id="accPwdNew2" type="password" autocomplete="new-password"></div>
+        <button id="accPwdBtn" type="button" class="primary-btn">Modifier mon mot de passe</button>
+        <div id="accPwdMsg" class="msg" role="status"></div>
+      </div>
+      <div id="passkeyCard" class="card account card-mt hidden">
+        <h2 class="account-section-title">Connexion rapide</h2>
+        <p class="account-text">Connecte-toi avec ton empreinte, Face ID ou le code de ton téléphone, sans mot de passe.</p>
+        <div id="passkeyList" class="passkey-list"></div>
+        <button id="passkeyAddBtn" type="button" class="primary-btn" style="margin-top:6px">🔑 Activer l'empreinte ou le code (passkey)</button>
+        <div id="passkeyMsg" class="msg"></div>
+      </div>
+      <div id="installCard" class="card account card-mt hidden">
+        <h2 class="account-section-title">Application</h2>
+        <p id="installInfo" class="account-text">Installe Cash Boost sur ton téléphone : accès direct depuis l'écran d'accueil, plein écran et chargement plus rapide.</p>
+        <button id="installBtn" type="button" class="primary-btn hidden" style="margin-top:6px">Ajouter à l'écran d'accueil</button>
+        <ol id="installSteps" class="install-steps hidden"></ol>
+      </div>
+      <div id="pushCard" class="card account card-mt">
+        <h2 class="account-section-title">Notifications</h2>
+        <p id="pushInfo" class="account-text">Reçois une alerte quand ta recharge est complétée.</p>
+        <button id="pushBtn" type="button" class="primary-btn" style="margin-top:6px">Activer les notifications</button>
+        <div id="pushMsg" class="msg"></div>
+      </div>
+      
+      <div id="prefCard" class="card account card-mt">
+        <h2 class="account-section-title">Son</h2>
+        <p class="account-text">Active ou coupe le son d'alerte quand une commande change d'état.</p>
+        <label class="pref-row" for="prefSound"><span>🔔 Son d'alerte</span><input id="prefSound" type="checkbox"></label>
+        <button id="prefTest" type="button" class="primary-btn" style="margin-top:6px">Tester l'alerte</button>
+      </div>
+
+      <div id="adminArea" class="card account admin hidden">
+        <h2 class="account-section-title">Administration</h2>
+        <p class="account-text">Gestion du site et des commandes clients.</p>
+        
+        <!-- BLOC WALLET MONITOR -->
+        <div id="walletMonitor" class="card-mt" style="margin-bottom: 18px; padding: 16px; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface-elev);">
+          <h3 style="font-size: 15px; margin-bottom: 12px; color: var(--text-strong);">💼 Solde du Wallet (Plasma)</h3>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 13px; color: var(--muted);">USDT</span>
+            <strong id="walletUsdt" style="font: 700 18px 'Space Grotesk', sans-serif; color: var(--success);">Chargement...</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; color: var(--muted);">XPL (Frais de gas)</span>
+            <strong id="walletGas" style="font: 700 18px 'Space Grotesk', sans-serif; color: var(--primary);">Chargement...</strong>
+          </div>
+          <p id="walletAlert" style="display: none; margin-top: 10px; font-size: 12px; color: var(--danger); font-weight: 600;"></p>
+        </div>
+        <!-- FIN BLOC WALLET MONITOR -->
+
+        <div class="admin-tabs">
+          <button type="button" class="admin-tab active" data-tab="orders">📦 Commandes</button>
+          <button type="button" class="admin-tab" data-tab="services">⚙️ Services</button>
+        </div>
+        <div class="settings-box hidden" id="adminServicesPane">
+          <h3>Paramètres du site</h3>
+          <div class="field"><label for="setWhatsapp">Numéro WhatsApp (avec indicatif)</label><input id="setWhatsapp" type="tel" placeholder="509XXXXXXXX"></div>
+          <div id="servicesAdmin"></div>
+          <button id="addSvcBtn" type="button" class="secondary-btn" style="margin:4px 0 12px">＋ Ajouter un service</button>
+          <div id="newSvcBox" class="svc-edit hidden"></div>
+          <button id="saveSettings" type="button" class="primary-btn">Enregistrer</button>
+          <div id="settingsMsg" class="msg"></div>
+        </div>
+        <div id="adminSearchWrap" class="admin-search"><input id="adminSearch" type="search" placeholder="Rechercher un client, un tag, un numéro…" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+        <div id="adminList"></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom">
+    <button data-page="home" class="active" type="button"><span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Accueil</button>
+    <button data-page="orders" type="button"><span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M15 3v18"/></svg></span>Commandes</button>
+    <button data-page="wallet" type="button"><span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span>Portefeuille</button>
+    <button data-page="account" type="button"><span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Compte</button>
+  </nav>
+</div>
+
+<div id="successView" class="sv" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="sv-card">
+    <div class="sv-check">✓</div>
+    <h2>Commande envoyée</h2>
+    <p>Nous vérifions ton paiement.</p>
+    <dl class="sv-info">
+      <div><dt>Numéro</dt><dd id="svNum">—</dd></div>
+      <div><dt>Montant</dt><dd id="svAmt">—</dd></div>
+      <div><dt>Délai estimé</dt><dd id="svEta">—</dd></div>
+    </dl>
+    <p id="svNote">On te prévient sur WhatsApp dès que c'est prêt.</p>
+    <div class="push-nudge hidden" data-push-nudge data-msg="Active les notifications pour être prévenu dès que ta recharge est prête.">
+      <p class="push-nudge-t"></p>
+      <ol class="push-nudge-steps hidden"><li>Ouvre ce site dans <b>Safari</b>.</li><li>Touche <b>Partager</b>, puis <b>Sur l’écran d’accueil</b>.</li><li>Ouvre Cash Boost depuis l’écran d’accueil et active les notifications dans ton compte.</li></ol>
+      <div class="push-nudge-act"><button type="button" class="primary-btn" data-push-act="enable">Activer</button><button type="button" class="push-nudge-later" data-push-act="later">Plus tard</button></div>
+    </div>
+    <button id="svView" type="button" class="primary-btn">Voir ma commande</button>
+    <button id="svReorder" type="button" class="secondary-btn">Commander à nouveau</button>
+    <button id="svClose" type="button" class="secondary-btn">Retour aux services</button>
+  </div>
+</div>
+
+<div id="confirmView" class="sv" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="sv-card">
+    <h2>Vérifie ta commande</h2>
+    <p>La recharge sera envoyée à l'identifiant ci-dessous. Vérifie qu'il est correct.</p>
+    <dl class="sv-info">
+      <div><dt>Service</dt><dd id="cvSvc">—</dd></div>
+      <div><dt>Montant</dt><dd id="cvAmt">—</dd></div>
+      <div><dt id="cvTagLabel">Compte</dt><dd id="cvTag">—</dd></div>
+      <div><dt>WhatsApp</dt><dd id="cvPhone">—</dd></div>
+      <div><dt>Paiement</dt><dd id="cvPay">—</dd></div>
+    </dl>
+    <label id="cvNet" class="net-confirm" hidden>
+      <input type="checkbox" id="cvNetCheck">
+      <span>Je confirme que cette adresse est sur le réseau <b>Plasma</b>. Sur un autre réseau, mes USDT seraient perdus.</span>
+    </label>
+    <button id="cvOk" type="button" class="primary-btn">Envoyer la commande</button>
+    <button id="cvCancel" type="button" class="secondary-btn">Modifier</button>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+<div id="offlineBar" class="offline-bar" role="status" hidden>Pas de connexion internet</div>
+
+<div id="proofViewer" class="proof-viewer" aria-hidden="true">
+  <div class="proof-viewer-top"><button type="button" id="proofBack" class="proof-back">← Retour</button><div class="proof-viewer-title">Preuve de paiement</div></div>
+  <div class="proof-viewer-img-wrap"><img id="proofViewerImg" class="proof-viewer-img" alt="Preuve"></div>
+</div>
+
+<script src="base.js"></script>
+<script src="portefeuille.js"></script>
+<script src="compte.js"></script>
+<script src="commandes.js"></script>
+<script src="admin.js"></script>
+<script src="notifications.js"></script>
+<script src="auth.js"></script>
+<script src="app.js"></script>
+
+<script src="ui.js"></script>
+
+<script src="animations.js"></script>
+
+<script src="usdt.js"></script>
+<script src="freefire.js"></script>
+<script src="compteur.js"></script>
+</body>
+  </html>
