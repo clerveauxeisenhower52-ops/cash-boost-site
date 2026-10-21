@@ -80,14 +80,19 @@
           const v=mt.value.trim();
           if(/^0x[a-fA-F0-9]{40}$/.test(v)&&ws.textContent.indexOf('…')<0)ws.textContent='✓ Adresse valide · '+v.slice(0,6)+'…'+v.slice(-4);
         }
-        // Récapitulatif : frais = total à payer − (montant × taux affiché). Montré en HTG ; « Inclus » si nul.
+        // Récapitulatif : frais = total à payer − (montant × taux affiché).
+        // Montré en HTG avec l'équivalent en dollars ; « Inclus » si nul.
         const feeEl=document.querySelector('#page-service .fee-included');
         if(feeEl){
           const q=Number(document.getElementById('qty').value);
           let txt='Inclus';
           if(Number.isFinite(q)&&q>0){
-            const fee=Math.round((q*getRateForAmount(q)-q*Number(RATE))*100)/100;
-            if(fee>0)txt=fmt(fee)+' HTG';
+            const shown=Number(RATE);
+            const fee=Math.round((q*getRateForAmount(q)-q*shown)*100)/100;
+            if(fee>0){
+              txt=fmt(fee)+' HTG';
+              if(shown>0)txt+=' (≈ '+fmt(Math.round(fee/shown*100)/100)+' $)';
+            }
           }
           if(feeEl.textContent!==txt)feeEl.textContent=txt;
         }
