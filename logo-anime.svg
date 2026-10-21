@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 300" width="380" height="300">
+<title>Cash Boost</title>
+<style>
+.k{transform-box:fill-box;transform-origin:center}
+.c1,.c2,.c3{animation:drop 4.5s ease-out infinite both}
+.c2{animation-delay:.3s}
+.c3{animation-delay:.6s}
+.sp{animation:tw 4.5s ease-in-out infinite;animation-delay:.9s}
+.wm{animation:wm 4.5s ease-out infinite}
+@keyframes drop{0%{transform:translateY(-120px);opacity:0}12%{opacity:1}24%{transform:translateY(8px)}32%,85%{transform:translateY(0);opacity:1}95%,100%{transform:translateY(0);opacity:0}}
+@keyframes tw{0%,40%{transform:scale(0) rotate(0);opacity:0}55%{transform:scale(1) rotate(45deg);opacity:1}72%,100%{transform:scale(0) rotate(90deg);opacity:0}}
+@keyframes wm{0%,28%{opacity:0;transform:translateY(8px)}42%,85%{opacity:1;transform:translateY(0)}95%,100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.c1,.c2,.c3,.wm{animation:none}.sp{animation:none;opacity:0}}
+</style>
+<rect width="380" height="300" rx="12" fill="#0A0F1A"/>
+<ellipse class="c1" cx="190" cy="196" rx="62" ry="20" fill="#00D4F0" stroke="#0A0F1A" stroke-width="3"/>
+<ellipse class="c2" cx="190" cy="164" rx="62" ry="20" fill="#00D4F0" stroke="#0A0F1A" stroke-width="3"/>
+<ellipse class="c3" cx="190" cy="132" rx="62" ry="20" fill="#FFFFFF" stroke="#0A0F1A" stroke-width="3"/>
+<polygon class="sp k" points="236,96 239,106 249,110 239,114 236,124 233,114 223,110 233,106" fill="#FFFFFF"/>
+<text class="wm" x="190" y="262" text-anchor="middle" font-size="26" font-weight="500" fill="#FFFFFF" font-family="sans-serif">Cash Boost</text>
+</svg>
