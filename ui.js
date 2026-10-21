@@ -56,11 +56,7 @@
       +'#merutag.is-addr{font-size:clamp(10px,3vw,12px);letter-spacing:-.1px;padding-left:10px;padding-right:10px}'
       // Étape en cours : cercle bleu plein (dégradé de marque) avec chiffre blanc
       +'#orderProgress .op-step.active i{background:var(--brand-grad) !important;color:#fff !important;border-color:transparent !important;box-shadow:0 4px 14px -4px rgba(var(--brand-b-rgb),.6)}'
-      // Solde insuffisant : bouton de paiement grisé (couleurs explicites pour rester lisible dans les deux thèmes)
-      +'#submitOrder.cb-short,#submitOrder.cb-short:disabled{background:#e6e8ee !important;background-image:none !important;color:#6b7280 !important;border:1px solid #d3d6df !important;box-shadow:none !important;opacity:1 !important;cursor:not-allowed;text-shadow:none !important;filter:none !important}'
-      +'[data-theme="dark"] #submitOrder.cb-short,[data-theme="dark"] #submitOrder.cb-short:disabled{background:#1d1d27 !important;color:#9ca3af !important;border-color:#2e2e3a !important}'
-      +'#submitOrder.cb-short *{color:inherit !important;text-shadow:none !important;opacity:1 !important}'
-      // « + Fonds » mis en avant
+      // Solde insuffisant : « + Fonds » mis en avant (le bouton de paiement garde le style principal)
       +'.pay-wallet-add.cb-need{background:var(--brand-grad) !important;color:var(--brand-ink) !important;border-color:transparent !important;font-weight:700;animation:cbNeed 1.6s ease-in-out infinite}'
       +'@keyframes cbNeed{0%,100%{box-shadow:0 0 0 0 rgba(var(--brand-b-rgb),.5)}50%{box-shadow:0 0 0 8px rgba(var(--brand-b-rgb),0)}}';
     document.head.appendChild(st);
@@ -85,9 +81,10 @@
     function formReady(){
       return typeof obNextStep==='function'&&!obNextStep().wait;
     }
-    // Barre du bas « Confirmer » : si le solde ne suffit pas, elle ouvre l'ajout de fonds
+    // Boutons « Payer » et « Confirmer » : si le solde ne suffit pas (et que le formulaire est complet),
+    // ils ouvrent l'ajout de fonds au lieu d'envoyer la commande
     document.addEventListener('click',e=>{
-      const b=e.target.closest('#obConfirm');
+      const b=e.target.closest('#obConfirm,#submitOrder');
       if(!b)return;
       const miss=missingFunds();
       if(miss>0&&formReady()){
@@ -135,23 +132,25 @@
           }
           if(feeEl.textContent!==txt)feeEl.textContent=txt;
         }
-        // Solde insuffisant : bouton grisé, « + Fonds » en couleur, barre du bas = « Ajouter X HTG »
+        // Solde insuffisant : « + Fonds » en couleur, boutons « Payer » et « Confirmer » = « Ajouter X HTG »
         const miss=missingFunds();
+        const fund=miss>0&&formReady();
         const addBtn=document.querySelector('#payWalletCard .pay-wallet-add');
         if(addBtn)addBtn.classList.toggle('cb-need',miss>0);
         const pay=document.getElementById('submitOrder'),payTxt=document.getElementById('submitOrderText'),spin=document.getElementById('submitOrderSpinner');
         const loading=!!spin&&!spin.classList.contains('hidden');
         if(pay&&payTxt&&!loading){
-          if(miss>0){
-            pay.classList.add('cb-short');pay.disabled=true;
-            if(payTxt.textContent!=='Solde insuffisant')payTxt.textContent='Solde insuffisant';
-          }else if(pay.classList.contains('cb-short')){
-            pay.classList.remove('cb-short');pay.disabled=false;
+          if(fund){
+            pay.classList.add('cb-fund');
+            const t='Ajouter '+fmt(miss)+' HTG';
+            if(payTxt.textContent!==t)payTxt.textContent=t;
+          }else if(pay.classList.contains('cb-fund')){
+            pay.classList.remove('cb-fund');
             payTxt.textContent='Payer avec mon solde';
           }
         }
         const ob=document.getElementById('obConfirm');
-        if(ob&&miss>0&&!ob.classList.contains('loading')&&formReady()){
+        if(ob&&fund&&!ob.classList.contains('loading')){
           ob.textContent='Ajouter '+fmt(miss)+' HTG';
           ob.classList.remove('is-wait');
         }
