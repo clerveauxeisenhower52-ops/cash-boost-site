@@ -53,7 +53,9 @@
   function polishServicePage(){
     const st=document.createElement('style');
     st.textContent='#page-service{padding-bottom:calc(28px + env(safe-area-inset-bottom))}'
-      +'#merutag.is-addr{font-size:clamp(10px,3vw,12px);letter-spacing:-.1px;padding-left:10px;padding-right:10px}';
+      +'#merutag.is-addr{font-size:clamp(10px,3vw,12px);letter-spacing:-.1px;padding-left:10px;padding-right:10px}'
+      // Étape en cours : cercle bleu plein (dégradé de marque) avec chiffre blanc
+      +'#orderProgress .op-step.active i{background:var(--brand-grad) !important;color:#fff !important;border-color:transparent !important;box-shadow:0 4px 14px -4px rgba(var(--brand-b-rgb),.6)}';
     document.head.appendChild(st);
 
     const baseProgress=window.updateProgress;
