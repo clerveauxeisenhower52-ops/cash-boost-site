@@ -86,20 +86,9 @@ document.addEventListener('DOMContentLoaded',function(){
       '#submitOrder,#obConfirm{background-image:linear-gradient(90deg,#2f6bff,#12b5d6)!important}'+
       '#submitOrder,#submitOrder span,#obConfirm{color:#fff!important;text-shadow:0 1px 2px rgba(4,16,31,.4)}'+
       /* bouton de paiement quand le solde est insuffisant : aspect grisé (le bouton reste cliquable) */
-      '#submitOrder.cb-low{background-image:none!important;background-color:#9aa6b8!important;box-shadow:none!important;text-shadow:none!important}'+
-      /* barre « Total / Confirmer » : un peu d'air avec le menu du bas, espace comblé par le fond de page */
-      '.ob{transform:translateY(-8px)}'+
-      '.ob::after{content:"";position:absolute;left:0;right:0;top:100%;height:10px;background:var(--cb-page-bg,#f4f5f7);pointer-events:none}';
+      '#submitOrder.cb-low{background-image:none!important;background-color:#9aa6b8!important;box-shadow:none!important;text-shadow:none!important}';
     document.head.appendChild(st);
 
-    // Couleur de fond de la page (suit le thème clair / sombre)
-    function setBg(){
-      try{
-        var c=getComputedStyle(document.body).backgroundColor;
-        if(!c||c==='rgba(0, 0, 0, 0)'||c==='transparent')c=getComputedStyle(document.documentElement).backgroundColor;
-        if(c&&c!=='rgba(0, 0, 0, 0)'&&c!=='transparent')document.documentElement.style.setProperty('--cb-page-bg',c);
-      }catch(_){}
-    }
     // Bouton grisé quand le message « Solde insuffisant » est affiché
     function syncPay(){
       try{
@@ -110,9 +99,8 @@ document.addEventListener('DOMContentLoaded',function(){
       }catch(_){}
     }
     function init(){
-      setBg();syncPay();
+      syncPay();
       if(!window.MutationObserver)return;
-      new MutationObserver(setBg).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class']});
       var h=document.getElementById('payWalletHint');
       if(h)new MutationObserver(syncPay).observe(h,{attributes:true,childList:true,subtree:true,characterData:true});
     }
