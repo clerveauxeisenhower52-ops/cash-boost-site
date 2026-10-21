@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded',function(){
   }catch(_){}
 })();
 
-// Retouches visuelles de la page de commande (style uniquement)
+// Retouches visuelles de la page de commande (style uniquement, aucune logique de paiement)
 (function(){
   try{
     var st=document.createElement('style');
@@ -82,10 +82,41 @@ document.addEventListener('DOMContentLoaded',function(){
       '#netWarn b{color:inherit!important;font-weight:700!important}'+
       /* « Adresse mémorisée » : simple ligne de texte au lieu d'un bandeau vert */
       '#savedHint{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;margin-top:6px!important;font-size:12.5px!important;font-weight:500!important;color:var(--muted,#6b7280)!important}'+
-      /* boutons principaux : texte blanc, plus lisible sur le dégradé bleu */
+      /* boutons principaux : cyan un peu plus foncé, texte blanc plus lisible */
+      '#submitOrder,#obConfirm{background-image:linear-gradient(90deg,#2f6bff,#12b5d6)!important}'+
       '#submitOrder,#submitOrder span,#obConfirm{color:#fff!important;text-shadow:0 1px 2px rgba(4,16,31,.4)}'+
-      /* barre « Total / Confirmer » : un peu d'air avec le menu du bas */
-      '.ob{transform:translateY(-8px)}';
+      /* bouton de paiement quand le solde est insuffisant : aspect grisé (le bouton reste cliquable) */
+      '#submitOrder.cb-low{background-image:none!important;background-color:#9aa6b8!important;box-shadow:none!important;text-shadow:none!important}'+
+      /* barre « Total / Confirmer » : un peu d'air avec le menu du bas, espace comblé par le fond de page */
+      '.ob{transform:translateY(-8px)}'+
+      '.ob::after{content:"";position:absolute;left:0;right:0;top:100%;height:10px;background:var(--cb-page-bg,#f4f5f7);pointer-events:none}';
     document.head.appendChild(st);
+
+    // Couleur de fond de la page (suit le thème clair / sombre)
+    function setBg(){
+      try{
+        var c=getComputedStyle(document.body).backgroundColor;
+        if(!c||c==='rgba(0, 0, 0, 0)'||c==='transparent')c=getComputedStyle(document.documentElement).backgroundColor;
+        if(c&&c!=='rgba(0, 0, 0, 0)'&&c!=='transparent')document.documentElement.style.setProperty('--cb-page-bg',c);
+      }catch(_){}
+    }
+    // Bouton grisé quand le message « Solde insuffisant » est affiché
+    function syncPay(){
+      try{
+        var h=document.getElementById('payWalletHint'),b=document.getElementById('submitOrder');
+        if(!h||!b)return;
+        var low=!h.classList.contains('hidden')&&/insuffisant/i.test(h.textContent||'');
+        b.classList.toggle('cb-low',low);
+      }catch(_){}
+    }
+    function init(){
+      setBg();syncPay();
+      if(!window.MutationObserver)return;
+      new MutationObserver(setBg).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class']});
+      var h=document.getElementById('payWalletHint');
+      if(h)new MutationObserver(syncPay).observe(h,{attributes:true,childList:true,subtree:true,characterData:true});
+    }
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+    else init();
   }catch(_){}
 })();
