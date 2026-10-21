@@ -155,3 +155,11 @@
 .cbs-tag i{width:10px;height:10px;border-radius:50%;background:var(--brand-grad)}
 [data-theme="light"] .cbs-ic{color:var(--primary)}
 @media(min-width:900px){.cbs-card{max-width:680px}}
+
+/* ── Écran de démarrage animé : logo n°5 (dessin dans logo-splash.svg) ── */
+#bootSplash{background:radial-gradient(120% 85% at 50% 40%,#0c2252 0%,#050b1f 60%,#030614 100%) !important}
+#bootSplash .splash-mark{width:min(58vw,230px);height:min(58vw,230px);aspect-ratio:1;margin:0 auto 4px;padding:0;border:0;border-radius:0;box-shadow:none;filter:none;transform:none;opacity:1;animation:none;overflow:visible;background:url("logo-splash.svg") center/contain no-repeat}
+#bootSplash .splash-mark::before,#bootSplash .splash-mark::after{content:none}
+#bootSplash .splash-logo{display:none}
+#bootSplash .splash-title{display:table;margin-left:auto;margin-right:auto;color:#fff;background:linear-gradient(90deg,#fff 0,#fff 47%,#22d3ee 47%,#22d3ee 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+#bootSplash .splash-tag{color:#67e8f9}
