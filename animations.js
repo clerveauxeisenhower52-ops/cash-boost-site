@@ -77,14 +77,16 @@ document.addEventListener('DOMContentLoaded',function(){
   try{
     var st=document.createElement('style');
     st.textContent=
+      /* barre flottante « Total à payer / Confirmer » : retirée */
+      '.ob{display:none!important}'+
       /* message réseau Plasma : petite note discrète au lieu du gros bloc rouge */
       '#netWarn{font-size:12.5px!important;font-weight:500!important;line-height:1.45!important;color:var(--muted,#6b7280)!important;margin-top:6px!important}'+
       '#netWarn b{color:inherit!important;font-weight:700!important}'+
       /* « Adresse mémorisée » : simple ligne de texte au lieu d'un bandeau vert */
       '#savedHint{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;margin-top:6px!important;font-size:12.5px!important;font-weight:500!important;color:var(--muted,#6b7280)!important}'+
-      /* boutons principaux : cyan un peu plus foncé, texte blanc plus lisible */
-      '#submitOrder,#obConfirm{background-image:linear-gradient(90deg,#2f6bff,#12b5d6)!important}'+
-      '#submitOrder,#submitOrder span,#obConfirm{color:#fff!important;text-shadow:0 1px 2px rgba(4,16,31,.4)}'+
+      /* bouton de paiement : cyan un peu plus foncé, texte blanc plus lisible */
+      '#submitOrder{background-image:linear-gradient(90deg,#2f6bff,#12b5d6)!important}'+
+      '#submitOrder,#submitOrder span{color:#fff!important;text-shadow:0 1px 2px rgba(4,16,31,.4)}'+
       /* bouton de paiement quand le solde est insuffisant : aspect grisé (le bouton reste cliquable) */
       '#submitOrder.cb-low{background-image:none!important;background-color:#9aa6b8!important;box-shadow:none!important;text-shadow:none!important}'+
       /* message rouge en doublon avec le bandeau « Solde insuffisant » : masqué */
