@@ -56,8 +56,11 @@
       +'#merutag.is-addr{font-size:clamp(10px,3vw,12px);letter-spacing:-.1px;padding-left:10px;padding-right:10px}'
       // Étape en cours : cercle bleu plein (dégradé de marque) avec chiffre blanc
       +'#orderProgress .op-step.active i{background:var(--brand-grad) !important;color:#fff !important;border-color:transparent !important;box-shadow:0 4px 14px -4px rgba(var(--brand-b-rgb),.6)}'
-      // Solde insuffisant : bouton de paiement grisé, « + Fonds » mis en avant
-      +'#submitOrder.cb-short{background:var(--surface-elev) !important;color:var(--muted) !important;box-shadow:none !important;opacity:1 !important;cursor:not-allowed}'
+      // Solde insuffisant : bouton de paiement grisé (couleurs explicites pour rester lisible dans les deux thèmes)
+      +'#submitOrder.cb-short,#submitOrder.cb-short:disabled{background:#e6e8ee !important;background-image:none !important;color:#6b7280 !important;border:1px solid #d3d6df !important;box-shadow:none !important;opacity:1 !important;cursor:not-allowed;text-shadow:none !important;filter:none !important}'
+      +'[data-theme="dark"] #submitOrder.cb-short,[data-theme="dark"] #submitOrder.cb-short:disabled{background:#1d1d27 !important;color:#9ca3af !important;border-color:#2e2e3a !important}'
+      +'#submitOrder.cb-short *{color:inherit !important;text-shadow:none !important;opacity:1 !important}'
+      // « + Fonds » mis en avant
       +'.pay-wallet-add.cb-need{background:var(--brand-grad) !important;color:var(--brand-ink) !important;border-color:transparent !important;font-weight:700;animation:cbNeed 1.6s ease-in-out infinite}'
       +'@keyframes cbNeed{0%,100%{box-shadow:0 0 0 0 rgba(var(--brand-b-rgb),.5)}50%{box-shadow:0 0 0 8px rgba(var(--brand-b-rgb),0)}}';
     document.head.appendChild(st);
