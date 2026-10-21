@@ -58,7 +58,9 @@
       +'#orderProgress .op-step.active i{background:var(--brand-grad) !important;color:#fff !important;border-color:transparent !important;box-shadow:0 4px 14px -4px rgba(var(--brand-b-rgb),.6)}'
       // Solde insuffisant : « + Fonds » mis en avant (le bouton de paiement garde le style principal)
       +'.pay-wallet-add.cb-need{background:var(--brand-grad) !important;color:var(--brand-ink) !important;border-color:transparent !important;font-weight:700;animation:cbNeed 1.6s ease-in-out infinite}'
-      +'@keyframes cbNeed{0%,100%{box-shadow:0 0 0 0 rgba(var(--brand-b-rgb),.5)}50%{box-shadow:0 0 0 8px rgba(var(--brand-b-rgb),0)}}';
+      +'@keyframes cbNeed{0%,100%{box-shadow:0 0 0 0 rgba(var(--brand-b-rgb),.5)}50%{box-shadow:0 0 0 8px rgba(var(--brand-b-rgb),0)}}'
+      // Le message « il manque X HTG » est masqué quand le bouton propose déjà « Ajouter X HTG »
+      +'#payWalletHint.cb-hide{display:none !important}';
     document.head.appendChild(st);
 
     // On ne juge le solde qu'une fois qu'il a été lu au moins une fois sur la page de commande
@@ -137,6 +139,8 @@
         const fund=miss>0&&formReady();
         const addBtn=document.querySelector('#payWalletCard .pay-wallet-add');
         if(addBtn)addBtn.classList.toggle('cb-need',miss>0);
+        const hint=document.getElementById('payWalletHint');
+        if(hint)hint.classList.toggle('cb-hide',fund);
         const pay=document.getElementById('submitOrder'),payTxt=document.getElementById('submitOrderText'),spin=document.getElementById('submitOrderSpinner');
         const loading=!!spin&&!spin.classList.contains('hidden');
         if(pay&&payTxt&&!loading){
