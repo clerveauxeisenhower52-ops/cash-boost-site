@@ -15,3 +15,34 @@ document.addEventListener('DOMContentLoaded',function(){
     if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
   });
 });
+
+// Logo Cash Boost animé : favicon, barre du haut et écran de connexion
+(function(){
+  function addLogo(){
+    try{
+      if(!document.querySelector('link[rel~="icon"]')){
+        var l=document.createElement('link');
+        l.rel='icon';l.type='image/svg+xml';l.href='logo-mark.svg';
+        document.head.appendChild(l);
+      }
+      var brand=document.querySelector('.topbar .brand');
+      if(brand&&!brand.querySelector('.brand-logo')){
+        var im=new Image();
+        im.src='logo-mark.svg';im.alt='';im.className='brand-logo';
+        im.setAttribute('aria-hidden','true');
+        im.style.cssText='width:30px;height:30px;display:block;flex:none';
+        brand.insertBefore(im,brand.firstChild);
+        brand.style.display='inline-flex';
+        brand.style.alignItems='center';
+        brand.style.gap='8px';
+      }
+      var au=document.querySelector('.auth-brand .logo');
+      if(au&&au.getAttribute('src')!=='logo-mark.svg'){
+        au.src='logo-mark.svg';
+        au.style.cssText='width:84px;height:84px;border-radius:0;box-shadow:none;background:none;border:0;padding:0;overflow:visible';
+      }
+    }catch(_){}
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addLogo);
+  else addLogo();
+})();
