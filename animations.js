@@ -71,3 +71,21 @@ document.addEventListener('DOMContentLoaded',function(){
     document.head.appendChild(st);
   }catch(_){}
 })();
+
+// Retouches visuelles de la page de commande (style uniquement)
+(function(){
+  try{
+    var st=document.createElement('style');
+    st.textContent=
+      /* message réseau Plasma : petite note discrète au lieu du gros bloc rouge */
+      '#netWarn{font-size:12.5px!important;font-weight:500!important;line-height:1.45!important;color:var(--muted,#6b7280)!important;margin-top:6px!important}'+
+      '#netWarn b{color:inherit!important;font-weight:700!important}'+
+      /* « Adresse mémorisée » : simple ligne de texte au lieu d'un bandeau vert */
+      '#savedHint{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;margin-top:6px!important;font-size:12.5px!important;font-weight:500!important;color:var(--muted,#6b7280)!important}'+
+      /* boutons principaux : texte blanc, plus lisible sur le dégradé bleu */
+      '#submitOrder,#submitOrder span,#obConfirm{color:#fff!important;text-shadow:0 1px 2px rgba(4,16,31,.4)}'+
+      /* barre « Total / Confirmer » : un peu d'air avec le menu du bas */
+      '.ob{transform:translateY(-8px)}';
+    document.head.appendChild(st);
+  }catch(_){}
+})();
