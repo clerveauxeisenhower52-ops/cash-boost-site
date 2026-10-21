@@ -87,21 +87,17 @@ document.addEventListener('DOMContentLoaded',function(){
       /* bouton de paiement : cyan un peu plus foncé, texte blanc plus lisible */
       '#submitOrder{background-image:linear-gradient(90deg,#2f6bff,#12b5d6)!important}'+
       '#submitOrder,#submitOrder span{color:#fff!important;text-shadow:0 1px 2px rgba(4,16,31,.4)}'+
-      /* bouton de paiement quand le solde est insuffisant : aspect grisé (le bouton reste cliquable) */
-      '#submitOrder.cb-low{background-image:none!important;background-color:#9aa6b8!important;box-shadow:none!important;text-shadow:none!important}'+
       /* message rouge en doublon avec le bandeau « Solde insuffisant » : masqué */
       '#orderMsg.cb-dup{display:none!important}';
     document.head.appendChild(st);
 
-    // Bouton grisé quand le message « Solde insuffisant » est affiché ;
-    // le message rouge identique sous le bouton est masqué (le bandeau bleu reste visible)
+    // Le message rouge « Solde insuffisant » sous le bouton est masqué quand le bandeau bleu identique est visible
     function syncPay(){
       try{
-        var h=document.getElementById('payWalletHint'),b=document.getElementById('submitOrder'),m=document.getElementById('orderMsg');
-        if(!h||!b)return;
+        var h=document.getElementById('payWalletHint'),m=document.getElementById('orderMsg');
+        if(!h||!m)return;
         var low=!h.classList.contains('hidden')&&/insuffisant/i.test(h.textContent||'');
-        b.classList.toggle('cb-low',low);
-        if(m)m.classList.toggle('cb-dup',low&&/solde insuffisant/i.test(m.textContent||''));
+        m.classList.toggle('cb-dup',low&&/solde insuffisant/i.test(m.textContent||''));
       }catch(_){}
     }
     function init(){
