@@ -86,23 +86,30 @@ document.addEventListener('DOMContentLoaded',function(){
       '#submitOrder,#obConfirm{background-image:linear-gradient(90deg,#2f6bff,#12b5d6)!important}'+
       '#submitOrder,#submitOrder span,#obConfirm{color:#fff!important;text-shadow:0 1px 2px rgba(4,16,31,.4)}'+
       /* bouton de paiement quand le solde est insuffisant : aspect grisé (le bouton reste cliquable) */
-      '#submitOrder.cb-low{background-image:none!important;background-color:#9aa6b8!important;box-shadow:none!important;text-shadow:none!important}';
+      '#submitOrder.cb-low{background-image:none!important;background-color:#9aa6b8!important;box-shadow:none!important;text-shadow:none!important}'+
+      /* message rouge en doublon avec le bandeau « Solde insuffisant » : masqué */
+      '#orderMsg.cb-dup{display:none!important}';
     document.head.appendChild(st);
 
-    // Bouton grisé quand le message « Solde insuffisant » est affiché
+    // Bouton grisé quand le message « Solde insuffisant » est affiché ;
+    // le message rouge identique sous le bouton est masqué (le bandeau bleu reste visible)
     function syncPay(){
       try{
-        var h=document.getElementById('payWalletHint'),b=document.getElementById('submitOrder');
+        var h=document.getElementById('payWalletHint'),b=document.getElementById('submitOrder'),m=document.getElementById('orderMsg');
         if(!h||!b)return;
         var low=!h.classList.contains('hidden')&&/insuffisant/i.test(h.textContent||'');
         b.classList.toggle('cb-low',low);
+        if(m)m.classList.toggle('cb-dup',low&&/solde insuffisant/i.test(m.textContent||''));
       }catch(_){}
     }
     function init(){
       syncPay();
       if(!window.MutationObserver)return;
+      var opts={attributes:true,attributeFilter:['class'],childList:true,subtree:true,characterData:true};
       var h=document.getElementById('payWalletHint');
-      if(h)new MutationObserver(syncPay).observe(h,{attributes:true,childList:true,subtree:true,characterData:true});
+      if(h)new MutationObserver(syncPay).observe(h,opts);
+      var m=document.getElementById('orderMsg');
+      if(m)new MutationObserver(syncPay).observe(m,{childList:true,subtree:true,characterData:true});
     }
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
     else init();
