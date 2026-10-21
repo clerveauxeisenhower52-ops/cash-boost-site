@@ -46,3 +46,28 @@ document.addEventListener('DOMContentLoaded',function(){
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addLogo);
   else addLogo();
 })();
+
+// Intro de l'écran de démarrage : l'anneau se dessine, le « $ » apparaît, puis le nom monte en fondu
+(function(){
+  try{
+    var svg=document.querySelector('#bootSplash .cbl');
+    if(!svg)return;
+    if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    var ring=svg.querySelector('circle[stroke="url(#cbl-ring)"]');
+    if(ring){
+      ring.setAttribute('class','cbl-ring');
+      ring.setAttribute('pathLength','1000');
+      ring.setAttribute('transform','rotate(-90 200 200)');
+    }
+    var st=document.createElement('style');
+    st.textContent=
+      '.cbl .cbl-ring{stroke-dasharray:1000;stroke-dashoffset:1000;animation:cblRing .9s .1s cubic-bezier(.5,0,.2,1) forwards}'+
+      '.cbl .cbl-coin{transform:scale(0);animation:cblPop .6s .5s cubic-bezier(.2,1.5,.4,1) forwards,cblPulse 3.2s 1.2s ease-in-out infinite}'+
+      '#bootSplash .splash-title,#bootSplash .splash-tag{opacity:0;animation:cblRise .6s ease-out forwards}'+
+      '#bootSplash .splash-title{animation-delay:.9s}#bootSplash .splash-tag{animation-delay:1.1s}'+
+      '@keyframes cblRing{to{stroke-dashoffset:0}}'+
+      '@keyframes cblPop{to{transform:scale(1)}}'+
+      '@keyframes cblRise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}';
+    document.head.appendChild(st);
+  }catch(_){}
+})();
