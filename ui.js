@@ -47,6 +47,47 @@
   }
   setupServicesTab();
 
+  // ── Page de commande : étapes, marge du bas, adresse wallet ──
+  // Exécuté tout de suite (comme l'onglet Services) : app.js branche ses écouteurs plus tard,
+  // il récupère donc déjà la version corrigée de updateProgress.
+  function polishServicePage(){
+    const st=document.createElement('style');
+    st.textContent='#page-service{padding-bottom:calc(28px + env(safe-area-inset-bottom))}'
+      +'#merutag.is-addr{font-size:clamp(10px,3vw,12px);letter-spacing:-.1px;padding-left:10px;padding-right:10px}';
+    document.head.appendChild(st);
+
+    const baseProgress=window.updateProgress;
+    if(typeof baseProgress!=='function')return;
+    window.updateProgress=function(){
+      baseProgress.apply(this,arguments);
+      try{
+        // Paiement par solde : l'étape « Paiement » n'est validée qu'une fois la commande envoyée.
+        // Tant que les étapes 1 et 2 sont faites, c'est elle l'étape en cours (bleue).
+        const steps=Array.from(document.querySelectorAll('#orderProgress .op-step'));
+        if(window.cbWallet&&window.cbWallet.on&&steps.length===3){
+          const ready=steps[0].classList.contains('done')&&steps[1].classList.contains('done');
+          steps[2].classList.remove('done');
+          steps[2].classList.toggle('active',ready);
+          const bar=document.getElementById('orderProgress');
+          if(bar)bar.style.setProperty('--op',steps.filter(s=>s.classList.contains('done')).length);
+        }
+        // Adresse wallet Plasma : police réduite pour tenir dans le champ, forme courte dans l'état
+        const mt=document.getElementById('merutag'),ws=document.getElementById('walletStatus');
+        if(mt)mt.classList.toggle('is-addr',!!currentService&&currentService.id==='Plasma One Auto');
+        if(mt&&ws&&ws.classList.contains('ok')){
+          const v=mt.value.trim();
+          if(/^0x[a-fA-F0-9]{40}$/.test(v)&&ws.textContent.indexOf('…')<0)ws.textContent='✓ Adresse valide · '+v.slice(0,6)+'…'+v.slice(-4);
+        }
+      }catch(_){}
+    };
+    // Le mode « paiement par solde » s'active après le chargement du solde : on rafraîchit tant que la page est ouverte
+    setInterval(()=>{
+      const p=document.getElementById('page-service');
+      if(p&&!p.classList.contains('hidden'))window.updateProgress();
+    },700);
+  }
+  polishServicePage();
+
   // Accueil : toutes les cartes de service gardent le même format vertical
   // (admin.js met « wide » sur la dernière carte quand le nombre est impair ; on retire cette classe).
   function keepCardsVertical(){
@@ -85,44 +126,6 @@
       new MutationObserver(apply).observe(orders,{childList:true,subtree:true});
     }
   }
-
-  // ── Page de commande : étapes, marge du bas, adresse wallet ──
-  function polishServicePage(){
-    const st=document.createElement('style');
-    st.textContent='#page-service{padding-bottom:calc(28px + env(safe-area-inset-bottom))}'
-      +'#merutag.is-addr{font-size:clamp(10px,3vw,12px);letter-spacing:-.1px;padding-left:10px;padding-right:10px}';
-    document.head.appendChild(st);
-
-    const baseProgress=window.updateProgress;
-    if(typeof baseProgress!=='function')return;
-    window.updateProgress=function(){
-      baseProgress.apply(this,arguments);
-      try{
-        // Paiement par solde : l'étape « Paiement » n'est validée qu'une fois la commande envoyée.
-        // Tant que les étapes 1 et 2 sont faites, c'est elle l'étape en cours (bleue).
-        const steps=Array.from(document.querySelectorAll('#orderProgress .op-step'));
-        if(window.cbWallet&&window.cbWallet.on&&steps.length===3){
-          const ready=steps[0].classList.contains('done')&&steps[1].classList.contains('done');
-          steps[2].classList.remove('done');
-          steps[2].classList.toggle('active',ready);
-          const bar=document.getElementById('orderProgress');
-          if(bar)bar.style.setProperty('--op',steps.filter(s=>s.classList.contains('done')).length);
-        }
-        // Adresse wallet Plasma : police réduite pour tenir dans le champ, forme courte dans l'état
-        const mt=document.getElementById('merutag'),ws=document.getElementById('walletStatus');
-        if(mt)mt.classList.toggle('is-addr',!!currentService&&currentService.id==='Plasma One Auto');
-        if(mt&&ws&&ws.classList.contains('ok')){
-          const v=mt.value.trim();
-          if(/^0x[a-fA-F0-9]{40}$/.test(v)&&ws.textContent.indexOf('…')<0)ws.textContent='✓ Adresse valide · '+v.slice(0,6)+'…'+v.slice(-4);
-        }
-      }catch(_){}
-    };
-    // Le mode « paiement par solde » s'active après le chargement du solde : on rafraîchit tant que la page est ouverte
-    setInterval(()=>{
-      const p=document.getElementById('page-service');
-      if(p&&!p.classList.contains('hidden'))window.updateProgress();
-    },700);
-  }
-  function init(){keepCardsVertical();routeToServices();addSearchAndFilters();polishServicePage();}
+  function init(){keepCardsVertical();routeToServices();addSearchAndFilters();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
