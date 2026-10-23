@@ -1,5 +1,6 @@
 // =====================================================================
-// CASH BOOST — Service Worker v6
+// CASH BOOST — Service Worker v7
+// v7 : nouvelle clé de thème (mode nuit par défaut) ; cache vidé chez tous les clients.
 // v6 : la librairie Supabase est servie depuis NOTRE copie (supabase.min.js).
 //  - Si jsdelivr est lent ou inaccessible (réseau faible), l'appli démarre quand même.
 //  - La copie est pré-mise en cache : elle marche aussi hors ligne.
@@ -17,7 +18,7 @@
 // =====================================================================
 
 // ⚠️ À changer quand tu modifies CE fichier ou veux vider le cache de tous les clients.
-const CACHE_NAME = 'cashboost-v6';
+const CACHE_NAME = 'cashboost-v7';
 const CORE_ASSETS = [
   './',
   './index.html',
