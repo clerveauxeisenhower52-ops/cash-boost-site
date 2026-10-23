@@ -42,7 +42,8 @@ const PAY_INFO = {
   MonCash: { name:"Wollens Clerveaux", number:"46467495", logo:"moncash.png", qr:"moncash-qr.jpg" },
   NatCash: { name:"Suzanne Pascal",   number:"40034963", logo:"natcash.png", qr:null }
 };
-const FORM_KEY_PREFIX='cashboost_meru_form_',THEME_KEY='cashboost_theme';
+// THEME_KEY en v2 : remet tout le monde en mode nuit une fois (anciens choix « clair » auto-enregistrés ignorés)
+const FORM_KEY_PREFIX='cashboost_meru_form_',THEME_KEY='cashboost_theme_v2';
 const $=id=>document.getElementById(id),$$=s=>document.querySelectorAll(s);
 const fmt=n=>Number(n).toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:2}).replace(/\u202f/g,' ');
 const fmtDateTime=d=>new Date(d).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).replace(',',' à');
