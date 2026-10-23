@@ -156,9 +156,10 @@ function getRateForAmount(amount){
   return EFFECTIVE_RATE;
 }
 
-function initTheme(){const s=localStorage.getItem(THEME_KEY);if(s){applyTheme(s);return;}const h=new Date().getHours();applyTheme((h>=6&&h<18)?'light':'dark');}
-function applyTheme(t){document.documentElement.setAttribute('data-theme',t);const i=document.querySelector('.theme-icon');if(i)i.textContent=t==='dark'?'🌙':'☀️';const m=$('metaThemeColor');if(m)m.setAttribute('content',t==='dark'?'#08080b':'#f7f7f9');localStorage.setItem(THEME_KEY,t);}
-function toggleTheme(){const c=document.documentElement.getAttribute('data-theme')||'dark';applyTheme(c==='dark'?'light':'dark');}
+// Thème : mode nuit par défaut ; seul le choix explicite de l'utilisateur (bouton soleil/lune) est mémorisé
+function initTheme(){const s=localStorage.getItem(THEME_KEY);applyTheme((s==='light'||s==='dark')?s:'dark');}
+function applyTheme(t){document.documentElement.setAttribute('data-theme',t);const i=document.querySelector('.theme-icon');if(i)i.textContent=t==='dark'?'🌙':'☀️';const m=$('metaThemeColor');if(m)m.setAttribute('content',t==='dark'?'#08080b':'#f7f7f9');}
+function toggleTheme(){const c=document.documentElement.getAttribute('data-theme')||'dark';const n=c==='dark'?'light':'dark';applyTheme(n);try{localStorage.setItem(THEME_KEY,n);}catch(_){}}
 
 function showLanding(){ showAuth(); }
 function showAuth(){
