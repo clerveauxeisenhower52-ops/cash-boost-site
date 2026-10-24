@@ -185,11 +185,14 @@
 /* Cash Boost : bannière « Installe l'app » en bas de l'écran (comme sur CashTransfe).
    - Android / Chrome : le bouton « Installer » ouvre la vraie fenêtre d'installation du navigateur.
    - iPhone (Safari) : l'installation automatique n'existe pas, le bouton affiche les 3 étapes à suivre.
-   - Jamais affichée si l'app est déjà installée. « Pas maintenant » ou ✕ la cache pendant 7 jours.
+   - Jamais affichée si l'app est déjà installée.
+   - Elle revient à chaque ouverture ou rafraîchissement de la page tant que l'app n'est pas installée.
+     « Pas maintenant » ou ✕ la ferme seulement pour la visite en cours.
+     Pour la cacher plus longtemps après un refus, mets DAYS à 1, 3 ou 7 (nombre de jours).
    Utilise deferredInstall et installRefresh() de base.js (la carte « Application » du compte reste en place). */
 (function(){
   'use strict';
-  var KEY='cashboost_install_snooze',DAYS=7,DELAY=2500;
+  var KEY='cashboost_install_snooze',DAYS=0,DELAY=2500;
   var el=null,shown=false;
 
   var st=document.createElement('style');
@@ -207,10 +210,12 @@
     +'@media (prefers-reduced-motion:reduce){#installBanner{transition:none}}';
   document.head.appendChild(st);
 
+  var dismissed=false;   // fermée pendant cette visite : on ne la rouvre pas tant que la page n'est pas rechargée
+
   function standalone(){ return window.navigator.standalone===true||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches); }
   function onIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1); }
   function snoozed(){ try{ return Number(localStorage.getItem(KEY)||0)>Date.now(); }catch(_){ return false; } }
-  function snooze(){ try{ localStorage.setItem(KEY,String(Date.now()+DAYS*864e5)); }catch(_){} }
+  function snooze(){ dismissed=true; if(DAYS>0){ try{ localStorage.setItem(KEY,String(Date.now()+DAYS*864e5)); }catch(_){} } }
   function promptEvt(){ try{ return deferredInstall||null; }catch(_){ return null; } }
 
   function hide(){
@@ -268,16 +273,16 @@
   }
 
   function schedule(){
-    if(shown||standalone()||snoozed()) return;
+    if(shown||dismissed||standalone()||snoozed()) return;
     setTimeout(function(){
-      if(shown||standalone()||snoozed()) return;
+      if(shown||dismissed||standalone()||snoozed()) return;
       if(promptEvt()) show(false);
       else if(onIOS()) show(true);
     },DELAY);
   }
 
   window.addEventListener('beforeinstallprompt',schedule);
-  window.addEventListener('appinstalled',function(){ snooze(); hide(); });
+  window.addEventListener('appinstalled',function(){ dismissed=true; hide(); });
   setInterval(lift,1000);
   if(document.readyState==='complete') schedule(); else window.addEventListener('load',schedule);
 })();
