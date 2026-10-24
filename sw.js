@@ -1,5 +1,6 @@
 // =====================================================================
-// CASH BOOST — Service Worker v7
+// CASH BOOST — Service Worker v8
+// v8 : panneau admin — suivi des dépôts crypto et avertissement de gaz bas.
 // v7 : nouvelle clé de thème (mode nuit par défaut) ; cache vidé chez tous les clients.
 // v6 : la librairie Supabase est servie depuis NOTRE copie (supabase.min.js).
 //  - Si jsdelivr est lent ou inaccessible (réseau faible), l'appli démarre quand même.
@@ -18,7 +19,7 @@
 // =====================================================================
 
 // ⚠️ À changer quand tu modifies CE fichier ou veux vider le cache de tous les clients.
-const CACHE_NAME = 'cashboost-v7';
+const CACHE_NAME = 'cashboost-v8';
 const CORE_ASSETS = [
   './',
   './index.html',

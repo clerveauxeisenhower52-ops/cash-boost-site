@@ -2,6 +2,7 @@ let adminFilter = 'pending', adminQuery = '', adminCache = [];
 async function loadAdmin(){
   if(!profile?.is_admin)return;
   loadWalletBalance();
+  loadCryptoAdmin();
   $('adminArea').classList.remove('hidden');
   fillSettingsForm();
   const el=$('adminList');
@@ -382,5 +383,106 @@ function readSvcBox(box){
 }
 function checkSvc(r){if(!r.name)return 'Entre le nom du service.';if(!r.field_label)return 'Indique ce que le client doit donner.';if(r.active&&(!(r.rate>0)||!(r.effective_rate>0)||!(r.min_qty>0)))return 'Taux et minimum requis pour activer.';return '';}
 function fileToLogo(file){return new Promise((resolve,reject)=>{if(!file.type.startsWith('image/')||file.size>8*1024*1024)return reject(new Error('image'));const img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{const n=256,c=document.createElement('canvas');c.width=n;c.height=n;const side=Math.min(img.width,img.height);c.getContext('2d').drawImage(img,(img.width-side)/2,(img.height-side)/2,side,side,0,0,n,n);URL.revokeObjectURL(url);resolve(c.toDataURL('image/png'));};img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('load'));};img.src=url;});}
-function slugify(t){return String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'service';}
+function slugify(t){return String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'service';}
 
+
+// =====================================================================
+// DÉPÔTS CRYPTO : suivi (statut + lien explorateur) et avertissement de gaz bas
+// Données : fonction SQL admin_crypto_overview (réservée aux admins).
+// =====================================================================
+const CRYPTO_TX_URL = { bsc: 'https://bscscan.com/tx/', plasma: 'https://plasmascan.to/tx/' };
+const CRYPTO_NET_LABEL = { bsc: 'BNB Smart Chain', plasma: 'Plasma' };
+let cryptoShowAll = false, cryptoData = null;
+
+function cryptoShort(h, a = 8, b = 6){
+  h = String(h || '');
+  return h.length > a + b + 1 ? h.slice(0, a) + '…' + h.slice(-b) : h;
+}
+function cryptoIsHash(h){ return /^0x[0-9a-fA-F]{64}$/.test(String(h || '')); }
+function cryptoTxLink(net, h, label){
+  const base = CRYPTO_TX_URL[net];
+  if(!base || !cryptoIsHash(h)) return esc(label || cryptoShort(h));
+  return `<a class="proof-link" href="${base}${esc(h)}" target="_blank" rel="noopener">${esc(label || cryptoShort(h))}</a>`;
+}
+function cryptoState(d){
+  if(d.swept_at) return { label: 'Balayé', style: 'background:rgba(34,197,94,.15);color:#22c55e' };
+  if(d.status === 'credited') return { label: 'Crédité · à balayer', style: 'background:rgba(245,158,11,.15);color:#f59e0b' };
+  return { label: 'En attente', style: 'background:rgba(148,163,184,.18);color:#94a3b8' };
+}
+
+async function loadCryptoAdmin(){
+  if(!profile?.is_admin) return;
+  const list = $('adminList');
+  if(!list) return;
+  let box = $('cryptoAdmin');
+  if(!box){
+    box = document.createElement('div');
+    box.id = 'cryptoAdmin';
+    box.style.margin = '0 0 18px';
+    list.parentNode.insertBefore(box, list);
+  }
+  try{
+    const { data, error } = await sb.rpc('admin_crypto_overview');
+    if(error || !data){ box.innerHTML = ''; return; }
+    cryptoData = data;
+    renderCryptoAdmin(box);
+  }catch(_){ box.innerHTML = ''; }
+}
+
+function renderCryptoAdmin(box){
+  const deps = Array.isArray(cryptoData?.deposits) ? cryptoData.deposits : [];
+  const sts = Array.isArray(cryptoData?.status) ? cryptoData.status : [];
+  if(!deps.length && !sts.length){ box.innerHTML = ''; return; }
+
+  // Avertissements : uniquement sur les réseaux qui ont déjà reçu des dépôts
+  const warns = [];
+  sts.forEach(s => {
+    if(!deps.some(d => d.network === s.network)) return;
+    const net = CRYPTO_NET_LABEL[s.network] || s.network, sym = s.native_symbol || '';
+    const bal = Number(s.native_balance);
+    if(s.low_gas){
+      warns.push(`<strong>⛽ Gaz bas (${esc(net)})</strong> : le wallet principal n'a plus que ${Number.isFinite(bal) ? bal.toFixed(5) : '?'} ${esc(sym)}, soit environ ${Number(s.sweeps_left) || 0} balayage(s). Ajoute du ${esc(sym)} sur ce wallet pour que les dépôts continuent d'être regroupés.`);
+    }
+    if(s.last_error){
+      warns.push(`<strong>⚠️ Dernier balayage en erreur (${esc(net)})</strong> : ${esc(s.last_error)}`);
+    }
+    const ageMin = (Date.now() - new Date(s.updated_at).getTime()) / 60000;
+    if(ageMin > 20){
+      warns.push(`<strong>⏱️ Balayage ${esc(net)} inactif</strong> depuis ${Math.round(ageMin)} min.`);
+    }
+  });
+  const warnHtml = warns.length
+    ? `<div class="ah-banner" style="border-color:var(--danger);background:var(--danger-soft)">${warns.map(w => `<div class="order-meta" style="color:var(--danger);margin:4px 0">${w}</div>`).join('')}</div>`
+    : '';
+
+  const waiting = deps.filter(d => !d.swept_at && d.status === 'credited');
+  const waitingUsdt = waiting.reduce((s, d) => s + (Number(d.amount_usdt) || 0), 0);
+  const stats = `<div class="admin-stats">
+    <div><strong>${deps.length}</strong><span>derniers dépôts</span></div>
+    <div><strong>${waiting.length}</strong><span>à balayer</span></div>
+    <div><strong>${waitingUsdt.toFixed(2)}</strong><span>USDT en attente</span></div>
+  </div>`;
+
+  const shown = cryptoShowAll ? deps : deps.slice(0, 10);
+  const rows = shown.map(d => {
+    const st = cryptoState(d);
+    const swept = d.swept_at
+      ? (cryptoIsHash(d.swept_tx)
+          ? `Balayage : ${cryptoTxLink(d.network, d.swept_tx)}`
+          : 'Balayage : solde déjà nul')
+      : '';
+    return `<div class="order">
+      <div class="order-top"><strong>${esc(d.full_name || 'Client')}</strong><strong>${(Number(d.amount_usdt) || 0).toFixed(2)} USDT</strong></div>
+      <div class="order-meta">${esc(CRYPTO_NET_LABEL[d.network] || d.network)} · ${fmt(Number(d.amount_htg) || 0)} HTG · <span class="order-ago">${timeAgo(d.created_at)}</span> <span class="ah-tag" style="${st.style}">${st.label}</span></div>
+      <div class="order-meta">Dépôt : ${cryptoTxLink(d.network, d.tx_hash)}${swept ? ' · ' + swept : ''}</div>
+    </div>`;
+  }).join('');
+
+  const more = deps.length > 10
+    ? `<button type="button" class="admin-filter-btn" id="cryptoToggle" style="margin-top:8px">${cryptoShowAll ? 'Voir moins' : 'Voir tout (' + deps.length + ')'}</button>`
+    : '';
+
+  box.innerHTML = `<h3 style="margin:0 0 8px">💰 Dépôts crypto</h3>${warnHtml}${stats}${rows || '<div class="order-meta">Aucun dépôt.</div>'}${more}`;
+  const t = $('cryptoToggle');
+  if(t) t.onclick = () => { cryptoShowAll = !cryptoShowAll; renderCryptoAdmin(box); };
+}
