@@ -1,6 +1,8 @@
 /* Cash Boost : dépôt crypto (USDT) dans « Ajouter des fonds »
    Ajoute un onglet « Crypto (USDT) » à côté de MonCash / NatCash.
-   L'onglet n'apparaît que si la fonction crypto-deposit-address répond (dépôts crypto activés). */
+   L'onglet n'apparaît que si la fonction crypto-deposit-address répond (dépôts crypto activés).
+   Affiche aussi l'historique des dépôts USDT du client (statut + lien explorateur)
+   et un avertissement si un envoi sur le mauvais réseau / avec le mauvais jeton a été détecté. */
 (function(){
   'use strict';
   var info=null, state='idle', mode='mm', net='bsc', poll=null, baseId=null, qrLib=null;
@@ -9,6 +11,8 @@
     bsc:{label:'BSC (BEP20)', token:'USDT BEP20'},
     plasma:{label:'Plasma', token:'USDT0'}
   };
+  var NET_LABEL={bsc:'BSC',plasma:'Plasma',ethereum:'Ethereum',polygon:'Polygon',arbitrum:'Arbitrum',base:'Base',optimism:'Optimism'};
+  var EXPLORER={bsc:'https://bscscan.com/tx/',plasma:'https://plasmascan.to/tx/'};
 
   function $id(i){ return document.getElementById(i); }
 
@@ -27,7 +31,20 @@
       '.cb-addr{font-size:13px!important;letter-spacing:0!important;word-break:break-all;line-height:1.4}'+
       '.cb-list{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:8px;font-size:13px;color:var(--text)}'+
       '.cb-list li{padding:10px 12px;border:1px solid var(--line-strong,rgba(255,255,255,.12));border-radius:12px;background:var(--surface-elev,transparent)}'+
-      '.cb-list li.warn{border-color:var(--danger,#ef4444)}';
+      '.cb-list li.warn{border-color:var(--danger,#ef4444)}'+
+      '.cb-lost{margin:14px 0 0;padding:12px;border:1px solid var(--danger,#ef4444);border-radius:12px;font-size:13px;line-height:1.45;color:var(--text)}'+
+      '.cb-lost[hidden]{display:none}'+
+      '.cb-lost b{display:block;margin-bottom:4px}'+
+      '.cb-hist-title{margin:18px 0 6px;font-size:14px;font-weight:700;color:var(--text)}'+
+      '.cb-hist-title[hidden]{display:none}'+
+      '.cb-hist{margin:0;padding:0;list-style:none;display:grid;gap:8px}'+
+      '.cb-hist li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line-strong,rgba(255,255,255,.12));border-radius:12px;font-size:13px;color:var(--text)}'+
+      '.cb-hist .cb-h-main{display:grid;gap:2px;min-width:0}'+
+      '.cb-hist .cb-h-main small{opacity:.7;font-size:11px}'+
+      '.cb-hist .cb-h-side{display:grid;gap:4px;justify-items:end;text-align:right;flex:none}'+
+      '.cb-badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;background:rgba(245,158,11,.18);color:#f59e0b}'+
+      '.cb-badge.ok{background:rgba(34,197,94,.18);color:#22c55e}'+
+      '.cb-hist a{font-size:11px;color:var(--accent,#38bdf8);text-decoration:underline}';
     document.head.appendChild(s);
   }
 
@@ -80,7 +97,10 @@
       '<div class="cb-qr" id="cbQrBox" hidden><img id="cbQr" alt="QR code de ton adresse" width="180" height="180" '+
         'style="width:180px;height:180px;max-width:100%;image-rendering:pixelated;background:#fff;padding:8px;border-radius:12px;display:block"></div>'+
       '<ul class="cb-list" id="cbList"></ul>'+
-      '<div id="cbWait" class="msg" role="status"></div>';
+      '<div class="cb-lost" id="cbLost" role="alert" hidden></div>'+
+      '<div id="cbWait" class="msg" role="status"></div>'+
+      '<h4 class="cb-hist-title" id="cbHistTitle" hidden>Mes dépôts USDT</h4>'+
+      '<ul class="cb-hist" id="cbHist"></ul>';
 
     var steps=sheet.querySelectorAll(':scope > section.wallet-step');
     steps[steps.length-1].insertAdjacentElement('afterend',panel);
@@ -114,6 +134,64 @@
     drawQr(info.address);
   }
 
+  /* ---------- Historique des dépôts USDT du client ---------- */
+  function fmtNum(v,d){
+    var x=Number(v); if(!isFinite(x)) return '0';
+    return x.toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:d});
+  }
+  function fmtDate(iso){
+    try{ return new Date(iso).toLocaleString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
+    catch(_){ return ''; }
+  }
+  async function loadHistory(){
+    var ul=$id('cbHist'), title=$id('cbHistTitle'); if(!ul||!title) return;
+    try{
+      var r=await sb.from('crypto_deposits')
+        .select('id,network,tx_hash,amount_usdt,amount_htg,status,created_at')
+        .eq('user_id',currentUserId).order('created_at',{ascending:false}).limit(10);
+      var rows=(r&&r.data)||[];
+      ul.innerHTML='';
+      title.hidden=!rows.length;
+      rows.forEach(function(d){
+        var li=document.createElement('li');
+        var main=document.createElement('div'); main.className='cb-h-main';
+        var amt=document.createElement('b'); amt.textContent=fmtNum(d.amount_usdt,2)+' USDT';
+        var sub=document.createElement('small');
+        sub.textContent=(NET_LABEL[d.network]||String(d.network||''))+' · '+fmtDate(d.created_at)+(d.status==='credited'?' · +'+fmtNum(d.amount_htg,0)+' HTG':'');
+        main.appendChild(amt); main.appendChild(sub);
+        var side=document.createElement('div'); side.className='cb-h-side';
+        var ok=d.status==='credited';
+        var badge=document.createElement('span'); badge.className='cb-badge'+(ok?' ok':''); badge.textContent=ok?'Crédité':'En cours';
+        side.appendChild(badge);
+        var base=EXPLORER[d.network];
+        if(base&&/^0x[0-9a-fA-F]{64}$/.test(d.tx_hash||'')){
+          var a=document.createElement('a'); a.href=base+d.tx_hash; a.target='_blank'; a.rel='noopener noreferrer';
+          a.textContent=d.network==='plasma'?'Voir sur PlasmaScan':'Voir sur BscScan';
+          side.appendChild(a);
+        }
+        li.appendChild(main); li.appendChild(side); ul.appendChild(li);
+      });
+    }catch(_){}
+  }
+
+  /* ---------- Envois détectés sur le mauvais réseau / avec le mauvais jeton ---------- */
+  async function loadLost(){
+    var box=$id('cbLost'); if(!box) return;
+    try{
+      var r=await sb.from('crypto_unrecognized').select('network,token_symbol,amount').eq('user_id',currentUserId).eq('status','open');
+      var rows=(r&&r.data)||[];
+      if(!rows.length){ box.hidden=true; box.innerHTML=''; return; }
+      box.innerHTML='';
+      var h=document.createElement('b'); h.textContent='Envoi détecté sur ton adresse, non crédité';
+      box.appendChild(h);
+      var p=document.createElement('div');
+      var parts=rows.map(function(x){ return fmtNum(x.amount,2)+' '+x.token_symbol+' sur '+(NET_LABEL[x.network]||x.network); });
+      p.textContent='Nous voyons '+parts.join(', ')+'. Ce n\u2019est pas le bon réseau ou le bon jeton, donc ce n\u2019est pas crédité automatiquement. Ne renvoie rien : contacte-nous avec ton adresse de dépôt et nous regarderons ce qui est possible.';
+      box.appendChild(p);
+      box.hidden=false;
+    }catch(_){}
+  }
+
   async function snapshot(){
     try{
       var r=await sb.from('wallet_transactions').select('id').eq('user_id',currentUserId).eq('type','deposit').like('provider','USDT%').order('created_at',{ascending:false}).limit(1);
@@ -139,6 +217,7 @@
       showToast('✅ '+fmt(Number(t.amount_htg))+' HTG ajoutés à ton portefeuille');
       try{ beep(); }catch(_){}
       loadWallet();
+      loadHistory();
       walletShowSuccess(Number(t.amount_htg),walletBal);
     }catch(_){}
   }
@@ -148,7 +227,7 @@
     var sheet=$id('walletSheet'); if(!sheet) return;
     sheet.classList.toggle('cb-crypto-mode',m==='crypto');
     document.querySelectorAll('#cbModeTabs [data-m]').forEach(function(b){ b.classList.toggle('active',b.dataset.m===m); });
-    if(m==='crypto'){ render(); startPoll(); } else stopPoll();
+    if(m==='crypto'){ render(); startPoll(); loadHistory(); loadLost(); } else stopPoll();
   }
 
   async function load(){
