@@ -177,11 +177,12 @@
     strip();
     new MutationObserver(strip).observe(list,{childList:true,subtree:true});
   }
-  // Les boutons « Retour aux services », « Explorer les services », « Faire une recharge » ramènent à l'onglet Services
-  // (ce gestionnaire passe après ceux de app.js, donc il a le dernier mot).
+  // Les boutons « Retour aux services », « Explorer les services », « Faire une recharge » et
+  // « Acheter avec mon solde » (Portefeuille) ramènent à l'onglet Services
+  // (ce gestionnaire passe après ceux de app.js et portefeuille.js, donc il a le dernier mot).
   function routeToServices(){
     document.addEventListener('click',e=>{
-      if(e.target.closest('#backHome,#svClose,#emptyGo,#cbhExplore'))window.showPage('services');
+      if(e.target.closest('#backHome,#svClose,#emptyGo,#cbhExplore,#walletBuyBtn'))window.showPage('services');
     });
   }
   function addSearchAndFilters(){
