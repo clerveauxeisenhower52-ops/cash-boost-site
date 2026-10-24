@@ -166,3 +166,18 @@
   };
   try{ if(SERVICES&&SERVICES.length) window.renderServices(); }catch(_){}
 })();
+
+/* Cash Boost : bouton « Commander à nouveau » / « Refaire la commande » bien visible dans Commandes.
+   Style seulement : le bouton et son action ne changent pas.
+   - Commande complétée : gros bouton plein (dégradé de la marque), pleine largeur.
+   - Autre cas (en attente, refaire) : bouton pleine largeur avec contour de la couleur de la marque,
+     pour ne pas pousser à recommander pendant qu'une commande est encore en cours. */
+(function(){
+  'use strict';
+  var st=document.createElement('style');
+  st.textContent='#ordersList .order .reorder-btn{display:flex !important;align-items:center;justify-content:center;gap:8px;width:100% !important;min-height:48px;margin-top:14px !important;padding:12px 16px !important;border-radius:14px !important;border:1.5px solid var(--primary-line) !important;background:var(--primary-soft) !important;color:var(--text-strong) !important;font-size:15px !important;font-weight:700 !important;cursor:pointer;-webkit-tap-highlight-color:transparent}'
+    +'#ordersList .order .reorder-btn::before{content:"\\21BB";font-size:18px;line-height:1}'
+    +'#ordersList .order:has(.status.done) .reorder-btn{border-color:transparent !important;background:var(--brand-grad) !important;color:var(--brand-ink) !important;box-shadow:0 8px 20px -10px rgba(var(--brand-b-rgb),.7)}'
+    +'#ordersList .order .reorder-btn:active{transform:scale(.98)}';
+  document.head.appendChild(st);
+})();
