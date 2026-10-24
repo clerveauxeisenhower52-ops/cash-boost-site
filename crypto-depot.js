@@ -3,7 +3,7 @@
    L'onglet n'apparaît que si la fonction crypto-deposit-address répond (dépôts crypto activés). */
 (function(){
   'use strict';
-  var info=null, state='idle', mode='mm', net='bsc', poll=null, baseId=null;
+  var info=null, state='idle', mode='mm', net='bsc', poll=null, baseId=null, qrLib=null;
 
   var NETS={
     bsc:{label:'BSC (BEP20)', token:'USDT BEP20'},
@@ -23,12 +23,35 @@
       '#walletSheet.cb-crypto-mode > section.wallet-step:not(#walletCryptoPanel){display:none}'+
       '#walletSheet.done #walletCryptoPanel,#walletSheet.done .cb-mode-tabs{display:none}'+
       '.cb-qr{display:flex;justify-content:center;margin:14px 0}'+
-      '.cb-qr canvas{background:#fff;border-radius:12px;padding:8px;max-width:100%;height:auto}'+
+      '.cb-qr[hidden]{display:none}'+
       '.cb-addr{font-size:13px!important;letter-spacing:0!important;word-break:break-all;line-height:1.4}'+
       '.cb-list{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:8px;font-size:13px;color:var(--text)}'+
       '.cb-list li{padding:10px 12px;border:1px solid var(--line-strong,rgba(255,255,255,.12));border-radius:12px;background:var(--surface-elev,transparent)}'+
       '.cb-list li.warn{border-color:var(--danger,#ef4444)}';
     document.head.appendChild(s);
+  }
+
+  // QR code : petite bibliothèque indépendante (n'entre pas en conflit avec celle déjà utilisée sur le site)
+  function loadQrLib(){
+    if(qrLib) return qrLib;
+    qrLib=new Promise(function(resolve,reject){
+      if(typeof window.qrcode==='function'){ resolve(window.qrcode); return; }
+      var s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
+      s.onload=function(){ typeof window.qrcode==='function'?resolve(window.qrcode):reject(new Error('qr')); };
+      s.onerror=function(){ reject(new Error('qr')); };
+      document.head.appendChild(s);
+    });
+    qrLib.catch(function(){ qrLib=null; });
+    return qrLib;
+  }
+  function drawQr(text){
+    var box=$id('cbQrBox'), img=$id('cbQr'); if(!box||!img) return;
+    loadQrLib().then(function(q){
+      var qr=q(0,'M'); qr.addData(text); qr.make();
+      img.src=qr.createDataURL(6,2);
+      box.hidden=false;
+    }).catch(function(){ box.hidden=true; });
   }
 
   function build(){
@@ -54,7 +77,8 @@
       '<div class="wallet-acc"><small>Ton adresse de dépôt personnelle</small>'+
         '<div class="wallet-acc-row"><span id="cbAddr" class="wallet-acc-num cb-addr">—</span>'+
         '<button id="cbCopy" type="button" class="wallet-copy">Copier</button></div></div>'+
-      '<div class="cb-qr"><canvas id="cbQr" width="180" height="180" aria-label="QR code de ton adresse"></canvas></div>'+
+      '<div class="cb-qr" id="cbQrBox" hidden><img id="cbQr" alt="QR code de ton adresse" width="180" height="180" '+
+        'style="width:180px;height:180px;max-width:100%;image-rendering:pixelated;background:#fff;padding:8px;border-radius:12px;display:block"></div>'+
       '<ul class="cb-list" id="cbList"></ul>'+
       '<div id="cbWait" class="msg" role="status"></div>';
 
@@ -87,8 +111,7 @@
     li('Envoie uniquement des <b>'+n.token+'</b> sur le réseau <b>'+n.label+'</b>. Un autre réseau ou un autre jeton sera perdu.','warn');
     li('Minimum : <b>'+min+' USDT</b>. En dessous, le dépôt n\u2019est pas crédité.');
     li('Ton solde est crédité automatiquement en 1 à 3 minutes. Tu peux laisser cette fenêtre ouverte.');
-    var cv=$id('cbQr');
-    try{ if(typeof QRCode!=='undefined'&&QRCode.toCanvas) QRCode.toCanvas(cv,info.address,{width:180,margin:1}); }catch(_){}
+    drawQr(info.address);
   }
 
   async function snapshot(){
