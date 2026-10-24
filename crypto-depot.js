@@ -254,7 +254,20 @@
   }
   function onClose(){ stopPoll(); var s=$id('walletSheet'); if(s) s.classList.remove('cb-crypto-mode'); mode='mm'; }
 
+  /* Retour visuel sur les boutons « Copier » : « Copié ✓ » pendant 2 secondes
+     (adresse USDT, numéro MonCash/NatCash, ID Cash Boost). */
+  function copyFeedback(){
+    document.addEventListener('click',function(e){
+      var b=e.target.closest&&e.target.closest('#cbCopy,#walletCopyNum,#walletCopyId'); if(!b) return;
+      if(b._cbHtml==null) b._cbHtml=b.innerHTML;
+      b.textContent=(b.id==='walletCopyId')?'\u2713':'Copié \u2713';
+      clearTimeout(b._cbT);
+      b._cbT=setTimeout(function(){ b.innerHTML=b._cbHtml; b._cbHtml=null; },2000);
+    });
+  }
+
   function init(){
+    copyFeedback();
     var d=$id('walletDeposit'); if(!d) return;
     var wasHidden=d.classList.contains('hidden');
     new MutationObserver(function(){
