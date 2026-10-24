@@ -2,10 +2,13 @@
    Ajoute un onglet « Crypto (USDT) » à côté de MonCash / NatCash.
    L'onglet n'apparaît que si la fonction crypto-deposit-address répond (dépôts crypto activés).
    Affiche aussi l'historique des dépôts USDT du client (statut + lien explorateur)
-   et un avertissement si un envoi sur le mauvais réseau / avec le mauvais jeton a été détecté. */
+   et un avertissement si un envoi sur le mauvais réseau / avec le mauvais jeton a été détecté.
+   Bandeau « Dépôt détecté » : dès qu'un envoi apparaît sur la blockchain (avant les confirmations),
+   le navigateur le repère via un serveur RPC public et prévient le client. Information seulement :
+   le crédit reste fait uniquement par le serveur (crypto-deposit-scan). */
 (function(){
   'use strict';
-  var info=null, state='idle', mode='mm', net='bsc', poll=null, baseId=null, qrLib=null;
+  var info=null, state='idle', mode='mm', net='bsc', poll=null, baseId=null, qrLib=null, pendBusy=false;
 
   var NETS={
     bsc:{label:'BSC (BEP20)', token:'USDT BEP20'},
@@ -13,6 +16,13 @@
   };
   var NET_LABEL={bsc:'BSC',plasma:'Plasma',ethereum:'Ethereum',polygon:'Polygon',arbitrum:'Arbitrum',base:'Base',optimism:'Optimism'};
   var EXPLORER={bsc:'https://bscscan.com/tx/',plasma:'https://plasmascan.to/tx/'};
+
+  /* Détection précoce (lecture seule, depuis le navigateur) */
+  var TRANSFER_TOPIC='0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+  var PEND={
+    bsc:{rpcs:['https://bsc-rpc.publicnode.com','https://bsc.drpc.org'], token:'0x55d398326f99059fF775485246999027B3197955', dec:18, back:400},
+    plasma:{rpcs:['https://rpc.plasma.to'], token:'0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb', dec:6, back:900}
+  };
 
   function $id(i){ return document.getElementById(i); }
 
@@ -33,6 +43,8 @@
       '.cb-list{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:8px;font-size:13px;color:var(--text)}'+
       '.cb-list li{padding:10px 12px;border:1px solid var(--line-strong,rgba(255,255,255,.12));border-radius:12px;background:var(--surface-elev,transparent)}'+
       '.cb-list li.warn{border-color:var(--danger,#ef4444)}'+
+      '.cb-pending{margin:14px 0 0;padding:12px;border:1px solid var(--primary-line,rgba(59,130,246,.35));border-radius:12px;background:var(--primary-soft,rgba(59,130,246,.12));font-size:13px;line-height:1.45;color:var(--text)}'+
+      '.cb-pending[hidden]{display:none}'+
       '.cb-lost{margin:14px 0 0;padding:12px;border:1px solid var(--danger,#ef4444);border-radius:12px;font-size:13px;line-height:1.45;color:var(--text)}'+
       '.cb-lost[hidden]{display:none}'+
       '.cb-lost b{display:block;margin-bottom:4px}'+
@@ -97,6 +109,7 @@
         '<button id="cbCopy" type="button" class="wallet-copy">Copier</button></div></div>'+
       '<div class="cb-qr" id="cbQrBox" hidden><img id="cbQr" alt="QR code de ton adresse" width="180" height="180" '+
         'style="width:180px;height:180px;max-width:100%;image-rendering:pixelated;background:#fff;padding:8px;border-radius:12px;display:block"></div>'+
+      '<div class="cb-pending" id="cbPending" role="status" aria-live="polite" hidden></div>'+
       '<ul class="cb-list" id="cbList"></ul>'+
       '<div class="cb-lost" id="cbLost" role="alert" hidden></div>'+
       '<div id="cbWait" class="msg" role="status"></div>'+
@@ -198,6 +211,65 @@
     }catch(_){}
   }
 
+  /* ---------- Détection précoce : « Dépôt détecté, confirmation en cours » ---------- */
+  function rpcCall(url,method,params){
+    var ctrl=(typeof AbortController==='function')?new AbortController():null;
+    var t=setTimeout(function(){ if(ctrl) ctrl.abort(); },6000);
+    return fetch(url,{
+      method:'POST', headers:{'content-type':'application/json'},
+      body:JSON.stringify({jsonrpc:'2.0',id:1,method:method,params:params}),
+      signal:ctrl?ctrl.signal:undefined
+    }).then(function(r){ return r.json(); }).then(function(j){
+      clearTimeout(t); if(!j||j.error) throw new Error('rpc'); return j.result;
+    },function(e){ clearTimeout(t); throw e; });
+  }
+  async function pendingFor(name,addr,credited,min){
+    var c=PEND[name];
+    var topicTo='0x'+'0'.repeat(24)+String(addr).slice(2).toLowerCase();
+    for(var i=0;i<c.rpcs.length;i++){
+      try{
+        var latest=parseInt(await rpcCall(c.rpcs[i],'eth_blockNumber',[]),16);
+        var from=Math.max(0,latest-c.back);
+        var logs=await rpcCall(c.rpcs[i],'eth_getLogs',[{
+          address:c.token, topics:[TRANSFER_TOPIC,null,topicTo],
+          fromBlock:'0x'+from.toString(16), toBlock:'latest'
+        }]);
+        var out=[];
+        (logs||[]).forEach(function(l){
+          if(l.removed) return;
+          var h=String(l.transactionHash||'').toLowerCase();
+          if(credited[h]) return;
+          var amt=Number(BigInt(l.data))/Math.pow(10,c.dec);
+          if(amt>=min) out.push({net:name,amount:amt,hash:h});
+        });
+        return out;
+      }catch(_){ /* on essaie le serveur suivant */ }
+    }
+    return [];
+  }
+  function hidePending(){ var b=$id('cbPending'); if(b){ b.hidden=true; b.textContent=''; } }
+  async function checkPending(){
+    var box=$id('cbPending'); if(!box||!info||!info.address||pendBusy) return;
+    pendBusy=true;
+    try{
+      // Dépôts déjà crédités : on ne les affiche pas comme « en attente »
+      var credited={};
+      var r=await sb.from('crypto_deposits').select('tx_hash').eq('user_id',currentUserId).order('created_at',{ascending:false}).limit(30);
+      if(!r||r.error) return;
+      (r.data||[]).forEach(function(d){ if(d.tx_hash) credited[String(d.tx_hash).toLowerCase()]=1; });
+      var min=Number(info.min_usdt)||5;
+      var res=await Promise.all([
+        pendingFor('bsc',info.address,credited,min),
+        pendingFor('plasma',info.address,credited,min)
+      ]);
+      var all=[].concat(res[0],res[1]);
+      if(mode!=='crypto'||!all.length){ hidePending(); return; }
+      var parts=all.map(function(x){ return fmtNum(x.amount,2)+' USDT sur '+(NET_LABEL[x.net]||x.net); });
+      box.textContent='\u23F3 Dépôt détecté : '+parts.join(', ')+'. Confirmation en cours, ton solde sera crédité dans quelques instants.';
+      box.hidden=false;
+    }catch(_){} finally{ pendBusy=false; }
+  }
+
   async function snapshot(){
     try{
       var r=await sb.from('wallet_transactions').select('id').eq('user_id',currentUserId).eq('type','deposit').like('provider','USDT%').order('created_at',{ascending:false}).limit(1);
@@ -209,14 +281,16 @@
     stopPoll();
     baseId=await snapshot();
     poll=setInterval(check,8000);
+    checkPending();
   }
   async function check(){
     var d=$id('walletDeposit');
     if(!d||d.classList.contains('hidden')||mode!=='crypto'){ stopPoll(); return; }
+    checkPending();
     try{
       var r=await sb.from('wallet_transactions').select('id,amount_htg').eq('user_id',currentUserId).eq('type','deposit').like('provider','USDT%').order('created_at',{ascending:false}).limit(1);
       var t=r.data&&r.data[0]; if(!t||t.id===baseId) return;
-      baseId=t.id; stopPoll();
+      baseId=t.id; stopPoll(); hidePending();
       var w=await sb.from('wallets').select('balance_htg').eq('user_id',currentUserId).maybeSingle();
       walletBal=Number((w&&w.data&&w.data.balance_htg)||0);
       walletRenderBalance();
@@ -233,7 +307,7 @@
     var sheet=$id('walletSheet'); if(!sheet) return;
     sheet.classList.toggle('cb-crypto-mode',m==='crypto');
     document.querySelectorAll('#cbModeTabs [data-m]').forEach(function(b){ b.classList.toggle('active',b.dataset.m===m); });
-    if(m==='crypto'){ render(); startPoll(); loadHistory(); loadLost(); } else stopPoll();
+    if(m==='crypto'){ render(); startPoll(); loadHistory(); loadLost(); } else { stopPoll(); hidePending(); }
   }
 
   async function load(){
@@ -252,7 +326,7 @@
     setMode('mm');
     load().then(function(){ var t=$id('cbModeTabs'); if(t&&info) t.hidden=false; });
   }
-  function onClose(){ stopPoll(); var s=$id('walletSheet'); if(s) s.classList.remove('cb-crypto-mode'); mode='mm'; }
+  function onClose(){ stopPoll(); hidePending(); var s=$id('walletSheet'); if(s) s.classList.remove('cb-crypto-mode'); mode='mm'; }
 
   /* Retour visuel sur les boutons « Copier » : « Copié ✓ » pendant 2 secondes
      (adresse USDT, numéro MonCash/NatCash, ID Cash Boost). */
