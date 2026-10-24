@@ -181,3 +181,103 @@
     +'#ordersList .order .reorder-btn:active{transform:scale(.98)}';
   document.head.appendChild(st);
 })();
+
+/* Cash Boost : bannière « Installe l'app » en bas de l'écran (comme sur CashTransfe).
+   - Android / Chrome : le bouton « Installer » ouvre la vraie fenêtre d'installation du navigateur.
+   - iPhone (Safari) : l'installation automatique n'existe pas, le bouton affiche les 3 étapes à suivre.
+   - Jamais affichée si l'app est déjà installée. « Pas maintenant » ou ✕ la cache pendant 7 jours.
+   Utilise deferredInstall et installRefresh() de base.js (la carte « Application » du compte reste en place). */
+(function(){
+  'use strict';
+  var KEY='cashboost_install_snooze',DAYS=7,DELAY=2500;
+  var el=null,shown=false;
+
+  var st=document.createElement('style');
+  st.textContent='#installBanner{position:fixed;left:12px;right:12px;bottom:var(--ib-b,12px);z-index:99990;max-width:460px;margin:0 auto;padding:16px 16px 14px;border:1px solid var(--primary-line,rgba(255,255,255,.14));border-radius:18px;background:var(--surface,#14151b);color:var(--text-strong,#fff);box-shadow:0 18px 40px -12px rgba(0,0,0,.55);transform:translateY(24px);opacity:0;transition:transform .3s ease,opacity .3s ease}'
+    +'#installBanner.show{transform:none;opacity:1}'
+    +'#installBanner .ib-t{display:block;padding-right:34px;font-family:"Space Grotesk",sans-serif;font-size:17px;font-weight:700}'
+    +'#installBanner .ib-d{margin:4px 0 12px;font-size:14px;line-height:1.45;color:var(--muted,#9aa0ad)}'
+    +'#installBanner .ib-steps{margin:0 0 12px;padding-left:20px;font-size:14px;line-height:1.55}'
+    +'#installBanner .ib-steps[hidden]{display:none}'
+    +'#installBanner .ib-act{display:flex;gap:10px}'
+    +'#installBanner .ib-act button{min-height:46px;padding:10px 16px;border-radius:12px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent}'
+    +'#installBanner .ib-go{border:0;background:var(--brand-grad,#1E6BFF);color:var(--brand-ink,#fff)}'
+    +'#installBanner .ib-later{border:1px solid var(--primary-line,rgba(255,255,255,.2));background:transparent;color:var(--text-strong,#fff)}'
+    +'#installBanner .ib-x{position:absolute;top:8px;right:8px;width:36px;height:36px;padding:0;border:0;background:transparent;color:var(--muted,#9aa0ad);font-size:16px;cursor:pointer}'
+    +'@media (prefers-reduced-motion:reduce){#installBanner{transition:none}}';
+  document.head.appendChild(st);
+
+  function standalone(){ return window.navigator.standalone===true||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches); }
+  function onIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1); }
+  function snoozed(){ try{ return Number(localStorage.getItem(KEY)||0)>Date.now(); }catch(_){ return false; } }
+  function snooze(){ try{ localStorage.setItem(KEY,String(Date.now()+DAYS*864e5)); }catch(_){} }
+  function promptEvt(){ try{ return deferredInstall||null; }catch(_){ return null; } }
+
+  function hide(){
+    if(!el) return;
+    var e=el;
+    el=null;shown=false;
+    e.classList.remove('show');
+    setTimeout(function(){ if(e.parentNode) e.parentNode.removeChild(e); },350);
+  }
+  // Au-dessus de la barre du bas quand elle est visible, sinon près du bord de l'écran
+  function lift(){
+    if(!el) return;
+    var nav=document.querySelector('nav.bottom'),av=document.getElementById('appView');
+    var on=!!nav&&!!av&&!av.classList.contains('hidden');
+    el.style.setProperty('--ib-b',on?(Math.round(nav.getBoundingClientRect().height)+12)+'px':'calc(12px + env(safe-area-inset-bottom,0px))');
+  }
+
+  function show(ios){
+    if(shown) return;
+    shown=true;
+    var d=document.createElement('div');
+    d.id='installBanner';
+    d.setAttribute('role','dialog');
+    d.setAttribute('aria-label','Installer l\u2019application');
+    d.innerHTML='<button type="button" class="ib-x" aria-label="Fermer">\u2715</button>'
+      +'<strong class="ib-t">Installe l\u2019app</strong>'
+      +'<p class="ib-d">Ajoute Cash Boost à ton écran d\u2019accueil pour y accéder plus vite, en plein écran.</p>'
+      +'<ol class="ib-steps" hidden><li>Ouvre ce site dans <b>Safari</b>.</li><li>Touche <b>Partager</b> (le carré avec une flèche).</li><li>Choisis <b>Sur l\u2019écran d\u2019accueil</b>, puis <b>Ajouter</b>.</li></ol>'
+      +'<div class="ib-act"><button type="button" class="ib-go">'+(ios?'Voir comment':'Installer')+'</button><button type="button" class="ib-later">Pas maintenant</button></div>';
+    var close=function(){ snooze(); hide(); };
+    d.querySelector('.ib-x').onclick=close;
+    d.querySelector('.ib-later').onclick=close;
+    d.querySelector('.ib-go').onclick=async function(){
+      if(ios){
+        d.querySelector('.ib-steps').hidden=false;
+        this.hidden=true;
+        d.querySelector('.ib-later').textContent='Fermer';
+        return;
+      }
+      var ev=promptEvt();
+      if(!ev){ snooze(); hide(); return; }
+      try{
+        ev.prompt();
+        var r=await ev.userChoice;
+        if(!(r&&r.outcome==='accepted')) snooze();
+      }catch(_){}
+      try{ deferredInstall=null; }catch(_){}
+      try{ installRefresh(); }catch(_){}
+      hide();
+    };
+    document.body.appendChild(d);
+    el=d;
+    lift();
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ d.classList.add('show'); }); });
+  }
+
+  function schedule(){
+    if(shown||standalone()||snoozed()) return;
+    setTimeout(function(){
+      if(shown||standalone()||snoozed()) return;
+      if(promptEvt()) show(false);
+      else if(onIOS()) show(true);
+    },DELAY);
+  }
+
+  window.addEventListener('beforeinstallprompt',schedule);
+  window.addEventListener('appinstalled',function(){ snooze(); hide(); });
+  setInterval(lift,1000);
+  if(document.readyState==='complete') schedule(); else window.addEventListener('load',schedule);
+})();
