@@ -183,10 +183,10 @@
 })();
 
 /* Cash Boost : bannière « Installe l'app » en bas de l'écran (comme sur CashTransfe).
-   - Android / Chrome : le bouton « Installer » ouvre la vraie fenêtre d'installation du navigateur.
-   - iPhone (Safari) : l'installation automatique n'existe pas, le bouton affiche les 3 étapes à suivre.
-   - Jamais affichée si l'app est déjà installée.
-   - Elle revient à chaque ouverture ou rafraîchissement de la page tant que l'app n'est pas installée.
+   - Si le navigateur autorise l'installation (Chrome Android) : « Installer » ouvre la vraie fenêtre d'installation.
+   - Sinon (iPhone, ou Chrome qui retient son autorisation) : « Voir comment » affiche les étapes à suivre.
+   - Jamais affichée si l'app est déjà ouverte en mode application (icône de l'écran d'accueil).
+   - Elle revient à chaque ouverture ou rafraîchissement tant que l'app n'est pas ouverte en mode application.
      « Pas maintenant » ou ✕ la ferme seulement pour la visite en cours.
      Pour la cacher plus longtemps après un refus, mets DAYS à 1, 3 ou 7 (nombre de jours).
    Utilise deferredInstall et installRefresh() de base.js (la carte « Application » du compte reste en place). */
@@ -233,9 +233,14 @@
     el.style.setProperty('--ib-b',on?(Math.round(nav.getBoundingClientRect().height)+12)+'px':'calc(12px + env(safe-area-inset-bottom,0px))');
   }
 
-  function show(ios){
+  var STEPS_IOS='<li>Ouvre ce site dans <b>Safari</b>.</li><li>Touche <b>Partager</b> (le carré avec une flèche).</li><li>Choisis <b>Sur l\u2019écran d\u2019accueil</b>, puis <b>Ajouter</b>.</li>';
+  var STEPS_ANDROID='<li>Ouvre le menu du navigateur (<b>\u22EE</b>, en haut à droite).</li><li>Touche <b>Installer l\u2019application</b> (ou <b>Ajouter à l\u2019écran d\u2019accueil</b>).</li><li>Confirme avec <b>Installer</b>.</li>';
+
+  // native = Chrome a donné son autorisation ; sinon on montre les étapes à la main
+  function show(native){
     if(shown) return;
     shown=true;
+    var ios=onIOS();
     var d=document.createElement('div');
     d.id='installBanner';
     d.setAttribute('role','dialog');
@@ -243,20 +248,19 @@
     d.innerHTML='<button type="button" class="ib-x" aria-label="Fermer">\u2715</button>'
       +'<strong class="ib-t">Installe l\u2019app</strong>'
       +'<p class="ib-d">Ajoute Cash Boost à ton écran d\u2019accueil pour y accéder plus vite, en plein écran.</p>'
-      +'<ol class="ib-steps" hidden><li>Ouvre ce site dans <b>Safari</b>.</li><li>Touche <b>Partager</b> (le carré avec une flèche).</li><li>Choisis <b>Sur l\u2019écran d\u2019accueil</b>, puis <b>Ajouter</b>.</li></ol>'
-      +'<div class="ib-act"><button type="button" class="ib-go">'+(ios?'Voir comment':'Installer')+'</button><button type="button" class="ib-later">Pas maintenant</button></div>';
+      +'<ol class="ib-steps" hidden>'+(ios?STEPS_IOS:STEPS_ANDROID)+'</ol>'
+      +'<div class="ib-act"><button type="button" class="ib-go">'+(native?'Installer':'Voir comment')+'</button><button type="button" class="ib-later">Pas maintenant</button></div>';
     var close=function(){ snooze(); hide(); };
+    var reveal=function(btn){
+      d.querySelector('.ib-steps').hidden=false;
+      btn.hidden=true;
+      d.querySelector('.ib-later').textContent='Fermer';
+    };
     d.querySelector('.ib-x').onclick=close;
     d.querySelector('.ib-later').onclick=close;
     d.querySelector('.ib-go').onclick=async function(){
-      if(ios){
-        d.querySelector('.ib-steps').hidden=false;
-        this.hidden=true;
-        d.querySelector('.ib-later').textContent='Fermer';
-        return;
-      }
-      var ev=promptEvt();
-      if(!ev){ snooze(); hide(); return; }
+      var ev=native?promptEvt():null;
+      if(!ev){ reveal(this); return; }
       try{
         ev.prompt();
         var r=await ev.userChoice;
@@ -276,11 +280,11 @@
     if(shown||dismissed||standalone()||snoozed()) return;
     setTimeout(function(){
       if(shown||dismissed||standalone()||snoozed()) return;
-      if(promptEvt()) show(false);
-      else if(onIOS()) show(true);
+      show(!!promptEvt());
     },DELAY);
   }
 
+  // Si Chrome donne son autorisation après l'affichage des étapes, le bouton « Installer » reste possible au prochain chargement
   window.addEventListener('beforeinstallprompt',schedule);
   window.addEventListener('appinstalled',function(){ dismissed=true; hide(); });
   setInterval(lift,1000);
