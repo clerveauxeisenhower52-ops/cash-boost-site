@@ -214,7 +214,13 @@
 
   function standalone(){ return window.navigator.standalone===true||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches); }
   function onIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1); }
-  function snoozed(){ try{ return Number(localStorage.getItem(KEY)||0)>Date.now(); }catch(_){ return false; } }
+  // DAYS=0 : jamais de blocage durable (et on efface l'ancien blocage de 7 jours laissé par la première version)
+  function snoozed(){
+    try{
+      if(!(DAYS>0)){ localStorage.removeItem(KEY); return false; }
+      return Number(localStorage.getItem(KEY)||0)>Date.now();
+    }catch(_){ return false; }
+  }
   function snooze(){ dismissed=true; if(DAYS>0){ try{ localStorage.setItem(KEY,String(Date.now()+DAYS*864e5)); }catch(_){} } }
   function promptEvt(){ try{ return deferredInstall||null; }catch(_){ return null; } }
 
