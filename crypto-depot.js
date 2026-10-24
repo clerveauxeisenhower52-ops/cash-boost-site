@@ -29,6 +29,7 @@
       '.cb-qr{display:flex;justify-content:center;margin:14px 0}'+
       '.cb-qr[hidden]{display:none}'+
       '.cb-addr{font-size:13px!important;letter-spacing:0!important;word-break:break-all;line-height:1.4}'+
+      '#walletVerify:disabled{opacity:1;background:var(--surface-elev,#1a1a24);color:var(--muted,#9aa3b5);box-shadow:none;border:1px solid var(--line-strong,rgba(255,255,255,.14));cursor:not-allowed}'+
       '.cb-list{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:8px;font-size:13px;color:var(--text)}'+
       '.cb-list li{padding:10px 12px;border:1px solid var(--line-strong,rgba(255,255,255,.12));border-radius:12px;background:var(--surface-elev,transparent)}'+
       '.cb-list li.warn{border-color:var(--danger,#ef4444)}'+
@@ -123,7 +124,12 @@
     document.querySelectorAll('#cbNets .wallet-op').forEach(function(b){
       var on=b.dataset.net===net; b.classList.toggle('active',on); b.setAttribute('aria-checked',String(on));
     });
-    $id('cbAddr').textContent=info.address;
+    /* Adresse coupée en deux moitiés égales (évite un petit bout orphelin sur la 2e ligne) */
+    var addrEl=$id('cbAddr'), addr=String(info.address||''), half=Math.ceil(addr.length/2);
+    addrEl.textContent='';
+    addrEl.appendChild(document.createTextNode(addr.slice(0,half)));
+    addrEl.appendChild(document.createElement('br'));
+    addrEl.appendChild(document.createTextNode(addr.slice(half)));
     var rate=Number(info.rate_htg)||0, min=Number(info.min_usdt)||5;
     $id('cbRate').textContent=rate>0?('1 USDT = '+rate+' HTG. Crédit automatique.'):'Crédit automatique après confirmation.';
     var list=$id('cbList'); list.innerHTML='';
