@@ -71,3 +71,11 @@
     setInterval(bindAddr,3000);
   });
 })();
+
+/* Dépôt crypto (USDT) : charge le module de l'onglet « Crypto » du portefeuille */
+(function(){
+  var s=document.createElement('script');
+  s.src='crypto-depot.js?v=20261024';
+  s.defer=true;
+  document.body.appendChild(s);
+})();
