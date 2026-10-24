@@ -383,15 +383,23 @@ function readSvcBox(box){
 }
 function checkSvc(r){if(!r.name)return 'Entre le nom du service.';if(!r.field_label)return 'Indique ce que le client doit donner.';if(r.active&&(!(r.rate>0)||!(r.effective_rate>0)||!(r.min_qty>0)))return 'Taux et minimum requis pour activer.';return '';}
 function fileToLogo(file){return new Promise((resolve,reject)=>{if(!file.type.startsWith('image/')||file.size>8*1024*1024)return reject(new Error('image'));const img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{const n=256,c=document.createElement('canvas');c.width=n;c.height=n;const side=Math.min(img.width,img.height);c.getContext('2d').drawImage(img,(img.width-side)/2,(img.height-side)/2,side,side,0,0,n,n);URL.revokeObjectURL(url);resolve(c.toDataURL('image/png'));};img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('load'));};img.src=url;});}
-function slugify(t){return String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'service';}
+function slugify(t){return String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'service';}
 
 
 // =====================================================================
-// DÉPÔTS CRYPTO : suivi (statut + lien explorateur) et avertissement de gaz bas
+// DÉPÔTS CRYPTO : suivi (statut + lien explorateur), avertissement de gaz bas
+// et envois non reconnus (mauvais réseau / mauvais jeton).
 // Données : fonction SQL admin_crypto_overview (réservée aux admins).
 // =====================================================================
 const CRYPTO_TX_URL = { bsc: 'https://bscscan.com/tx/', plasma: 'https://plasmascan.to/tx/' };
-const CRYPTO_NET_LABEL = { bsc: 'BNB Smart Chain', plasma: 'Plasma' };
+const CRYPTO_ADDR_URL = {
+  bsc: 'https://bscscan.com/address/', ethereum: 'https://etherscan.io/address/', polygon: 'https://polygonscan.com/address/',
+  arbitrum: 'https://arbiscan.io/address/', base: 'https://basescan.org/address/', optimism: 'https://optimistic.etherscan.io/address/'
+};
+const CRYPTO_NET_LABEL = {
+  bsc: 'BNB Smart Chain', plasma: 'Plasma', ethereum: 'Ethereum', polygon: 'Polygon',
+  arbitrum: 'Arbitrum', base: 'Base', optimism: 'Optimism'
+};
 let cryptoShowAll = false, cryptoData = null;
 
 function cryptoShort(h, a = 8, b = 6){
@@ -432,7 +440,8 @@ async function loadCryptoAdmin(){
 function renderCryptoAdmin(box){
   const deps = Array.isArray(cryptoData?.deposits) ? cryptoData.deposits : [];
   const sts = Array.isArray(cryptoData?.status) ? cryptoData.status : [];
-  if(!deps.length && !sts.length){ box.innerHTML = ''; return; }
+  const unrec = Array.isArray(cryptoData?.unrecognized) ? cryptoData.unrecognized : [];
+  if(!deps.length && !sts.length && !unrec.length){ box.innerHTML = ''; return; }
 
   // Avertissements : uniquement sur les réseaux qui ont déjà reçu des dépôts
   const warns = [];
@@ -482,7 +491,37 @@ function renderCryptoAdmin(box){
     ? `<button type="button" class="admin-filter-btn" id="cryptoToggle" style="margin-top:8px">${cryptoShowAll ? 'Voir moins' : 'Voir tout (' + deps.length + ')'}</button>`
     : '';
 
-  box.innerHTML = `<h3 style="margin:0 0 8px">💰 Dépôts crypto</h3>${warnHtml}${stats}${rows || '<div class="order-meta">Aucun dépôt.</div>'}${more}`;
+  // Envois non reconnus : rien n'est crédité, à traiter à la main puis « Marquer traité »
+  const unrecHtml = unrec.length
+    ? `<h3 style="margin:18px 0 6px">❓ Envois non reconnus</h3>
+       <div class="order-meta" style="margin-bottom:8px">Mauvais réseau ou mauvais jeton envoyé sur l'adresse d'un client. Rien n'est crédité.</div>`
+      + unrec.map(u => {
+        const addr = String(u.address || '');
+        const base = CRYPTO_ADDR_URL[u.network];
+        const addrLink = (base && /^0x[0-9a-fA-F]{40}$/.test(addr))
+          ? `<a class="proof-link" href="${base}${esc(addr)}" target="_blank" rel="noopener">${esc(cryptoShort(addr, 8, 6))}</a>`
+          : esc(cryptoShort(addr, 8, 6));
+        return `<div class="order">
+          <div class="order-top"><strong>${esc(u.full_name || 'Client')}</strong><strong>${(Number(u.amount) || 0).toFixed(2)} ${esc(u.token_symbol)}</strong></div>
+          <div class="order-meta">Sur ${esc(CRYPTO_NET_LABEL[u.network] || u.network)} · <span class="order-ago">${timeAgo(u.first_seen)}</span> <span class="ah-tag" style="background:rgba(245,158,11,.15);color:#f59e0b">à traiter</span></div>
+          <div class="order-meta">Adresse de dépôt : ${addrLink} <button type="button" class="copy-tag" data-copy="${esc(addr)}" aria-label="Copier l'adresse">📋</button></div>
+          <button type="button" class="admin-filter-btn" data-unrec-id="${esc(u.id)}" style="margin-top:8px">✅ Marquer traité</button>
+        </div>`;
+      }).join('')
+    : '';
+
+  box.innerHTML = `<h3 style="margin:0 0 8px">💰 Dépôts crypto</h3>${warnHtml}${stats}${rows || '<div class="order-meta">Aucun dépôt.</div>'}${more}${unrecHtml}`;
   const t = $('cryptoToggle');
   if(t) t.onclick = () => { cryptoShowAll = !cryptoShowAll; renderCryptoAdmin(box); };
+  box.querySelectorAll('[data-unrec-id]').forEach(b => {
+    b.onclick = async () => {
+      b.disabled = true;
+      try{
+        const { error } = await sb.rpc('admin_mark_unrecognized_handled', { p_id: b.dataset.unrecId });
+        if(error){ showToast('Erreur : impossible de marquer traité.'); b.disabled = false; return; }
+        showToast('✅ Marqué comme traité');
+        loadCryptoAdmin();
+      }catch(_){ showToast('Erreur : impossible de marquer traité.'); b.disabled = false; }
+    };
+  });
 }
