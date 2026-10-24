@@ -50,8 +50,7 @@
     +'.pc-opt:disabled{opacity:.5;cursor:not-allowed}'
     +'.pc-ic{font-size:26px;line-height:1;flex:none}'
     +'.pc-tx b{display:block;font-size:16px}'
-    +'.pc-tx small{display:block;margin-top:2px;font-size:13px;opacity:.85;line-height:1.35}'
-    +'.pc-tx em{display:block;margin-top:4px;font-size:12px;font-style:normal;opacity:.7}';
+    +'.pc-tx small{display:block;margin-top:2px;font-size:13px;opacity:.85;line-height:1.35}';
   document.head.appendChild(st);
 
   function mk(tag,cls,txt){
@@ -86,7 +85,6 @@
     var tx=mk('span','pc-tx');
     tx.appendChild(mk('b','',title));
     tx.appendChild(mk('small','',ready?desc:'Bientôt disponible'));
-    if(ready&&Number(s.rate)>0) tx.appendChild(mk('em','','1 USD = '+fmt(s.rate)+' HTG'));
     b.appendChild(tx);
     b.onclick=function(){ closeChoice(); openService(s.id); };
     return b;
