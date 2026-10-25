@@ -1,5 +1,6 @@
 /* Cash Boost : écran « Effectuer un dépôt » (choix MonCash / NatCash / Crypto)
-   S'appuie sur la fenêtre « Ajouter des fonds » existante : un clic sur une carte ouvre l'étape de dépôt déjà en place. */
+   S'appuie sur la fenêtre « Ajouter des fonds » existante : un clic sur une carte ouvre l'étape de dépôt déjà en place.
+   MonCash et NatCash sont séparés : l'étape n'affiche que le compte choisi. */
 (function(){
   'use strict';
   function $id(i){ return document.getElementById(i); }
@@ -11,6 +12,7 @@
     s.textContent=
       '#cbModeTabs{display:none!important}'+
       '#walletSheet.dp-choose > section.wallet-step,#walletSheet.dp-choose #walletCryptoPanel{display:none!important}'+
+      '#walletSheet.dp-sep #walletOps{display:none!important}'+
       '#walletSheet:not(.dp-choose) #dpChoose{display:none}'+
       '#walletSheet.dp-choose #dpBack{display:none}'+
       '#walletSheet.done #dpChoose,#walletSheet.done #dpBack{display:none!important}'+
@@ -73,7 +75,7 @@
       var k=c.dataset.dp;
       if(k==='crypto'){
         whenCryptoReady(function(){
-          sheet.classList.remove('dp-choose');
+          sheet.classList.remove('dp-choose','dp-sep');
           var t=document.querySelector('#cbModeTabs [data-m="crypto"]'); if(t) t.click();
         });
         return;
@@ -81,9 +83,18 @@
       sheet.classList.remove('dp-choose');
       var op=document.querySelector('#walletOps .wallet-op[data-op="'+k+'"]'); if(op) op.click();
       var m=document.querySelector('#cbModeTabs [data-m="mm"]'); if(m) m.click();
+      // MonCash et NatCash sont séparés : on n'affiche que le compte choisi
+      sheet.classList.add('dp-sep');
+      var st=sheet.querySelector(':scope > section.wallet-step');
+      if(st){
+        var h=st.querySelector('h3'), p=st.querySelector('.wallet-step-head p');
+        if(h) h.textContent='Compte '+k;
+        if(p) p.textContent='Envoie ton dépôt vers ce compte '+k+'.';
+      }
     });
     back.addEventListener('click',function(){
       var m=document.querySelector('#cbModeTabs [data-m="mm"]'); if(m) m.click();
+      sheet.classList.remove('dp-sep');
       sheet.classList.add('dp-choose');
     });
   }
@@ -94,7 +105,7 @@
       build();
       var sheet=$id('walletSheet'), title=$id('walletSheetTitle');
       if(title) title.textContent='Effectuer un dépôt';
-      if(sheet) sheet.classList.add('dp-choose');
+      if(sheet){ sheet.classList.remove('dp-sep'); sheet.classList.add('dp-choose'); }
     },0);
   }
 
