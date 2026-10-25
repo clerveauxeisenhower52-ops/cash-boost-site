@@ -5,6 +5,13 @@
   'use strict';
   function $id(i){ return document.getElementById(i); }
   var CHEV='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+  // Icône USDT dessinée en SVG : carré arrondi vert, barre du haut, pied et anneau en blanc
+  var USDT_ICON='<svg viewBox="0 0 32 32" width="100%" height="100%" aria-hidden="true" focusable="false">'+
+    '<rect width="32" height="32" rx="8" fill="#26A17B"/>'+
+    '<rect x="7" y="7" width="18" height="4.2" rx="1.2" fill="#fff"/>'+
+    '<rect x="13.9" y="9.5" width="4.2" height="16.5" rx="1.2" fill="#fff"/>'+
+    '<ellipse cx="16" cy="15.6" rx="9.4" ry="2.9" fill="none" stroke="#fff" stroke-width="1.7"/>'+
+    '</svg>';
 
   function injectCss(){
     if($id('dpCss')) return;
@@ -22,7 +29,7 @@
       '.dp-card:active{background:var(--primary-soft,rgba(0,229,255,.08))}'+
       '.dp-logo{flex:none;width:58px;height:58px;border-radius:16px;overflow:hidden;display:grid;place-items:center;background:var(--primary-soft,rgba(0,229,255,.12))}'+
       '.dp-logo img{width:100%;height:100%;object-fit:cover;display:block}'+
-      '.dp-logo.usdt{background:#26a17b;color:#fff;font:700 28px \'Space Grotesk\',Inter,sans-serif}'+
+      '.dp-logo.usdt{background:none}'+
       '.dp-tx{flex:1;min-width:0}'+
       '.dp-tx b{display:block;font:700 18px \'Space Grotesk\',Inter,sans-serif;color:var(--text-strong,inherit)}'+
       '.dp-tx small{display:block;margin-top:3px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}'+
@@ -60,7 +67,7 @@
         '<span class="dp-tx"><b>MonCash</b><small>Paiement mobile en HTG</small></span><span class="dp-chev">'+CHEV+'</span></button>'+
       '<button type="button" class="dp-card" data-dp="NatCash"><span class="dp-logo"><img src="natcash.png" alt="" onerror="this.style.display=\'none\'"></span>'+
         '<span class="dp-tx"><b>NatCash</b><small>Paiement mobile en HTG</small></span><span class="dp-chev">'+CHEV+'</span></button>'+
-      '<button type="button" class="dp-card" data-dp="crypto"><span class="dp-logo usdt" aria-hidden="true">\u20AE</span>'+
+      '<button type="button" class="dp-card" data-dp="crypto"><span class="dp-logo usdt" aria-hidden="true">'+USDT_ICON+'</span>'+
         '<span class="dp-tx"><b>Crypto</b><small>USDT · BSC et Plasma</small></span><span class="dp-chev">'+CHEV+'</span></button>'+
       '<div class="dp-tip"><b>Astuce :</b> les dépôts sont crédités directement sur ton solde après vérification du paiement. Tu n\u2019as pas besoin d\u2019attendre une approbation manuelle.</div>';
     need.insertAdjacentElement('afterend',box);
