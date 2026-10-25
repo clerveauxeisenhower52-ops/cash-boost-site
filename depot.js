@@ -5,12 +5,14 @@
   'use strict';
   function $id(i){ return document.getElementById(i); }
   var CHEV='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
-  // Icône USDT dessinée en SVG : carré arrondi vert, barre du haut, pied et anneau en blanc
-  var USDT_ICON='<svg viewBox="0 0 32 32" width="100%" height="100%" aria-hidden="true" focusable="false">'+
-    '<rect width="32" height="32" rx="8" fill="#26A17B"/>'+
-    '<rect x="7" y="7" width="18" height="4.2" rx="1.2" fill="#fff"/>'+
-    '<rect x="13.9" y="9.5" width="4.2" height="16.5" rx="1.2" fill="#fff"/>'+
-    '<ellipse cx="16" cy="15.6" rx="9.4" ry="2.9" fill="none" stroke="#fff" stroke-width="1.7"/>'+
+  // Logo USDT en SVG : rond vert, grand T blanc et anneau (le pied du T passe à travers l'anneau)
+  var USDT_ICON='<svg viewBox="0 0 1065 1065" width="100%" height="100%" aria-hidden="true" focusable="false">'+
+    '<circle cx="532.5" cy="532.5" r="532.5" fill="#26A17B"/>'+
+    '<ellipse cx="532.5" cy="549" rx="325" ry="72" fill="#fff"/>'+
+    '<ellipse cx="532.5" cy="541" rx="288" ry="47" fill="#26A17B"/>'+
+    '<rect x="277.5" y="272" width="510" height="124" fill="#fff"/>'+
+    '<rect x="471" y="396" width="123" height="181" fill="#fff"/>'+
+    '<rect x="471" y="620" width="123" height="260" fill="#fff"/>'+
     '</svg>';
 
   function injectCss(){
@@ -29,7 +31,7 @@
       '.dp-card:active{background:var(--primary-soft,rgba(0,229,255,.08))}'+
       '.dp-logo{flex:none;width:58px;height:58px;border-radius:16px;overflow:hidden;display:grid;place-items:center;background:var(--primary-soft,rgba(0,229,255,.12))}'+
       '.dp-logo img{width:100%;height:100%;object-fit:cover;display:block}'+
-      '.dp-logo.usdt{background:none}'+
+      '.dp-logo.usdt{background:none;border-radius:50%}'+
       '.dp-tx{flex:1;min-width:0}'+
       '.dp-tx b{display:block;font:700 18px \'Space Grotesk\',Inter,sans-serif;color:var(--text-strong,inherit)}'+
       '.dp-tx small{display:block;margin-top:3px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}'+
