@@ -1,6 +1,9 @@
 /* Cash Boost : dépôt crypto (USDT) dans « Ajouter des fonds »
    Ajoute un onglet « Crypto (USDT) » à côté de MonCash / NatCash.
    L'onglet n'apparaît que si la fonction crypto-deposit-address répond (dépôts crypto activés).
+   Parcours : choix du réseau, bouton « Afficher mon adresse de paiement », puis adresse + QR + récapitulatif
+   (taux, frais de service) et avertissements. L'adresse du client reste permanente (pas d'expiration).
+   Les frais viennent du réglage crypto_fee_percent (renvoyé par crypto-deposit-address) et sont déduits côté serveur.
    Affiche aussi l'historique des dépôts USDT du client (statut + lien explorateur)
    et un avertissement si un envoi sur le mauvais réseau / avec le mauvais jeton a été détecté.
    Bandeau « Dépôt détecté » : dès qu'un envoi apparaît sur la blockchain (avant les confirmations),
@@ -11,11 +14,12 @@
   var info=null, state='idle', mode='mm', net='bsc', poll=null, baseId=null, qrLib=null, pendBusy=false;
 
   var NETS={
-    bsc:{label:'BSC (BEP20)', token:'USDT BEP20'},
-    plasma:{label:'Plasma', token:'USDT0'}
+    bsc:{label:'BSC (BEP20)', token:'USDT BEP20', short:'USDT \u00B7 BEP-20 (BSC)'},
+    plasma:{label:'Plasma', token:'USDT0', short:'USDT0 \u00B7 Plasma'}
   };
   var NET_LABEL={bsc:'BSC',plasma:'Plasma',ethereum:'Ethereum',polygon:'Polygon',arbitrum:'Arbitrum',base:'Base',optimism:'Optimism'};
   var EXPLORER={bsc:'https://bscscan.com/tx/',plasma:'https://plasmascan.to/tx/'};
+  var GEN_LABEL='Afficher mon adresse de paiement';
 
   /* Petits logos des réseaux (SVG) : BNB Smart Chain et Plasma */
   var LOGO_BSC='<svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true" focusable="false">'+
@@ -58,6 +62,21 @@
       '.cb-net-tx b{display:block;font-size:16px;font-weight:700;line-height:1.25;color:var(--text-strong,inherit)}'+
       '.cb-net-tx span{display:block;margin-top:2px;font-size:14px;color:var(--muted,#9aa3b5)}'+
       '.cb-net-tx small{display:block;margin-top:2px;font-size:13px;color:var(--muted,#9aa3b5);opacity:.8}'+
+      /* Bouton « Afficher mon adresse de paiement » + petit chargement */
+      '.cb-gen{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:54px;margin:14px 0 0;padding:12px 16px;border:0;border-radius:16px;background:var(--brand-grad,#1E6BFF);color:var(--brand-ink,#fff);font:inherit;font-size:16px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent}'+
+      '.cb-gen[hidden]{display:none}'+
+      '.cb-gen:disabled{opacity:.85;cursor:wait}'+
+      '.cb-spin{width:20px;height:20px;border:3px solid currentColor;border-right-color:transparent;border-radius:50%;animation:cbSpin .7s linear infinite}'+
+      '@keyframes cbSpin{to{transform:rotate(360deg)}}'+
+      '#cbReveal[hidden]{display:none}'+
+      /* Récapitulatif : réseau, montant, taux, frais */
+      '.cb-sum{margin:14px 0 0;padding:12px 14px;border:1px solid var(--line-strong,rgba(255,255,255,.12));border-radius:14px;background:var(--surface-elev,transparent);display:grid;gap:8px;font-size:14px}'+
+      '.cb-sum div{display:flex;justify-content:space-between;align-items:baseline;gap:12px}'+
+      '.cb-sum span{color:var(--muted,#9aa3b5)}'+
+      '.cb-sum b{text-align:right;color:var(--text-strong,inherit)}'+
+      '.cb-sum .rate b{color:#16a34a}'+
+      '.cb-sum .fee b{color:#ea580c}'+
+      '.cb-note{margin:12px 0 0;padding:12px;border:1px solid var(--primary-line,rgba(59,130,246,.35));border-radius:12px;background:var(--primary-soft,rgba(59,130,246,.12));font-size:13px;line-height:1.45;color:var(--text)}'+
       '.cb-qr{display:flex;justify-content:center;margin:14px 0}'+
       '.cb-qr[hidden]{display:none}'+
       '.cb-addr{font-size:13px!important;letter-spacing:0!important;word-break:break-all;line-height:1.4}'+
@@ -121,7 +140,7 @@
     panel.id='walletCryptoPanel'; panel.className='wallet-step';
     panel.innerHTML=
       '<div class="wallet-step-head"><span class="wallet-step-num" aria-hidden="true">\u20AE</span>'+
-      '<div><h3>Dépose des USDT</h3><p id="cbRate">Choisis le réseau, puis envoie à ton adresse personnelle.</p></div></div>'+
+      '<div><h3>Dépose des USDT</h3><p id="cbRate">Choisis le réseau, puis affiche ton adresse personnelle.</p></div></div>'+
       '<div class="wallet-ops" id="cbNets" role="radiogroup" aria-label="Réseau">'+
         '<button type="button" class="wallet-op cb-net active" data-net="bsc" role="radio" aria-checked="true">'+
           '<span class="cb-net-logo" aria-hidden="true">'+LOGO_BSC+'</span>'+
@@ -130,13 +149,18 @@
           '<span class="cb-net-logo" aria-hidden="true">'+LOGO_PLASMA+'</span>'+
           '<span class="cb-net-tx"><b>Plasma</b><span>USDT0 (Plasma)</span><small class="cb-net-min">Min: 5 USDT</small></span></button>'+
       '</div>'+
-      '<div class="wallet-acc"><small>Ton adresse de dépôt personnelle</small>'+
-        '<div class="wallet-acc-row"><span id="cbAddr" class="wallet-acc-num cb-addr">—</span>'+
-        '<button id="cbCopy" type="button" class="wallet-copy">Copier</button></div></div>'+
-      '<div class="cb-qr" id="cbQrBox" hidden><img id="cbQr" alt="QR code de ton adresse" width="180" height="180" '+
-        'style="width:180px;height:180px;max-width:100%;image-rendering:pixelated;background:#fff;padding:8px;border-radius:12px;display:block"></div>'+
+      '<button type="button" class="cb-gen" id="cbGen">'+GEN_LABEL+'</button>'+
+      '<div id="cbReveal" hidden>'+
+        '<div class="wallet-acc"><small>Ton adresse de dépôt personnelle</small>'+
+          '<div class="wallet-acc-row"><span id="cbAddr" class="wallet-acc-num cb-addr">—</span>'+
+          '<button id="cbCopy" type="button" class="wallet-copy">Copier</button></div></div>'+
+        '<div class="cb-qr" id="cbQrBox" hidden><img id="cbQr" alt="QR code de ton adresse" width="180" height="180" '+
+          'style="width:180px;height:180px;max-width:100%;image-rendering:pixelated;background:#fff;padding:8px;border-radius:12px;display:block"></div>'+
+        '<div class="cb-sum" id="cbSum"></div>'+
+        '<div class="cb-note" id="cbNote"></div>'+
+        '<ul class="cb-list" id="cbList"></ul>'+
+      '</div>'+
       '<div class="cb-pending" id="cbPending" role="status" aria-live="polite" hidden></div>'+
-      '<ul class="cb-list" id="cbList"></ul>'+
       '<div class="cb-lost" id="cbLost" role="alert" hidden></div>'+
       '<div id="cbWait" class="msg" role="status"></div>'+
       '<h4 class="cb-hist-title" id="cbHistTitle" hidden>Mes dépôts USDT</h4>'+
@@ -152,9 +176,24 @@
       var b=e.target.closest('[data-net]'); if(!b) return;
       net=b.dataset.net; render();
     });
+    $id('cbGen').addEventListener('click',function(){
+      var b=this; if(b.disabled||!info) return;
+      b.disabled=true; b.innerHTML='<span class="cb-spin" aria-label="Chargement"></span>';
+      setTimeout(function(){
+        b.hidden=true; b.disabled=false; b.textContent=GEN_LABEL;
+        var r=$id('cbReveal'); if(r) r.hidden=false;
+        render();
+      },700);
+    });
     $id('cbCopy').addEventListener('click',function(){
       if(info&&info.address&&typeof walletCopy==='function') walletCopy(info.address,'Adresse copiée');
     });
+  }
+
+  function resetReveal(){
+    var g=$id('cbGen'), r=$id('cbReveal');
+    if(g){ g.hidden=false; g.disabled=false; g.textContent=GEN_LABEL; }
+    if(r) r.hidden=true;
   }
 
   function render(){
@@ -169,13 +208,30 @@
     addrEl.appendChild(document.createTextNode(addr.slice(0,half)));
     addrEl.appendChild(document.createElement('br'));
     addrEl.appendChild(document.createTextNode(addr.slice(half)));
-    var rate=Number(info.rate_htg)||0, min=Number(info.min_usdt)||5;
+    var rate=Number(info.rate_htg)||0, min=Number(info.min_usdt)||5, fee=Number(info.fee_percent)||0;
     document.querySelectorAll('#cbNets .cb-net-min').forEach(function(e){ e.textContent='Min: '+min+' USDT'; });
     $id('cbRate').textContent=rate>0?('1 USDT = '+rate+' HTG. Crédit automatique.'):'Crédit automatique après confirmation.';
+
+    /* Récapitulatif */
+    var sum=$id('cbSum'); sum.innerHTML='';
+    function row(label,value,cls){
+      var d=document.createElement('div'); if(cls) d.className=cls;
+      var s=document.createElement('span'); s.textContent=label;
+      var b=document.createElement('b'); b.textContent=value;
+      d.appendChild(s); d.appendChild(b); sum.appendChild(d);
+    }
+    row('Réseau',n.short);
+    row('Montant','Libre (minimum '+min+' USDT)');
+    if(rate>0) row('Taux appliqué','1 USDT = '+fmtNum(rate,2)+' HTG','rate');
+    if(fee>0) row('Frais de service',fmtNum(fee,2)+' %','fee');
+    $id('cbNote').textContent=fee>0
+      ?('Ton solde est crédité du montant reçu après déduction des frais ('+fmtNum(fee,2)+' %)'+(rate>0?', converti au taux 1 USDT = '+fmtNum(rate,2)+' HTG.':'.'))
+      :('Ton solde est crédité automatiquement après confirmation'+(rate>0?', au taux 1 USDT = '+fmtNum(rate,2)+' HTG.':'.'));
+
     var list=$id('cbList'); list.innerHTML='';
     function li(html,cls){ var e=document.createElement('li'); if(cls)e.className=cls; e.innerHTML=html; list.appendChild(e); }
     li('Envoie uniquement des <b>'+n.token+'</b> sur le réseau <b>'+n.label+'</b>. Un autre réseau ou un autre jeton sera perdu.','warn');
-    li('Minimum : <b>'+min+' USDT</b>. En dessous, le dépôt n\u2019est pas crédité.');
+    li('En dessous de <b>'+min+' USDT</b>, le dépôt n\u2019est pas crédité.');
     li('Ton solde est crédité automatiquement en 1 à 3 minutes. Tu peux laisser cette fenêtre ouverte.');
     drawQr(info.address);
   }
@@ -334,7 +390,7 @@
     var sheet=$id('walletSheet'); if(!sheet) return;
     sheet.classList.toggle('cb-crypto-mode',m==='crypto');
     document.querySelectorAll('#cbModeTabs [data-m]').forEach(function(b){ b.classList.toggle('active',b.dataset.m===m); });
-    if(m==='crypto'){ render(); startPoll(); loadHistory(); loadLost(); } else { stopPoll(); hidePending(); }
+    if(m==='crypto'){ resetReveal(); render(); startPoll(); loadHistory(); loadLost(); } else { stopPoll(); hidePending(); }
   }
 
   async function load(){
