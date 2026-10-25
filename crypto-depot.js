@@ -1,8 +1,9 @@
 /* Cash Boost : dépôt crypto (USDT) dans « Ajouter des fonds »
    Ajoute un onglet « Crypto (USDT) » à côté de MonCash / NatCash.
    L'onglet n'apparaît que si la fonction crypto-deposit-address répond (dépôts crypto activés).
-   Parcours : choix du réseau, bouton « Afficher mon adresse de paiement », puis adresse + QR + récapitulatif
-   (taux, frais de service) et avertissements. L'adresse du client reste permanente (pas d'expiration).
+   Parcours : choix du réseau, case à cocher de confirmation du réseau et du jeton, bouton « Afficher mon adresse de paiement »,
+   puis adresse + QR + récapitulatif (taux, frais de service) et avertissements. Changer de réseau cache l'adresse
+   et demande de confirmer à nouveau. L'adresse du client reste permanente (pas d'expiration).
    Les frais viennent du réglage crypto_fee_percent (renvoyé par crypto-deposit-address) et sont déduits côté serveur.
    Affiche aussi l'historique des dépôts USDT du client (statut + lien explorateur)
    et un avertissement si un envoi sur le mauvais réseau / avec le mauvais jeton a été détecté.
@@ -62,10 +63,16 @@
       '.cb-net-tx b{display:block;font-size:16px;font-weight:700;line-height:1.25;color:var(--text-strong,inherit)}'+
       '.cb-net-tx span{display:block;margin-top:2px;font-size:14px;color:var(--muted,#9aa3b5)}'+
       '.cb-net-tx small{display:block;margin-top:2px;font-size:13px;color:var(--muted,#9aa3b5);opacity:.8}'+
+      /* Case de confirmation du réseau et du jeton, avant d'afficher l'adresse */
+      '.cb-confirm{display:flex;align-items:flex-start;gap:12px;margin:14px 0 0;padding:12px 14px;border:1px solid var(--danger,#ef4444);border-radius:14px;font-size:14px;line-height:1.45;color:var(--text);cursor:pointer;-webkit-tap-highlight-color:transparent}'+
+      '.cb-confirm[hidden]{display:none}'+
+      '.cb-confirm input{flex:none;width:22px;height:22px;margin:1px 0 0;accent-color:var(--primary,#1E6BFF);cursor:pointer}'+
+      '.cb-confirm small{display:block;margin-top:4px;font-size:12px;opacity:.75}'+
       /* Bouton « Afficher mon adresse de paiement » + petit chargement */
       '.cb-gen{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:54px;margin:14px 0 0;padding:12px 16px;border:0;border-radius:16px;background:var(--brand-grad,#1E6BFF);color:var(--brand-ink,#fff);font:inherit;font-size:16px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent}'+
       '.cb-gen[hidden]{display:none}'+
       '.cb-gen:disabled{opacity:.85;cursor:wait}'+
+      '.cb-gen.cb-off{opacity:.45;cursor:not-allowed}'+
       '.cb-spin{width:20px;height:20px;border:3px solid currentColor;border-right-color:transparent;border-radius:50%;animation:cbSpin .7s linear infinite}'+
       '@keyframes cbSpin{to{transform:rotate(360deg)}}'+
       '#cbReveal[hidden]{display:none}'+
@@ -149,7 +156,8 @@
           '<span class="cb-net-logo" aria-hidden="true">'+LOGO_PLASMA+'</span>'+
           '<span class="cb-net-tx"><b>Plasma</b><span>USDT0 (Plasma)</span><small class="cb-net-min">Min: 5 USDT</small></span></button>'+
       '</div>'+
-      '<button type="button" class="cb-gen" id="cbGen">'+GEN_LABEL+'</button>'+
+      '<label class="cb-confirm" id="cbConfirmRow"><input type="checkbox" id="cbConfirm"><span id="cbConfirmTxt"></span></label>'+
+      '<button type="button" class="cb-gen cb-off" id="cbGen" aria-disabled="true">'+GEN_LABEL+'</button>'+
       '<div id="cbReveal" hidden>'+
         '<div class="wallet-acc"><small>Ton adresse de dépôt personnelle</small>'+
           '<div class="wallet-acc-row"><span id="cbAddr" class="wallet-acc-num cb-addr">—</span>'+
@@ -174,13 +182,23 @@
     });
     $id('cbNets').addEventListener('click',function(e){
       var b=e.target.closest('[data-net]'); if(!b) return;
-      net=b.dataset.net; render();
+      var changed=(net!==b.dataset.net);
+      net=b.dataset.net;
+      if(changed) resetReveal();   // autre réseau : on cache l'adresse et on redemande la confirmation
+      render();
     });
+    $id('cbConfirm').addEventListener('change',updateGate);
     $id('cbGen').addEventListener('click',function(){
       var b=this; if(b.disabled||!info) return;
+      var c=$id('cbConfirm');
+      if(!c||!c.checked){
+        try{ showToast('Coche la confirmation du réseau pour afficher ton adresse'); }catch(_){}
+        return;
+      }
       b.disabled=true; b.innerHTML='<span class="cb-spin" aria-label="Chargement"></span>';
       setTimeout(function(){
         b.hidden=true; b.disabled=false; b.textContent=GEN_LABEL;
+        var row=$id('cbConfirmRow'); if(row) row.hidden=true;
         var r=$id('cbReveal'); if(r) r.hidden=false;
         render();
       },700);
@@ -190,10 +208,20 @@
     });
   }
 
+  /* Le bouton « Afficher mon adresse » reste grisé tant que la case n'est pas cochée */
+  function updateGate(){
+    var c=$id('cbConfirm'), g=$id('cbGen'); if(!c||!g) return;
+    g.classList.toggle('cb-off',!c.checked);
+    g.setAttribute('aria-disabled',String(!c.checked));
+  }
+
   function resetReveal(){
-    var g=$id('cbGen'), r=$id('cbReveal');
+    var g=$id('cbGen'), r=$id('cbReveal'), c=$id('cbConfirm'), row=$id('cbConfirmRow');
+    if(c) c.checked=false;
+    if(row) row.hidden=false;
     if(g){ g.hidden=false; g.disabled=false; g.textContent=GEN_LABEL; }
     if(r) r.hidden=true;
+    updateGate();
   }
 
   function render(){
@@ -202,6 +230,9 @@
     document.querySelectorAll('#cbNets .wallet-op').forEach(function(b){
       var on=b.dataset.net===net; b.classList.toggle('active',on); b.setAttribute('aria-checked',String(on));
     });
+    /* Texte de la case de confirmation : réseau et jeton du réseau choisi */
+    var ct=$id('cbConfirmTxt');
+    if(ct) ct.innerHTML='Je vais envoyer uniquement des <b>'+n.token+'</b> sur le réseau <b>'+n.label+'</b>.<small>Un autre réseau ou un autre jeton sera perdu.</small>';
     /* Adresse coupée en deux moitiés égales (évite un petit bout orphelin sur la 2e ligne) */
     var addrEl=$id('cbAddr'), addr=String(info.address||''), half=Math.ceil(addr.length/2);
     addrEl.textContent='';
