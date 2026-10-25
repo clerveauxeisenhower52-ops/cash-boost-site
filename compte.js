@@ -9,7 +9,10 @@ async function loadAccountStats(){
     const tb=$('accTotalBuy'); if(tb) tb.textContent=fmt(sum)+' HTG';
   }catch(e){ console.error('loadAccountStats',e); }
 }
-function accPwdValid(p){ return p.length>=12&&/[a-z]/.test(p)&&/[A-Z]/.test(p)&&/\d/.test(p); }
+const ACC_PWD_MIN=10;
+function accPwdValid(p){ return p.length>=ACC_PWD_MIN&&/[a-z]/.test(p)&&/[A-Z]/.test(p)&&/\d/.test(p); }
+// Texte d'aide affiché dans la fenêtre « Mot de passe » (suit la règle ci-dessus)
+(function(){ const t=document.querySelector('#pwdCard .account-text'); if(t) t.textContent='Utilise au moins '+ACC_PWD_MIN+' caractères avec majuscules, minuscules et chiffres.'; })();
 // Vérifie le mot de passe actuel avant toute modification sensible
 async function accCheckPassword(pass){
   const {data:{user}}=await sb.auth.getUser();
@@ -40,7 +43,7 @@ async function accCheckPassword(pass){
   $('accPwdBtn').addEventListener('click',async()=>{
     const btn=$('accPwdBtn'),old=$('accPwdOld').value,n1=$('accPwdNew').value,n2=$('accPwdNew2').value;
     if(!old){ setMsg('accPwdMsg','Entre ton mot de passe actuel.','err'); return; }
-    if(!accPwdValid(n1)){ setMsg('accPwdMsg','Le nouveau mot de passe doit avoir au moins 12 caractères avec majuscules, minuscules et chiffres.','err'); return; }
+    if(!accPwdValid(n1)){ setMsg('accPwdMsg','Le nouveau mot de passe doit avoir au moins '+ACC_PWD_MIN+' caractères avec majuscules, minuscules et chiffres.','err'); return; }
     if(n1!==n2){ setMsg('accPwdMsg','Les deux mots de passe ne correspondent pas.','err'); return; }
     if(n1===old){ setMsg('accPwdMsg','Le nouveau mot de passe doit être différent de l’actuel.','err'); return; }
     btn.disabled=true; setMsg('accPwdMsg','Vérification…');
@@ -104,4 +107,3 @@ function initPasskeys(){
     loadPasskeys();
   });
 }
-
