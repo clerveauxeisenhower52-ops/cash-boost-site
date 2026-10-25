@@ -32,6 +32,8 @@
       '.dp-logo{flex:none;width:58px;height:58px;border-radius:16px;overflow:hidden;display:grid;place-items:center;background:var(--primary-soft,rgba(0,229,255,.12))}'+
       '.dp-logo img{width:100%;height:100%;object-fit:cover;display:block}'+
       '.dp-logo.usdt{background:none;border-radius:50%}'+
+      // Repère de l'étape Crypto (adresse et QR) : même logo USDT que la carte, sans fond de couleur
+      '.wallet-step-num.dp-usdt{background:none!important;box-shadow:none!important;border:0!important;padding:0!important;overflow:hidden;border-radius:50%!important;display:grid!important;place-items:center}'+
       '.dp-tx{flex:1;min-width:0}'+
       '.dp-tx b{display:block;font:700 18px \'Space Grotesk\',Inter,sans-serif;color:var(--text-strong,inherit)}'+
       '.dp-tx small{display:block;margin-top:3px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}'+
@@ -108,10 +110,17 @@
     });
   }
 
+  // Remplace l'ancien repère « ₮ » de l'étape Crypto par le logo USDT de la carte
+  function usdtHead(){
+    var num=document.querySelector('#walletCryptoPanel .wallet-step-num');
+    if(num&&!num.classList.contains('dp-usdt')){ num.classList.add('dp-usdt'); num.innerHTML=USDT_ICON; }
+  }
+
   function onOpen(){
     // on laisse d'abord le module crypto construire ses éléments
     setTimeout(function(){
       build();
+      usdtHead();
       var sheet=$id('walletSheet'), title=$id('walletSheetTitle');
       if(title) title.textContent='Effectuer un dépôt';
       if(sheet){ sheet.classList.remove('dp-sep'); sheet.classList.add('dp-choose'); }
