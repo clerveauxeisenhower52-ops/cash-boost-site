@@ -17,6 +17,22 @@
   var NET_LABEL={bsc:'BSC',plasma:'Plasma',ethereum:'Ethereum',polygon:'Polygon',arbitrum:'Arbitrum',base:'Base',optimism:'Optimism'};
   var EXPLORER={bsc:'https://bscscan.com/tx/',plasma:'https://plasmascan.to/tx/'};
 
+  /* Petits logos des réseaux (SVG) : BNB Smart Chain et Plasma */
+  var LOGO_BSC='<svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true" focusable="false">'+
+    '<circle cx="32" cy="32" r="32" fill="#F3BA2F"/>'+
+    '<g fill="#fff">'+
+      '<polygon points="32,25.5 38.5,32 32,38.5 25.5,32"/>'+
+      '<polygon points="32,13 40.5,21.5 36.5,25.5 32,21 27.5,25.5 23.5,21.5"/>'+
+      '<polygon points="32,51 40.5,42.5 36.5,38.5 32,43 27.5,38.5 23.5,42.5"/>'+
+      '<polygon points="13,32 18.5,26.5 23,31 23,33 18.5,37.5"/>'+
+      '<polygon points="51,32 45.5,26.5 41,31 41,33 45.5,37.5"/>'+
+    '</g></svg>';
+  var LOGO_PLASMA='<svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true" focusable="false">'+
+    '<circle cx="32" cy="32" r="32" fill="#111827"/>'+
+    '<circle cx="32" cy="32" r="15" fill="none" stroke="#fff" stroke-width="5"/>'+
+    '<circle cx="32" cy="32" r="5" fill="#fff"/>'+
+    '</svg>';
+
   /* Détection précoce (lecture seule, depuis le navigateur) */
   var TRANSFER_TOPIC='0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
   var PEND={
@@ -36,6 +52,15 @@
       '#walletSheet:not(.cb-crypto-mode) #walletCryptoPanel{display:none}'+
       '#walletSheet.cb-crypto-mode > section.wallet-step:not(#walletCryptoPanel){display:none}'+
       '#walletSheet.done #walletCryptoPanel,#walletSheet.done .cb-mode-tabs{display:none}'+
+      /* Choix du réseau : petit logo à gauche, puis nom, jeton et minimum (une carte par réseau) */
+      '#cbNets{display:grid!important;grid-template-columns:1fr!important;gap:10px}'+
+      '#cbNets .cb-net{display:flex!important;align-items:center;gap:14px;width:100%;text-align:left;padding:12px 14px!important}'+
+      '.cb-net-logo{flex:none;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;overflow:hidden;background:var(--surface-elev,rgba(255,255,255,.06));border:1px solid var(--line-strong,rgba(255,255,255,.14))}'+
+      '.cb-net-logo svg{width:30px;height:30px;display:block}'+
+      '.cb-net-tx{min-width:0;flex:1}'+
+      '.cb-net-tx b{display:block;font-size:16px;font-weight:700;line-height:1.25;color:var(--text-strong,inherit)}'+
+      '.cb-net-tx span{display:block;margin-top:2px;font-size:14px;color:var(--muted,#9aa3b5)}'+
+      '.cb-net-tx small{display:block;margin-top:2px;font-size:13px;color:var(--muted,#9aa3b5);opacity:.8}'+
       '.cb-qr{display:flex;justify-content:center;margin:14px 0}'+
       '.cb-qr[hidden]{display:none}'+
       '.cb-addr{font-size:13px!important;letter-spacing:0!important;word-break:break-all;line-height:1.4}'+
@@ -101,8 +126,12 @@
       '<div class="wallet-step-head"><span class="wallet-step-num" aria-hidden="true">\u20AE</span>'+
       '<div><h3>Dépose des USDT</h3><p id="cbRate">Choisis le réseau, puis envoie à ton adresse personnelle.</p></div></div>'+
       '<div class="wallet-ops" id="cbNets" role="radiogroup" aria-label="Réseau">'+
-        '<button type="button" class="wallet-op active" data-net="bsc" role="radio" aria-checked="true"><span class="wallet-radio" aria-hidden="true"></span><span class="wallet-op-txt">BSC<small>USDT BEP20</small></span></button>'+
-        '<button type="button" class="wallet-op" data-net="plasma" role="radio" aria-checked="false"><span class="wallet-radio" aria-hidden="true"></span><span class="wallet-op-txt">Plasma<small>USDT0</small></span></button>'+
+        '<button type="button" class="wallet-op cb-net active" data-net="bsc" role="radio" aria-checked="true">'+
+          '<span class="cb-net-logo" aria-hidden="true">'+LOGO_BSC+'</span>'+
+          '<span class="cb-net-tx"><b>BNB Smart Chain</b><span>Tether USD (BSC)</span><small class="cb-net-min">Min: 5 USDT</small></span></button>'+
+        '<button type="button" class="wallet-op cb-net" data-net="plasma" role="radio" aria-checked="false">'+
+          '<span class="cb-net-logo" aria-hidden="true">'+LOGO_PLASMA+'</span>'+
+          '<span class="cb-net-tx"><b>Plasma</b><span>USDT0 (Plasma)</span><small class="cb-net-min">Min: 5 USDT</small></span></button>'+
       '</div>'+
       '<div class="wallet-acc"><small>Ton adresse de dépôt personnelle</small>'+
         '<div class="wallet-acc-row"><span id="cbAddr" class="wallet-acc-num cb-addr">—</span>'+
@@ -144,6 +173,7 @@
     addrEl.appendChild(document.createElement('br'));
     addrEl.appendChild(document.createTextNode(addr.slice(half)));
     var rate=Number(info.rate_htg)||0, min=Number(info.min_usdt)||5;
+    document.querySelectorAll('#cbNets .cb-net-min').forEach(function(e){ e.textContent='Min: '+min+' USDT'; });
     $id('cbRate').textContent=rate>0?('1 USDT = '+rate+' HTG. Crédit automatique.'):'Crédit automatique après confirmation.';
     var list=$id('cbList'); list.innerHTML='';
     function li(html,cls){ var e=document.createElement('li'); if(cls)e.className=cls; e.innerHTML=html; list.appendChild(e); }
