@@ -19,26 +19,6 @@
       try{ setFieldErr('merutag', addrMsg(el.value)); }catch(_){}
     });
   }
-  /* Bouton lune : toujours centré sur la pastille du solde.
-     La bannière « Envois USDT » décale l'en-tête vers le bas, puis disparaît au défilement :
-     on recalcule donc la position à partir de la pastille elle-même. */
-  function alignMoon(){
-    try{
-      const t=document.getElementById('themeToggle'), w=document.getElementById('hdrWallet'), app=document.getElementById('appView');
-      if(!t||!w) return;
-      if(!app||app.classList.contains('hidden')){ t.style.removeProperty('top'); return; }
-      const r=w.getBoundingClientRect();
-      if(!r.height) return;
-      t.style.setProperty('top', Math.round(r.top+r.height/2-t.offsetHeight/2)+'px','important');
-    }catch(_){}
-  }
-  var moonQueued=false;
-  function queueMoon(){
-    if(moonQueued) return; moonQueued=true;
-    requestAnimationFrame(function(){ moonQueued=false; alignMoon(); });
-  }
-  window.addEventListener('scroll',queueMoon,{passive:true});
-  window.addEventListener('resize',queueMoon);
   async function refreshStatus(){
     try{
       const app=document.getElementById('appView');
@@ -55,7 +35,6 @@
       b.textContent=ok?'🟢 Envois USDT : normal':'🟠 Envois USDT : retardés · ta commande sera envoyée dès que possible';
       b.style.background=ok?'var(--primary-soft)':'rgba(245,158,11,.16)';
       b.style.color='var(--text)';
-      queueMoon();
     }catch(_){}
   }
   window.cbShowUpdate=function(reg){
@@ -84,20 +63,21 @@
       if(v!==baseVer) window.cbShowUpdate(null);
     }catch(_){}
   }
-  document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'){ checkVersion(); queueMoon(); } });
+  document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') checkVersion(); });
   window.addEventListener('load',function(){
-    bindAddr(); refreshStatus(); checkVersion(); queueMoon();
+    bindAddr(); refreshStatus(); checkVersion();
     setInterval(checkVersion,300000);
     setInterval(refreshStatus,120000);
     setInterval(bindAddr,3000);
-    setInterval(queueMoon,1500);
   });
 })();
 
-/* Dépôt crypto (USDT) : charge le module de l'onglet « Crypto » du portefeuille */
+/* Modules ajoutés : onglet « Crypto » du portefeuille et page Profil */
 (function(){
-  var s=document.createElement('script');
-  s.src='crypto-depot.js?v=20261024';
-  s.defer=true;
-  document.body.appendChild(s);
+  ['crypto-depot.js?v=20261024','profil.js?v=20261025'].forEach(function(src){
+    var s=document.createElement('script');
+    s.src=src;
+    s.defer=true;
+    document.body.appendChild(s);
+  });
 })();

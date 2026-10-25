@@ -1,0 +1,41 @@
+/* Cash Boost : page Profil */
+#page-account.pf-page > .hero{display:none}
+#page-account.pf-page .acc-pill{display:none}
+.pf-hidden{display:none!important}
+
+/* Carte d'en-tête : grand avatar centré */
+#page-account .pf-head{text-align:center;padding:26px 18px 22px;border-radius:28px}
+#page-account .pf-head #avatar{width:112px;height:112px;font-size:42px;margin:0 auto 14px;border-radius:50%;
+  box-shadow:0 0 0 6px var(--primary-soft,rgba(0,229,255,.12)),0 10px 30px rgba(0,0,0,.18)}
+#page-account .pf-head .account-name{font:700 26px 'Space Grotesk',Inter,sans-serif;letter-spacing:-.02em;margin:0 0 4px;color:var(--text-strong,inherit)}
+#page-account .pf-head .account-email{margin:0;color:var(--muted)}
+#page-account .pf-head #logout{display:none}
+
+/* Listes de réglages */
+.pf-card{background:var(--surface);border:1px solid var(--line-strong,rgba(255,255,255,.12));border-radius:24px;overflow:hidden;margin:14px 0}
+.pf-title{display:flex;align-items:center;gap:12px;padding:16px 18px 10px;font:700 16px 'Space Grotesk',Inter,sans-serif;color:var(--text-strong,inherit)}
+.pf-row{display:flex;align-items:center;gap:14px;width:100%;padding:14px 18px;background:none;border:0;
+  border-top:1px solid var(--line-strong,rgba(255,255,255,.1));text-align:left;color:var(--text);cursor:pointer;font:inherit;-webkit-tap-highlight-color:transparent}
+.pf-card > .pf-row:first-child{border-top:0}
+.pf-row[hidden]{display:none}
+.pf-row:active{background:var(--primary-soft,rgba(0,229,255,.08))}
+.pf-ic{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;
+  background:var(--primary-soft,rgba(0,229,255,.12));color:var(--primary,#00b8d9)}
+.pf-ic.sm{width:36px;height:36px;border-radius:11px}
+.pf-tx{flex:1;min-width:0}
+.pf-tx b{display:block;font-weight:600;font-size:15px;color:var(--text-strong,inherit)}
+.pf-tx small{display:block;margin-top:2px;font-size:13px;color:var(--muted)}
+.pf-chev{flex:none;color:var(--muted);display:grid}
+.pf-row.danger .pf-ic{background:rgba(239,68,68,.12);color:var(--danger,#ef4444)}
+.pf-row.danger .pf-tx b{color:var(--danger,#ef4444)}
+
+/* Fenêtre modale */
+.pf-ov{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;padding:16px;padding-top:max(16px,env(safe-area-inset-top));padding-bottom:max(16px,env(safe-area-inset-bottom))}
+.pf-ov[hidden]{display:none}
+.pf-sheet{position:relative;width:100%;max-width:440px;max-height:88vh;overflow:auto;background:var(--surface);color:var(--text);
+  border:1px solid var(--line-strong,rgba(255,255,255,.12));border-radius:26px;padding:26px 20px 22px;box-shadow:0 24px 60px rgba(0,0,0,.4)}
+.pf-x{position:absolute;top:12px;right:12px;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
+  background:transparent;border:1px solid var(--line-strong,rgba(255,255,255,.12));color:var(--text);cursor:pointer;z-index:1}
+.pf-sheet .card{margin:0!important;border:0!important;box-shadow:none!important;background:transparent!important;padding:6px 2px 0!important}
+.pf-sheet .acc-head{padding-right:44px}
