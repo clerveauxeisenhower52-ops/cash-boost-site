@@ -24,3 +24,8 @@
   background:var(--primary-soft) !important;
   color:var(--primary) !important;
 }
+
+/* Dépôt crypto : logos des réseaux (BNB Smart Chain, Plasma) plus grands dans leur cercle */
+.cb-net-logo svg{width:38px !important;height:38px !important}
+/* Plasma : barres du logo agrandies pour mieux remplir le rond */
+.cb-net[data-net="plasma"] .cb-net-logo svg g{transform:translate(32px,32px) scale(.115) translate(-540px,-363px)}
