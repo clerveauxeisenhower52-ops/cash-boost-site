@@ -108,6 +108,33 @@ function walletShowSuccess(amount,bal){
   const sh=$('walletSheet'); sh.classList.add('done'); sh.scrollTop=0;
   const f=$('walletSuccTx'); if(f)f.focus();
   pushNudgeShow();
+  walletSuccAutoStart();
+}
+// Après un dépôt crédité : redirection automatique vers l'onglet Services après quelques secondes.
+// Elle s'arrête dès que le client ferme la fenêtre ou touche un bouton de l'écran de succès.
+// Pas de redirection si le client venait compléter une commande (le bouton de retour est là pour ça).
+let walletSuccT=null;
+function walletSuccAutoStop(){
+  if(walletSuccT){ clearInterval(walletSuccT); walletSuccT=null; }
+  const h=$('walletSuccAuto'); if(h) h.remove();
+}
+function walletSuccAutoStart(){
+  walletSuccAutoStop();
+  if(walletNeedAmt>0) return;
+  const anchor=$('walletSuccTx'); if(!anchor||!anchor.parentNode) return;
+  let left=6;
+  const h=document.createElement('p');
+  h.id='walletSuccAuto'; h.setAttribute('role','status');
+  h.style.cssText='margin:12px 0 0;text-align:center;font-size:13px;color:var(--muted,#9aa3b5)';
+  const draw=()=>{ h.textContent='Redirection vers les services dans '+left+' s…'; };
+  draw(); anchor.parentNode.appendChild(h);
+  walletSuccT=setInterval(()=>{
+    const d=$('walletDeposit');
+    if(!d||d.classList.contains('hidden')){ walletSuccAutoStop(); return; }
+    left--;
+    if(left<=0){ walletSuccAutoStop(); walletCloseSheet(); window.showPage('services'); }
+    else draw();
+  },1000);
 }
 // Carte des 3 étapes (vérification, crédit, confirmation)
 function wspSet(st){
@@ -182,7 +209,7 @@ async function walletDeposit(auto){
 }
 function walletOpenSheet(missing){
   const d=$('walletDeposit'); if(!d)return;
-  walletAutoStop();
+  walletAutoStop(); walletSuccAutoStop();
   walletNeedAmt=(typeof missing==='number'&&missing>0)?Math.ceil(missing):0;
   const nb=$('walletNeed');
   if(nb){ nb.hidden=!walletNeedAmt; if(walletNeedAmt) nb.innerHTML='Il te manque <b>'+fmt(walletNeedAmt)+' HTG</b> pour ta commande. Envoie au moins ce montant.'; }
@@ -193,6 +220,7 @@ function walletOpenSheet(missing){
   const first=d.querySelector('.wallet-op.active')||$('walletClose'); if(first)first.focus();
 }
 function walletCloseSheet(){
+  walletSuccAutoStop();
   const d=$('walletDeposit'); if(!d||d.classList.contains('hidden'))return;
   walletAutoStop();
   d.classList.add('hidden'); document.body.style.overflow='';
