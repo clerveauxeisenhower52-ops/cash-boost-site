@@ -72,9 +72,9 @@
   });
 })();
 
-/* Modules ajoutés : onglet « Crypto » du portefeuille, page Profil, écran « Effectuer un dépôt » */
+/* Modules ajoutés : onglet « Crypto » du portefeuille, page Profil, écran « Effectuer un dépôt », parrainage */
 (function(){
-  ['crypto-depot.js?v=20261024','profil.js?v=20261025','depot.js?v=20261025'].forEach(function(src){
+  ['crypto-depot.js?v=20261024','profil.js?v=20261025','depot.js?v=20261025','parrainage.js?v=20261025'].forEach(function(src){
     var s=document.createElement('script');
     s.src=src;
     s.defer=true;
