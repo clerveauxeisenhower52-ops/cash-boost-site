@@ -1,0 +1,26 @@
+/* Cash Boost : retouches visuelles (chargé après wallet-blue.css) */
+
+/* Accueil : cartes du parcours (01, 02, 03) plus compactes */
+.cbs-top{margin-bottom:14px}
+.cbs-card{padding:18px 20px 16px}
+
+/* Commandes : « Commander à nouveau » discret au lieu d'un gros bouton plein */
+.reorder-btn{
+  width:auto !important;
+  display:inline-flex !important;
+  align-items:center;
+  gap:6px;
+  margin-top:10px !important;
+  padding:8px 14px !important;
+  font-size:13px !important;
+  font-weight:600 !important;
+  border-radius:12px !important;
+  background:transparent !important;
+  color:var(--primary) !important;
+  border:1px solid var(--primary-line) !important;
+  box-shadow:none !important;
+}
+.reorder-btn:hover,.reorder-btn:active{
+  background:var(--primary-soft) !important;
+  color:var(--primary) !important;
+}
