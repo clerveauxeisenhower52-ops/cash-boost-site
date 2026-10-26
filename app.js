@@ -472,6 +472,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     lastOrderId=ins?.id||null;
     $('svNum').textContent=ins?.id?'#'+String(ins.id).slice(0,6).toUpperCase():'—';
     $('svAmt').textContent=qty+' USD · '+fmt(total)+' HTG';
+    // Sous-titre de l'écran de succès : avec le solde, le paiement est déjà débité donc validé
+    const svSub=document.querySelector('#successView .sv-card > p:not(#svNote)');
+    if(svSub) svSub.textContent = walletPay ? 'Ton paiement est validé.' : 'Nous vérifions ton paiement.';
     const afterHours = !isOpenNow();
     if(isPlasma || isPocket){
       // Services automatiques : pas de notion d'horaires, les USDT partent dès que le paiement est vérifié
