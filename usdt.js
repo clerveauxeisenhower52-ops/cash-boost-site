@@ -1,9 +1,12 @@
 /* Cash Boost : adresse USDT en direct, statut des envois, bannière de mise à jour */
 (function(){
   'use strict';
+  // Plasma One Auto envoie maintenant les USDT sur BNB Smart Chain (BEP20), plus sur Plasma.
+  // On corrige ici le réseau annoncé au client (avertissement sous le champ + case de confirmation).
+  try{ ADDR_SERVICES['Plasma One Auto']={net:'BNB Smart Chain (BEP20)',others:'Tron, Ethereum, Plasma…'}; }catch(_){}
   function addrMsg(v){
     v=(v||'').trim(); if(v.length<3) return '';
-    if(/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(v)) return "C'est une adresse TRON. Utilise ton adresse Plasma (elle commence par 0x).";
+    if(/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(v)) return "C'est une adresse TRON. Utilise ton adresse BNB Smart Chain (elle commence par 0x).";
     if(/\.eth$/i.test(v)) return "Les noms .eth ne sont pas acceptés. Colle l'adresse complète qui commence par 0x.";
     if(!/^0x/i.test(v)) return "L'adresse doit commencer par 0x.";
     if(!/^0x[a-fA-F0-9]*$/.test(v)) return "L'adresse contient un caractère invalide.";
