@@ -5,6 +5,9 @@ const SUPABASE_KEY = "sb_publishable_6Qfm6jAesBFJPQ3KX0O8mA_6NPu5dVd";
 // avertissement de réseau et confirmation du réseau avant d'envoyer.
 const ADDR_SERVICES={'Plasma One Auto':{net:'Plasma',others:'BSC, Tron, Ethereum…'},'karta':{net:'BNB Smart Chain (BEP20)',others:'Tron, Ethereum, Plasma…'},'pocket-option':{net:'BNB Smart Chain (BEP20)',others:'Tron, Ethereum, Plasma…'}};
 function addrSvc(s){s=s||currentService;return (s&&ADDR_SERVICES[s.id])||null;}
+// Services automatiques : pas d'horaires d'ouverture (les USDT partent dès que le paiement est vérifié)
+const AUTO_SERVICE_IDS=['Plasma One Auto','pocket-option'];
+function isAutoSvc(s){s=s||currentService;return !!s&&AUTO_SERVICE_IDS.includes(s.id);}
 let RATE=140,EFFECTIVE_RATE=157.5,WHATSAPP='',MIN_QTY=5,SERVICES=[],currentService=null,profile=null,isSignup=false,currentUserId=null,recoveryMode=false,adminRealtimeChannel=null,clientRealtimeChannel=null;
 let originalProofFile = null;
 // Lien de réinitialisation : on lit l'URL AVANT que Supabase ne la nettoie, pour ne pas rater l'événement PASSWORD_RECOVERY
@@ -49,7 +52,7 @@ const PAY_INFO = {
 // THEME_KEY en v2 : remet tout le monde en mode nuit une fois (anciens choix « clair » auto-enregistrés ignorés)
 const FORM_KEY_PREFIX='cashboost_meru_form_',THEME_KEY='cashboost_theme_v2';
 const $=id=>document.getElementById(id),$$=s=>document.querySelectorAll(s);
-const fmt=n=>Number(n).toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:2}).replace(/ /g,' ');
+const fmt=n=>Number(n).toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:2}).replace(/\u202f/g,'\u00a0');
 const fmtDateTime=d=>new Date(d).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).replace(',',' à');
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -69,7 +72,7 @@ function isOpenNow(){
 function fmtHour(h,m){return h+'h'+(m?String(m).padStart(2,'0'):'');}
 function renderStatusLine(){
   const el=$('svcStatus'),tx=$('svcStatusText');if(!el||!tx)return;
-  const auto=!!currentService&&currentService.id==='Plasma One Auto';
+  const auto=isAutoSvc();
   const open=auto||isOpenNow(),rt=Number(RATE)>0?' · 1 USD = '+fmt(RATE)+' HTG':'';
   el.classList.toggle('is-open',open);
   if(auto){ tx.textContent='Service automatique'+rt; return; }
@@ -79,8 +82,8 @@ function updateOpeningHoursNotice(){
   const el = $('openingHoursNotice');
   renderStatusLine();
   if(!el) return;
-  // Plasma One Auto est automatique : jamais de bandeau d'horaires
-  if(currentService && currentService.id==='Plasma One Auto'){ el.hidden = true; return; }
+  // Les services automatiques (Plasma One Auto, Pocket Option) : jamais de bandeau d'horaires
+  if(isAutoSvc()){ el.hidden = true; return; }
   const open = isOpenNow();
   el.hidden = open; // le bandeau complet n'apparaît que hors heures d'ouverture
   if(open){
