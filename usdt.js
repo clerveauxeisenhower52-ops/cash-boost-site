@@ -22,24 +22,30 @@
       try{ setFieldErr('merutag', addrMsg(el.value)); }catch(_){}
     });
   }
-  // Les envois d'USDT se font sur BNB Smart Chain depuis le 26/10/2026 (17h15 UTC) : lien BscScan pour ces commandes.
-  // Les anciennes commandes (envoyées sur Plasma) gardent le lien Plasmascan.
+  // Les envois d'USDT se font sur BNB Smart Chain depuis le 26/10/2026 (17h15 UTC) : lien BscScan pour ces commandes
+  // (historique client et panneau admin). Les anciennes commandes (envoyées sur Plasma) gardent le lien Plasmascan.
   const BSC_SINCE=Date.parse('2026-10-26T17:15:00Z');
-  function fixTxLinks(){
+  function fixTxLinksIn(listId, orders){
     try{
-      const list=document.getElementById('ordersList'); if(!list) return;
-      const orders=window._myOrders||[];
+      const list=document.getElementById(listId); if(!list) return;
       list.querySelectorAll('a[href*="plasmascan.to/tx/"]').forEach(function(a){
         const m=a.getAttribute('href').match(/\/tx\/(0x[a-fA-F0-9]{64})/); if(!m) return;
-        const o=orders.find(function(x){ return String(x.tx_hash).toLowerCase()===m[1].toLowerCase(); });
+        const o=(orders||[]).find(function(x){ return String(x.tx_hash).toLowerCase()===m[1].toLowerCase(); });
         if(!o) return;
         if(o.service==='pocket-option'||Date.parse(o.created_at)>=BSC_SINCE) a.setAttribute('href','https://bscscan.com/tx/'+m[1]);
       });
     }catch(_){}
   }
+  function fixTxLinks(){
+    fixTxLinksIn('ordersList', window._myOrders||[]);
+    let adm=[]; try{ adm=(typeof adminCache!=='undefined'&&Array.isArray(adminCache))?adminCache:[]; }catch(_){}
+    fixTxLinksIn('adminList', adm);
+  }
   function watchOrders(){
-    const list=document.getElementById('ordersList'); if(!list||list.dataset.txWatch) return; list.dataset.txWatch='1';
-    new MutationObserver(fixTxLinks).observe(list,{childList:true,subtree:true});
+    ['ordersList','adminList'].forEach(function(id){
+      const list=document.getElementById(id); if(!list||list.dataset.txWatch) return; list.dataset.txWatch='1';
+      new MutationObserver(fixTxLinks).observe(list,{childList:true,subtree:true});
+    });
     fixTxLinks();
   }
   async function refreshStatus(){
