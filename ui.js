@@ -111,9 +111,9 @@
           const bar=document.getElementById('orderProgress');
           if(bar)bar.style.setProperty('--op',steps.filter(s=>s.classList.contains('done')).length);
         }
-        // Adresse wallet Plasma : police réduite pour tenir dans le champ, forme courte dans l'état
+        // Adresse wallet (Plasma One et Pocket Option) : police réduite pour tenir dans le champ, forme courte dans l'état
         const mt=document.getElementById('merutag'),ws=document.getElementById('walletStatus');
-        if(mt)mt.classList.toggle('is-addr',!!currentService&&currentService.id==='Plasma One Auto');
+        if(mt)mt.classList.toggle('is-addr',!!currentService&&(currentService.id==='Plasma One Auto'||currentService.id==='pocket-option'));
         if(mt&&ws&&ws.classList.contains('ok')){
           const v=mt.value.trim();
           if(/^0x[a-fA-F0-9]{40}$/.test(v)&&ws.textContent.indexOf('…')<0)ws.textContent='✓ Adresse valide · '+v.slice(0,6)+'…'+v.slice(-4);
