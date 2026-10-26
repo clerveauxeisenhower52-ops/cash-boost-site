@@ -1,6 +1,10 @@
 const SUPABASE_URL = "https://ljddntmrcarbwfiqvyor.supabase.co";
 const SUPABASE_KEY = "sb_publishable_6Qfm6jAesBFJPQ3KX0O8mA_6NPu5dVd";
 
+// Services dont le champ est une adresse de portefeuille (0x…) : bouton Coller, vérification de l'adresse,
+// avertissement de réseau et confirmation du réseau avant d'envoyer.
+const ADDR_SERVICES={'Plasma One Auto':{net:'Plasma',others:'BSC, Tron, Ethereum…'},'karta':{net:'BNB Smart Chain (BEP20)',others:'Tron, Ethereum, Plasma…'},'pocket-option':{net:'BNB Smart Chain (BEP20)',others:'Tron, Ethereum, Plasma…'}};
+function addrSvc(s){s=s||currentService;return (s&&ADDR_SERVICES[s.id])||null;}
 let RATE=140,EFFECTIVE_RATE=157.5,WHATSAPP='',MIN_QTY=5,SERVICES=[],currentService=null,profile=null,isSignup=false,currentUserId=null,recoveryMode=false,adminRealtimeChannel=null,clientRealtimeChannel=null;
 let originalProofFile = null;
 // Lien de réinitialisation : on lit l'URL AVANT que Supabase ne la nettoie, pour ne pas rater l'événement PASSWORD_RECOVERY
@@ -21,8 +25,8 @@ function installRefresh(){
   if(deferredInstall){btn.classList.remove('hidden');}
   else{
     steps.innerHTML=ios
-      ?'<li>Ouvre ce site dans <b>Safari</b>.</li><li>Touche le bouton <b>Partager</b> (carré avec une flèche).</li><li>Choisis <b>Sur l\u2019écran d\u2019accueil</b>, puis <b>Ajouter</b>.</li>'
-      :'<li>Ouvre le menu du navigateur (<b>⋮</b>).</li><li>Touche <b>Ajouter à l\u2019écran d\u2019accueil</b> (ou <b>Installer l\u2019application</b>).</li>';
+      ?'<li>Ouvre ce site dans <b>Safari</b>.</li><li>Touche le bouton <b>Partager</b> (carré avec une flèche).</li><li>Choisis <b>Sur l’écran d’accueil</b>, puis <b>Ajouter</b>.</li>'
+      :'<li>Ouvre le menu du navigateur (<b>⋮</b>).</li><li>Touche <b>Ajouter à l’écran d’accueil</b> (ou <b>Installer l’application</b>).</li>';
     steps.classList.remove('hidden');
   }
 }
@@ -45,7 +49,7 @@ const PAY_INFO = {
 // THEME_KEY en v2 : remet tout le monde en mode nuit une fois (anciens choix « clair » auto-enregistrés ignorés)
 const FORM_KEY_PREFIX='cashboost_meru_form_',THEME_KEY='cashboost_theme_v2';
 const $=id=>document.getElementById(id),$$=s=>document.querySelectorAll(s);
-const fmt=n=>Number(n).toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:2}).replace(/\u202f/g,' ');
+const fmt=n=>Number(n).toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:2}).replace(/ /g,' ');
 const fmtDateTime=d=>new Date(d).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).replace(',',' à');
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -295,7 +299,7 @@ async function restoreMeruForm(){
 function showSavedHint(show){
   const el = $('savedHint');
   if(!el) return;
-  el.textContent=(currentService&&currentService.id==='Plasma One Auto')?'✓ Adresse mémorisée — préremplie pour toi':'✓ Tag mémorisé — prérempli pour toi';
+  el.textContent=addrSvc()?'✓ Adresse mémorisée — préremplie pour toi':'✓ Tag mémorisé — prérempli pour toi';
   el.classList.toggle('show', !!show);
   const help = $('merutagHelp');
   if(help) help.style.display = show ? 'none' : '';
@@ -345,4 +349,3 @@ function showPage(page,rem=true){
   if(page==='service')payWalletRefresh();
   if(page==='account'){loadPasskeys();loadAccountStats();}
 }
-
