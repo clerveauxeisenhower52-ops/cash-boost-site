@@ -113,3 +113,28 @@ document.addEventListener('DOMContentLoaded',function(){
     else init();
   }catch(_){}
 })();
+
+// Barre du bas : elle glisse vers le bas pendant que la page défile, puis revient quand le défilement s'arrête.
+// Utilise la propriété CSS « translate » (indépendante de « transform ») pour ne pas casser la mise en page de la barre.
+(function(){
+  try{
+    var st=document.createElement('style');
+    st.textContent=
+      'nav.bottom{transition:translate .28s cubic-bezier(.2,.8,.2,1),opacity .2s ease}'+
+      'nav.bottom.cb-scrolling{translate:0 140%;opacity:0;pointer-events:none}'+
+      '@media (prefers-reduced-motion:reduce){nav.bottom{transition:none}}';
+    document.head.appendChild(st);
+    var nav=null,timer=null,lastY=0;
+    function onScroll(){
+      var y=window.pageYOffset||document.documentElement.scrollTop||0;
+      if(Math.abs(y-lastY)<2)return;
+      lastY=y;
+      if(!nav)nav=document.querySelector('nav.bottom');
+      if(!nav)return;
+      nav.classList.add('cb-scrolling');
+      clearTimeout(timer);
+      timer=setTimeout(function(){nav.classList.remove('cb-scrolling');},250);
+    }
+    window.addEventListener('scroll',onScroll,{passive:true});
+  }catch(_){}
+})();
