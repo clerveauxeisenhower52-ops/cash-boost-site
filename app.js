@@ -341,6 +341,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(!currentService){setMsg('orderMsg','Choisis un service.','err');return;}
     
     const isPlasma = currentService.id === 'Plasma One Auto';
+    const isPocket = currentService.id === 'pocket-option';
     const qty=Number($('qty').value),merutag=$('merutag').value.trim();
     const proofFile = $('payProof').files?.[0] || $('payProofCamera').files?.[0] || originalProofFile;
     const walletPay = !!(window.cbWallet&&window.cbWallet.on);
@@ -358,6 +359,9 @@ document.addEventListener('DOMContentLoaded',()=>{
 
     if(walletPay) {
       // Paiement par solde : aucune preuve à fournir
+    } else if(isPocket) {
+      // Pocket Option : le serveur n'accepte que le paiement par solde (jamais de capture ni de Transcode)
+      errs.proof = 'Pocket Option : paiement par solde uniquement. Recharge ton portefeuille, puis paie avec ton solde.';
     } else if(isPlasma) {
       if(!transcodeVal) errs.proof = 'Tape le Transcode reçu par SMS.';
       else if(transcodeVal.length !== codeLenFor($('payMethod').value)) errs.proof = 'Transcode invalide. Il doit contenir exactement '+codeLenFor($('payMethod').value)+' chiffres.';
@@ -469,8 +473,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     $('svNum').textContent=ins?.id?'#'+String(ins.id).slice(0,6).toUpperCase():'—';
     $('svAmt').textContent=qty+' USD · '+fmt(total)+' HTG';
     const afterHours = !isOpenNow();
-    if(isPlasma){
-      // Service automatique : pas de notion d'horaires, les USDT partent dès que le paiement est vérifié
+    if(isPlasma || isPocket){
+      // Services automatiques : pas de notion d'horaires, les USDT partent dès que le paiement est vérifié
       $('svEta').textContent = 'Instantané';
       const note = $('svNote');
       if(note) note.textContent = 'Tes USDT sont envoyés automatiquement dès que ton paiement est vérifié.';
