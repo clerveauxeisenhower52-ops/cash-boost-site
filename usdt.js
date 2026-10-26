@@ -22,6 +22,26 @@
       try{ setFieldErr('merutag', addrMsg(el.value)); }catch(_){}
     });
   }
+  // Les envois d'USDT se font sur BNB Smart Chain depuis le 26/10/2026 (17h15 UTC) : lien BscScan pour ces commandes.
+  // Les anciennes commandes (envoyées sur Plasma) gardent le lien Plasmascan.
+  const BSC_SINCE=Date.parse('2026-10-26T17:15:00Z');
+  function fixTxLinks(){
+    try{
+      const list=document.getElementById('ordersList'); if(!list) return;
+      const orders=window._myOrders||[];
+      list.querySelectorAll('a[href*="plasmascan.to/tx/"]').forEach(function(a){
+        const m=a.getAttribute('href').match(/\/tx\/(0x[a-fA-F0-9]{64})/); if(!m) return;
+        const o=orders.find(function(x){ return String(x.tx_hash).toLowerCase()===m[1].toLowerCase(); });
+        if(!o) return;
+        if(o.service==='pocket-option'||Date.parse(o.created_at)>=BSC_SINCE) a.setAttribute('href','https://bscscan.com/tx/'+m[1]);
+      });
+    }catch(_){}
+  }
+  function watchOrders(){
+    const list=document.getElementById('ordersList'); if(!list||list.dataset.txWatch) return; list.dataset.txWatch='1';
+    new MutationObserver(fixTxLinks).observe(list,{childList:true,subtree:true});
+    fixTxLinks();
+  }
   async function refreshStatus(){
     try{
       const app=document.getElementById('appView');
@@ -68,10 +88,11 @@
   }
   document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') checkVersion(); });
   window.addEventListener('load',function(){
-    bindAddr(); refreshStatus(); checkVersion();
+    bindAddr(); watchOrders(); refreshStatus(); checkVersion();
     setInterval(checkVersion,300000);
     setInterval(refreshStatus,120000);
     setInterval(bindAddr,3000);
+    setInterval(watchOrders,3000);
   });
 })();
 
