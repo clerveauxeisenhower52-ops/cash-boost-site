@@ -1,44 +1,3 @@
-// ── Services « adresse wallet » : Plasma One Auto (réseau Plasma) et Karta (BNB Smart Chain) ──
-// Les deux utilisent une adresse 0x + 40 caractères hexadécimaux : seul le réseau change.
-const WALLET_SVCS={
-  'Plasma One Auto':{
-    warn:'⚠️ Colle une adresse du réseau <b>Plasma</b>. Une adresse d\'un autre réseau (BSC, Tron, Ethereum…) fait perdre tes USDT définitivement, sans remboursement possible.',
-    confirm:'Je confirme que cette adresse est sur le réseau <b>Plasma</b>. Sur un autre réseau, mes USDT seraient perdus.'
-  },
-  'karta':{
-    warn:'⚠️ Colle une adresse du réseau <b>BNB Smart Chain (BEP20)</b>. Une adresse d\'un autre réseau (Plasma, Tron, Ethereum…) fait perdre tes fonds définitivement, sans remboursement possible.',
-    confirm:'Je confirme que cette adresse est sur le réseau <b>BNB Smart Chain (BEP20)</b>. Sur un autre réseau, mes fonds seraient perdus.'
-  }
-};
-function walletSvcCfg(s){return (s&&Object.prototype.hasOwnProperty.call(WALLET_SVCS,s.id))?WALLET_SVCS[s.id]:null;}
-// Texte du problème ('' si l'adresse est valide)
-function addrProblem(v){
-  v=String(v||'').trim();
-  if(/^0x[a-fA-F0-9]{40}$/.test(v))return /^0x0{40}$/.test(v)?'Adresse invalide (adresse nulle).':'';
-  if(!v.startsWith('0x'))return 'L\'adresse doit commencer par 0x.';
-  if(/[^0-9a-fA-F]/.test(v.slice(2)))return 'Caractères non valides (0-9 et a-f seulement).';
-  if(v.length<42)return 'Il manque '+(42-v.length)+' caractère'+(42-v.length>1?'s':'')+'.';
-  if(v.length>42)return 'Trop long : '+(v.length-42)+' caractère'+(v.length-42>1?'s':'')+' en trop.';
-  return 'Adresse invalide.';
-}
-// Champ « infos » rempli ; pour un service à adresse wallet, l'adresse doit aussi être valide
-function infoFieldOk(){
-  const v=$('merutag').value.trim();
-  return !!v&&(!walletSvcCfg(currentService)||!addrProblem(v));
-}
-// Même police réduite que Plasma pour que l'adresse tienne dans le champ (ui.js ne gère que la classe is-addr de Plasma)
-(function(){const st=document.createElement('style');st.textContent='#merutag.is-addr2{font-size:clamp(10px,3vw,12px);letter-spacing:-.1px;padding-left:10px;padding-right:10px}';document.head.appendChild(st);})();
-// Message « mémorisé » : adresse (et non tag) pour les services wallet
-(function(){
-  const base=window.showSavedHint;
-  if(typeof base!=='function')return;
-  window.showSavedHint=function(show){
-    base.apply(this,arguments);
-    const el=document.getElementById('savedHint');
-    if(el&&walletSvcCfg(currentService))el.textContent='✓ Adresse mémorisée — préremplie pour toi';
-  };
-})();
-
 function updateTotal(){_updateTotal();updateProgress();}
 function _updateTotal(){
   const raw=$('qty').value.trim(),q=Number(raw),t=$('total');
@@ -49,14 +8,15 @@ function _updateTotal(){
   t.classList.remove('bump');void t.offsetWidth;t.classList.add('bump');
 }
 
+function netBoxEl(){ return document.getElementById('cvNet'); }
+// Adresse de portefeuille valide : 0x + 40 caractères hexadécimaux, et pas l'adresse nulle
+function isValidWalletAddr(v){ v=String(v||'').trim(); return /^0x[a-fA-F0-9]{40}$/.test(v) && !/^0x0{40}$/.test(v); }
 function askConfirm(o){
-  const cfg=walletSvcCfg(currentService);
-  // Adresse wallet invalide : on s'arrête ici, avant tout envoi ou débit
-  if(cfg){
-    const p=addrProblem(o.merutag);
-    if(p){setFieldErr('merutag',p);scrollToErr();return Promise.resolve(false);}
-  }
   return new Promise(res=>{
+    if(addrSvc() && !isValidWalletAddr(o.merutag)){
+      setFieldErr('merutag','Adresse wallet invalide. Doit commencer par 0x et faire 42 caractères.');
+      scrollToErr(); res(false); return;
+    }
     const v=$('confirmView');
     $('cvSvc').textContent=currentService.name;
     $('cvAmt').textContent=o.qty+' USD · '+fmt(o.total)+' HTG';
@@ -64,17 +24,16 @@ function askConfirm(o){
     $('cvTag').textContent=o.merutag;
     $('cvPhone').textContent='+'+o.phone;
     $('cvPay').textContent=(window.cbWallet&&window.cbWallet.on)?'Mon solde':$('payMethod').value;
-    const needNet=!!cfg;
-    const netBox=$('cvNet'),netCheck=$('cvNetCheck'),okBtn=$('cvOk');
-    const netTxt=netBox.querySelector('span');
-    if(cfg&&netTxt)netTxt.innerHTML=cfg.confirm;
-    netBox.classList.toggle('show',needNet);
-    netCheck.checked=false;
-    okBtn.disabled=needNet;
-    okBtn.style.opacity=needNet?'.5':'';
-    netCheck.onchange=()=>{okBtn.disabled=needNet&&!netCheck.checked;okBtn.style.opacity=okBtn.disabled?'.5':'';};
+    const needNet = !!addrSvc();
+    const cvNetSpan = netBoxEl().querySelector('span'); if(cvNetSpan && addrSvc()) cvNetSpan.innerHTML = 'Je confirme que cette adresse est sur le réseau <b>'+addrSvc().net+'</b>. Sur un autre réseau, mes USDT seraient perdus.';
+    const netBox = $('cvNet'), netCheck = $('cvNetCheck'), okBtn = $('cvOk');
+    netBox.classList.toggle('show', needNet);
+    netCheck.checked = false;
+    okBtn.disabled = needNet;
+    okBtn.style.opacity = needNet ? '.5' : '';
+    netCheck.onchange = () => { okBtn.disabled = needNet && !netCheck.checked; okBtn.style.opacity = okBtn.disabled ? '.5' : ''; };
     const done=r=>{v.classList.remove('show');v.setAttribute('aria-hidden','true');$('cvOk').onclick=null;$('cvCancel').onclick=null;v.onclick=null;netCheck.onchange=null;okBtn.disabled=false;okBtn.style.opacity='';res(r);};
-    $('cvOk').onclick=()=>{if(needNet&&!netCheck.checked)return;done(true);};
+    $('cvOk').onclick=()=>{ if(needNet && !netCheck.checked) return; done(true); };
     $('cvCancel').onclick=()=>done(false);
     v.onclick=e=>{if(e.target===v)done(false);};
     v.classList.add('show');v.setAttribute('aria-hidden','false');
@@ -90,7 +49,7 @@ function showFieldErrs(errs){['qty','merutag','custPhone','proof'].forEach(k=>se
 function scrollToErr(){const el=document.querySelector('.field-err.show');if(el)el.scrollIntoView({behavior:'smooth',block:'center'});}
 function obNextStep(){
   const q=Number($('qty').value),qtyOk=Number.isFinite(q)&&q>=MIN_QTY;
-  const infoOk=infoFieldOk()&&normPhone($('custPhone').value).length>=11;
+  const infoOk=!!$('merutag').value.trim()&&normPhone($('custPhone').value).length>=11;
   const isPlasma = currentService && currentService.id === 'Plasma One Auto';
   const proofOk = (window.cbWallet&&window.cbWallet.on) ? true : isPlasma 
     ? (document.getElementById('transcodeInput')?.value.trim().length === codeLenFor($('payMethod').value))
@@ -108,7 +67,7 @@ function updateOrderBar(){
 function updateProgress(){
   if(!$('orderProgress'))return;
   const q=Number($('qty').value),qtyOk=Number.isFinite(q)&&q>=MIN_QTY;
-  const infoOk=infoFieldOk()&&normPhone($('custPhone').value).length>=11;
+  const infoOk=!!$('merutag').value.trim()&&normPhone($('custPhone').value).length>=11;
   const isPlasma = currentService && currentService.id === 'Plasma One Auto';
   const proofOk = (window.cbWallet&&window.cbWallet.on) ? true : isPlasma 
     ? (document.getElementById('transcodeInput')?.value.trim().length === codeLenFor($('payMethod').value))
@@ -124,23 +83,30 @@ function updateProgress(){
   const pab=$('payAmountBig');if(pab){pab.textContent=amt?fmt(amt)+' HTG':'Choisis d\'abord un montant';pab.classList.toggle('is-empty',!amt);}
   updateOrderBar();
   if(qtyOk&&$('err_qty'))setFieldErr('qty','');
-  if(infoFieldOk()&&$('err_merutag'))setFieldErr('merutag','');
+  if($('merutag').value.trim()&&$('err_merutag'))setFieldErr('merutag','');
   if(normPhone($('custPhone').value).length>=11&&$('err_custPhone'))setFieldErr('custPhone','');
   if(proofOk&&$('err_proof'))setFieldErr('proof','');
 }
 function updateWalletStatus(){
   const box=$('walletTools'),st=$('walletStatus'),inp=$('merutag');if(!box||!st||!inp)return;
-  const cfg=walletSvcCfg(currentService);
-  inp.classList.toggle('is-addr2',!!cfg);
-  box.hidden=!cfg;if(!cfg)return;
+  const isWallet=!!addrSvc();
+  // Avertissement de réseau : nom du réseau propre au service (Plasma ou BNB Smart Chain)
   const nw=$('netWarn');
-  if(nw){if(nw.dataset.svc!==currentService.id){nw.innerHTML=cfg.warn;nw.dataset.svc=currentService.id;}nw.style.display='';}
+  if(nw){
+    nw.style.display=isWallet?'':'none';
+    if(isWallet){const a=addrSvc();nw.innerHTML='⚠️ Colle une adresse du réseau <b>'+a.net+'</b>. Une adresse d\'un autre réseau ('+a.others+') fait perdre tes USDT définitivement, sans remboursement possible.';}
+  }
+  box.hidden=!isWallet;if(!isWallet)return;
   const pb=$('walletPaste');if(pb)pb.hidden=!(window.isSecureContext&&navigator.clipboard&&navigator.clipboard.readText);
   const v=inp.value.trim();st.className='wallet-status';
   if(!v){st.textContent='';return;}
-  const p=addrProblem(v);
-  if(!p){st.textContent='✓ Adresse valide';st.classList.add('ok');return;}
-  st.textContent=p;st.classList.add('bad');
+  if(/^0x[a-fA-F0-9]{40}$/.test(v)){st.textContent='✓ Adresse valide';st.classList.add('ok');return;}
+  let msg='Adresse invalide.';
+  if(!v.startsWith('0x'))msg='L\'adresse doit commencer par 0x.';
+  else if(/[^0-9a-fA-F]/.test(v.slice(2)))msg='Caractères non valides (0-9 et a-f seulement).';
+  else if(v.length<42)msg='Il manque '+(42-v.length)+' caractère'+(42-v.length>1?'s':'')+'.';
+  else if(v.length>42)msg='Trop long : '+(v.length-42)+' caractère'+(v.length-42>1?'s':'')+' en trop.';
+  st.textContent=msg;st.classList.add('bad');
 }
 function updatePayInfo(){
   const method=$('payMethod').value;
