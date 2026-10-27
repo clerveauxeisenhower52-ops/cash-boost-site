@@ -21,7 +21,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="design.css?v=20261019-push">
 <link rel="stylesheet" href="wallet-blue.css">
@@ -291,74 +290,12 @@
 
         <div class="section" id="secPay">
           <div class="section-head"><span class="step">3</span><div><h2>Paiement par portefeuille</h2><p>Le montant est débité de ton solde</p></div></div>
-          <select id="payMethod" hidden>
-            <option value="MonCash">MonCash</option>
-            <option value="NatCash">NatCash</option>
-          </select>
           <div id="payWalletCard" class="pay-wallet-card selected">
             <span class="pay-wallet-ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H5a2 2 0 0 1 0-4h13v4"/><path d="M3 5v14a2 2 0 0 0 2 2h15V7"/><circle cx="16.5" cy="14" r="1.2"/></svg></span>
             <span class="pay-wallet-info"><span class="pay-wallet-name">Paiement par portefeuille</span><span class="pay-wallet-desc" id="payWalletDesc">Solde : …</span></span>
             <button type="button" class="pay-wallet-add" data-act="addfunds">+ Fonds</button>
           </div>
           <div id="payWalletHint" class="pay-wallet-hint hidden" role="status"></div>
-          <label class="pay-method-card selected" data-method="MonCash">
-            <div class="pay-method-logo"><img src="moncash.png" alt="MonCash" onerror="this.style.display='none'"></div>
-            <div class="pay-method-info"><span class="pay-method-name">MonCash</span><span class="pay-method-desc">Paiement Digicel</span></div>
-            <span class="pay-method-check">✓</span>
-          </label>
-          <label class="pay-method-card" data-method="NatCash">
-            <div class="pay-method-logo"><img src="natcash.png" alt="NatCash" onerror="this.style.display='none'"></div>
-            <div class="pay-method-info"><span class="pay-method-name">NatCash</span><span class="pay-method-desc">Paiement Natcom</span></div>
-            <span class="pay-method-check">✓</span>
-          </label>
-          <div class="pay-instructions">
-            <div class="pay-step"><span class="pay-step-num" aria-hidden="true"></span><span>Ouvre ton app <strong id="payAppName">MonCash</strong></span></div>
-            <div class="pay-step"><span class="pay-step-num" aria-hidden="true"></span><span>Envoie exactement ce montant :</span></div>
-            <div class="pay-amount"><strong id="payAmountBig" class="is-empty">Choisis d'abord un montant</strong></div>
-            <div class="pay-step"><span class="pay-step-num" aria-hidden="true"></span><span>à ce numéro :</span></div>
-            <div class="pay-recipient">
-              <div class="pay-recipient-logo"><img id="payRecipientLogo" src="moncash.png" alt=""></div>
-              <div class="pay-recipient-info"><div id="payName" class="pay-recipient-name">Wollens Clerveaux</div><div id="payNumber" class="pay-recipient-number">46467495</div></div>
-              <button id="copyPay" type="button" class="pay-copy-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Copier</span></button>
-            </div>
-            <div class="pay-qr-box">
-              <img id="payQrImg" class="pay-qr-img" src="moncash-qr.jpg" alt="QR MonCash" hidden>
-              <canvas id="payQrCanvas" width="160" height="160" aria-label="QR code de paiement" hidden></canvas>
-              <p class="pay-qr-hint">Scanne avec <strong id="payQrApp">MonCash</strong> pour envoyer l'argent instantanément</p>
-            </div>
-            <button id="copyAmount" type="button" class="pay-copy-btn pay-copy-wide"><span id="copyAmountLabel">Copier le montant exact</span><b id="copyAmountVal"></b></button>
-            <div class="pay-step"><span class="pay-step-num" aria-hidden="true"></span><span>Reviens ici avec ta capture d'écran</span></div>
-          </div>
-          <div class="field field-mt">
-            <label>Preuve de transaction</label>
-            
-            <div id="transcodeSection" class="field hidden" style="margin-top:16px; padding:16px; border:1px solid var(--primary-line); border-radius:14px; background:var(--primary-soft);">
-              <label for="transcodeInput" style="color:var(--text-strong); font-size:15px;">Code de transaction (Reçu par SMS)</label>
-<input id="transcodeInput" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Tape le code (12 ou 14 chiffres)" autocomplete="off" style="background:var(--surface); font-size:18px; font-weight:bold; letter-spacing:1px;">
-<p id="transcodeHelp" class="field-help" style="color:var(--text)">Ouvre ton SMS MonCash (Txn ID) ou NatCash (TransCode) et copie le numéro de transaction. Tes USDT seront envoyés instantanément.</p>
-            </div>
-
-            <input id="payProof" type="file" accept="image/*" hidden>
-            <input id="payProofCamera" type="file" accept="image/*" capture="environment" hidden>
-            <div id="proofUploadZone" class="proof-upload-zone">
-              <div class="proof-upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
-              <div class="proof-upload-title">Ajoute ta preuve de paiement</div>
-              <div class="proof-upload-desc">Choisis la capture d'écran de ton paiement</div>
-              <div class="proof-upload-buttons">
-                <button type="button" id="btnGallery" class="proof-btn proof-btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Galerie</button>
-                <button type="button" id="btnCamera" class="proof-btn proof-btn-secondary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Prendre une photo</button>
-              </div>
-            </div>
-            <div id="proofPreview" class="proof-preview">
-              <div class="proof-preview-header"><button type="button" id="removeProof" class="proof-remove" aria-label="Retirer">×</button></div>
-              <img id="proofPreviewImg" alt="Aperçu">
-            </div>
-            <div class="file-help">Image uniquement · 5 Mo max</div>
-          </div>
-          <div class="security-badge">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <span>Paiement sécurisé · Aucun débit automatique</span>
-          </div>
           <button id="submitOrder" class="primary-btn" type="button">
             <span id="submitOrderText">Payer avec mon solde</span>
             <span id="submitOrderSpinner" class="spinner hidden"></span>
@@ -642,7 +579,7 @@
   <div class="sv-card">
     <div class="sv-check">✓</div>
     <h2>Commande envoyée</h2>
-    <p>Nous vérifions ton paiement.</p>
+    <p>Ton paiement est validé.</p>
     <dl class="sv-info">
       <div><dt>Numéro</dt><dd id="svNum">—</dd></div>
       <div><dt>Montant</dt><dd id="svAmt">—</dd></div>
