@@ -109,15 +109,15 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('checkBack').addEventListener('click',()=>{clearInterval(resendTimer);$('checkCard').classList.add('hidden');$('loginCard').classList.remove('hidden');setMode(false);});
 
   const LEGAL={
-    terms:{t:"Conditions d'utilisation",b:`<p><b>1. Service.</b> Cash Boost te permet de commander des recharges et des cartes numériques, payées par MonCash ou NatCash.</p>
-<p><b>2. Commande.</b> Une commande est traitée après vérification de ta preuve de paiement. Les délais affichés sont indicatifs.</p>
-<p><b>3. Informations saisies.</b> Tu es responsable de l'exactitude de l'identifiant ou de l'e-mail indiqué. Une erreur de saisie peut entraîner une livraison au mauvais compte.</p>
-<p><b>4. Paiement.</b> Le montant envoyé doit correspondre au total affiché. Un paiement incomplet ou incorrect peut retarder ou annuler la commande.</p>
-<p><b>5. Annulation.</b> Une recharge ou une carte déjà livrée ne peut pas être annulée, sauf erreur de notre part. En cas de problème, écris-nous sur WhatsApp.</p>
-<p><b>6. Usage.</b> Toute fraude (fausse preuve de paiement, par exemple) peut entraîner la suspension du compte.</p>
+    terms:{t:"Conditions d'utilisation",b:`<p><b>1. Service.</b> Cash Boost te permet de commander des recharges et des cartes numériques, payées avec ton solde Cash Boost (portefeuille).</p>
+<p><b>2. Commande.</b> Le total de ta commande est débité de ton solde au moment où tu la valides. Elle est ensuite traitée automatiquement ou par notre équipe. Les délais affichés sont indicatifs.</p>
+<p><b>3. Informations saisies.</b> Tu es responsable de l'exactitude de l'identifiant, de l'adresse ou de l'e-mail indiqué. Une erreur de saisie peut entraîner une livraison au mauvais compte.</p>
+<p><b>4. Solde et dépôts.</b> Pour commander, ton solde doit couvrir le total affiché. Tu alimentes ton solde par un dépôt (MonCash, NatCash ou USDT), crédité après vérification du paiement. Un dépôt incomplet, incorrect ou envoyé sur le mauvais réseau peut être retardé ou ne pas être crédité.</p>
+<p><b>5. Annulation et remboursement.</b> Une recharge ou une carte déjà livrée ne peut pas être annulée, sauf erreur de notre part. Si une commande est rejetée ou si la recharge échoue, le montant débité est remboursé sur ton solde. En cas de problème, écris-nous sur WhatsApp.</p>
+<p><b>6. Usage.</b> Toute fraude (fausse référence de transaction lors d'un dépôt, abus du solde, par exemple) peut entraîner la suspension du compte.</p>
 <p><b>7. Modifications.</b> Les taux et les services peuvent changer. Le prix qui compte est celui affiché au moment de ta commande.</p>`},
-    privacy:{t:"Politique de confidentialité",b:`<p><b>Données collectées.</b> Ton nom, ton e-mail, ton numéro WhatsApp (si tu le donnes), l'historique de tes commandes et les preuves de paiement que tu envoies.</p>
-<p><b>Utilisation.</b> Uniquement pour traiter tes commandes, te contacter à leur sujet et t'envoyer des notifications si tu les actives.</p>
+    privacy:{t:"Politique de confidentialité",b:`<p><b>Données collectées.</b> Ton nom, ton e-mail, ton numéro WhatsApp (si tu le donnes), l'historique de tes commandes et les mouvements de ton portefeuille (dépôts, achats, transferts). Pour les anciennes commandes, les preuves de paiement que tu avais envoyées sont aussi conservées.</p>
+<p><b>Utilisation.</b> Uniquement pour traiter tes commandes et tes dépôts, te contacter à leur sujet et t'envoyer des notifications si tu les actives.</p>
 <p><b>Partage.</b> Tes données ne sont pas vendues. Elles sont accessibles à l'équipe Cash Boost pour traiter les commandes.</p>
 <p><b>Stockage.</b> Les données sont conservées dans une base de données sécurisée tant que ton compte existe.</p>
 <p><b>Sur ton appareil.</b> Ton e-mail, ton thème et ton brouillon de commande peuvent être mémorisés pour te faciliter la prochaine visite.</p>
