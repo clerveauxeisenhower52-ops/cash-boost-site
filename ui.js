@@ -119,12 +119,12 @@
           if(/^0x[a-fA-F0-9]{40}$/.test(v)&&ws.textContent.indexOf('…')<0)ws.textContent='✓ Adresse valide · '+v.slice(0,6)+'…'+v.slice(-4);
         }
         // Récapitulatif : frais = total à payer − (montant × taux affiché).
-        // Montré en HTG avec l'équivalent en dollars ; « Inclus » si nul.
+        // Montré en HTG avec l'équivalent en dollars ; « Inclus » si nul ou si le montant est sous le minimum.
         const feeEl=document.querySelector('#page-service .fee-included');
         if(feeEl){
           const q=Number(document.getElementById('qty').value);
           let txt='Inclus';
-          if(Number.isFinite(q)&&q>0){
+          if(Number.isFinite(q)&&q>0&&q>=MIN_QTY){
             const shown=Number(RATE);
             const fee=Math.round((q*getRateForAmount(q)-q*shown)*100)/100;
             if(fee>0){
