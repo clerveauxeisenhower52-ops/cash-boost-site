@@ -5,6 +5,10 @@ const SUPABASE_KEY = "sb_publishable_6Qfm6jAesBFJPQ3KX0O8mA_6NPu5dVd";
 // avertissement de réseau et confirmation du réseau avant d'envoyer.
 const ADDR_SERVICES={'Plasma One Auto':{net:'BNB Smart Chain (BEP20)',others:'Tron, Ethereum, Plasma…'},'karta':{net:'BNB Smart Chain (BEP20)',others:'Tron, Ethereum, Plasma…'},'pocket-option':{net:'BNB Smart Chain (BEP20)',others:'Tron, Ethereum, Plasma…'}};
 function addrSvc(s){s=s||currentService;return (s&&ADDR_SERVICES[s.id])||null;}
+// Services dont l'adresse change à chaque recharge (Pocket Option donne une nouvelle adresse à chaque fois) :
+// on ne mémorise ni ne préremplit jamais l'adresse, le client la colle à chaque commande.
+const NO_ADDR_MEMORY=['pocket-option'];
+function noMemory(s){s=s||currentService;return !!s&&NO_ADDR_MEMORY.includes(s.id);}
 // Services automatiques : pas d'horaires d'ouverture (les USDT partent dès que le paiement est vérifié)
 const AUTO_SERVICE_IDS=['Plasma One Auto','pocket-option'];
 function isAutoSvc(s){s=s||currentService;return !!s&&AUTO_SERVICE_IDS.includes(s.id);}
@@ -230,12 +234,14 @@ function formStorageKey(){return (currentUserId&&currentService)?FORM_KEY_PREFIX
 function saveMeruForm(){
   const k = formStorageKey();
   if(!k) return;
+  // Pocket Option : l'adresse change à chaque recharge, on ne la mémorise jamais (seul le montant est gardé en brouillon)
+  const keepTag = !noMemory();
   localStorage.setItem(k, JSON.stringify({
     qty: $('qty').value,
-    merutag: $('merutag').value
+    merutag: keepTag ? $('merutag').value : ''
   }));
   const ik = identityKey();
-  if(ik){
+  if(ik && keepTag){
     localStorage.setItem(ik, JSON.stringify({
       merutag: $('merutag').value.trim()
     }));
@@ -257,6 +263,24 @@ function restorePhone(){
 
 async function restoreMeruForm(){
   const k = formStorageKey();
+  // Pocket Option : jamais d'adresse préremplie. On restaure seulement le montant du brouillon
+  // et on efface toute adresse déjà mémorisée par les versions précédentes.
+  if(noMemory()){
+    try {
+      const ik = identityKey();
+      if(ik) localStorage.removeItem(ik);
+      if(k){
+        const s = JSON.parse(localStorage.getItem(k) || 'null');
+        if(s){
+          if(s.qty !== undefined) $('qty').value = s.qty;
+          if(s.merutag){ s.merutag = ''; localStorage.setItem(k, JSON.stringify(s)); }
+        }
+      }
+    } catch(_){}
+    updateTotal();
+    showSavedHint(false);
+    return;
+  }
   let restored = false;
   if(k){
     try {
@@ -319,6 +343,7 @@ async function restoreMeruForm(){
 function showSavedHint(show){
   const el = $('savedHint');
   if(!el) return;
+  if(noMemory()) show = false;
   el.textContent=addrSvc()?'✓ Adresse mémorisée — préremplie pour toi':'✓ Tag mémorisé — prérempli pour toi';
   el.classList.toggle('show', !!show);
   const help = $('merutagHelp');
@@ -328,7 +353,12 @@ function showSavedHint(show){
 function clearMeruForm(){
   const k = formStorageKey();
   const ik = identityKey();
-  if(ik){
+  if(noMemory()){
+    // Pocket Option : l'adresse est à usage unique, on la vide après la commande
+    if(ik){ try { localStorage.removeItem(ik); } catch(_){} }
+    $('merutag').value = '';
+    try { updateWalletStatus(); } catch(_){}
+  } else if(ik){
     localStorage.setItem(ik, JSON.stringify({
       merutag: $('merutag').value.trim()
     }));
@@ -341,6 +371,7 @@ function clearMeruForm(){
     try {
       const s = JSON.parse(localStorage.getItem(k) || '{}');
       s.qty = '';
+      if(noMemory()) s.merutag = '';
       localStorage.setItem(k, JSON.stringify(s));
     } catch(_){
       localStorage.removeItem(k);
