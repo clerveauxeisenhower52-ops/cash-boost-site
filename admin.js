@@ -242,39 +242,13 @@ function applyCurrentService(){
 async function openService(id){
   const s=SERVICES.find(x=>x.id===id);if(!s||!serviceReady(s))return;
   currentService=s;
-  
-  // --- NOUVEAU : Gestion Transcode vs Image ---
-  const isPlasma = s.id === 'Plasma One Auto';
-  document.getElementById('transcodeSection').classList.toggle('hidden', !isPlasma);
-  
-  const proofZone = document.getElementById('proofUploadZone');
-  const proofPreview = document.getElementById('proofPreview');
-  const proofTip = document.querySelector('.proof-tip');
-  
-  if(isPlasma) {
-    if(proofZone) proofZone.style.display = 'none';
-    if(proofPreview) proofPreview.style.display = 'none';
-    if(proofTip) proofTip.style.display = 'none';
-    $('transcodeInput').value = '';
-    if(typeof acReset==='function'){ try{ acReset(); }catch(_){} }
-  } else {
-    if(proofZone) proofZone.style.display = '';
-    if(proofPreview) proofPreview.style.display = '';
-    if(proofTip) proofTip.style.display = '';
-  }
-  // -------------------------------------------
 
-  $('qty').value='';$('merutag').value='';$('payMethod').value='MonCash';
-  $('payProof').value='';$('payProofCamera').value='';
-  $('proofPreview').classList.remove('show');$('proofPreviewImg').removeAttribute('src');
-  $('proofUploadZone').classList.remove('filled');
+  $('qty').value='';$('merutag').value='';
   $('orderSuccess').classList.remove('show');setMsg('orderMsg','');
-  originalProofFile = null;
   restorePhone();
   applyCurrentService();
   await restoreMeruForm();
   updateWalletStatus();
-  updatePayInfo();
   updateOpeningHoursNotice();
   localStorage.setItem('cashboost_last_service',id);
   showPage('service');
