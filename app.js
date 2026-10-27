@@ -22,67 +22,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('merutag').addEventListener('blur',()=>{saveMeruForm();showSavedHint(!!$('merutag').value.trim());});
   $('custPhone').addEventListener('input',()=>{const k=phoneKey();if(k){try{localStorage.setItem(k,$('custPhone').value);}catch(_){}}});
 
-  $$('.pay-method-card').forEach(card=>{
-    card.addEventListener('click',()=>{
-      const method=card.dataset.method;
-      if(!method)return;
-      $('payMethod').value=method;
-      $('payMethod').dispatchEvent(new Event('change'));
-    });
-  });
-
-  function handleProofFile(file){
-    if(!file)return;
-    if(!file.type.startsWith('image/')){setMsg('orderMsg','La preuve doit être une image.','err');return;}
-    if(file.size>5*1024*1024){setMsg('orderMsg','Image trop grande (5 Mo max).','err');return;}
-    originalProofFile = file;
-    const reader=new FileReader();
-    reader.onload=()=>{
-      $('proofPreviewImg').src=reader.result;
-      $('proofPreview').classList.add('show');
-      $('proofUploadZone').classList.add('filled');
-      setMsg('orderMsg','');updateProgress();
-    };
-    reader.readAsDataURL(file);
-  }
-  $('btnCamera').addEventListener('click',(e)=>{e.stopPropagation();$('payProofCamera').click();});
-  $('btnGallery').addEventListener('click',(e)=>{e.stopPropagation();$('payProof').click();});
-  $('payProof').addEventListener('change',(e)=>handleProofFile(e.target.files[0]));
-  $('payProofCamera').addEventListener('change',(e)=>handleProofFile(e.target.files[0]));
-  $('removeProof').addEventListener('click',()=>{
-    $('payProof').value='';$('payProofCamera').value='';
-    $('proofPreview').classList.remove('show');
-    $('proofPreviewImg').removeAttribute('src');
-    $('proofUploadZone').classList.remove('filled');
-    originalProofFile = null;
-    updateProgress();
-  });
-  const uz=$('proofUploadZone');
-  ['dragenter','dragover'].forEach(ev=>uz.addEventListener(ev,(e)=>{e.preventDefault();uz.classList.add('dragover');}));
-  ['dragleave','drop'].forEach(ev=>uz.addEventListener(ev,(e)=>{e.preventDefault();uz.classList.remove('dragover');}));
-  uz.addEventListener('drop',(e)=>{
-    const file=e.dataTransfer.files[0];if(!file)return;
-    const dt=new DataTransfer();dt.items.add(file);
-    $('payProof').files=dt.files;
-    handleProofFile(file);
-  });
-  uz.addEventListener('click',(e)=>{
-    if(e.target.closest('button'))return;
-    $('payProof').click();
-  });
-
-  $('payMethod').addEventListener('change',()=>{updatePayInfo();saveMeruForm();});
-
-  $('copyPay').addEventListener('click',async()=>{
-    try{
-      await navigator.clipboard.writeText($('payNumber').textContent);
-      const btn=$('copyPay');
-      btn.classList.add('copied');
-      btn.querySelector('span').textContent='Copié !';
-      setTimeout(()=>{btn.classList.remove('copied');btn.querySelector('span').textContent='Copier';},1600);
-    }catch(_){setMsg('orderMsg','Copie automatique indisponible.','err');}
-  });
-
+  // Visionneuse des anciennes preuves de paiement (historique client et administration)
   $('proofBack').addEventListener('click',()=>{$('proofViewer').classList.remove('show');$('proofViewerImg').removeAttribute('src');document.body.style.overflow='';});
 
 
@@ -325,120 +265,43 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(so&&obar)new IntersectionObserver(es=>{es.forEach(e=>obar.classList.toggle('ob-hidden',e.isIntersecting));},{threshold:0.6}).observe(so);
   }
   $$('#orderProgress .op-step').forEach(b=>b.addEventListener('click',()=>$(b.dataset.go).scrollIntoView({behavior:'smooth',block:'start'})));
-  $('copyAmount').addEventListener('click',async()=>{
-    const q=Number($('qty').value);
-    if(!(q>0)){setFieldErr('qty','Entre d\'abord un montant.');$('secAmount').scrollIntoView({behavior:'smooth',block:'start'});return;}
-    try{
-      await navigator.clipboard.writeText(String(Math.round(q*getRateForAmount(q)*100)/100));
-      const b=$('copyAmount');b.classList.add('copied');$('copyAmountLabel').textContent='Copié !';
-      setTimeout(()=>{b.classList.remove('copied');$('copyAmountLabel').textContent='Copier le montant exact';},1600);
-    }catch(_){setMsg('orderMsg','Copie automatique indisponible.','err');}
-  });
   document.addEventListener('input',updateProgress);document.addEventListener('change',updateProgress);
+
+  // Commande : toujours payée avec le solde du portefeuille (fonction serveur wallet_purchase_idem).
+  // Le débit et la création de la commande se font ensemble côté serveur.
   let orderInFlight=false;
-  const doSubmitOrderInner=async(opts)=>{
+  const doSubmitOrderInner=async()=>{
     setMsg('orderMsg','');$('orderSuccess').classList.remove('show');
     if(!currentService){setMsg('orderMsg','Choisis un service.','err');return;}
-    
+
     const isPlasma = currentService.id === 'Plasma One Auto';
     const isPocket = currentService.id === 'pocket-option';
     const qty=Number($('qty').value),merutag=$('merutag').value.trim();
-    const proofFile = $('payProof').files?.[0] || $('payProofCamera').files?.[0] || originalProofFile;
-    const walletPay = !!(window.cbWallet&&window.cbWallet.on);
-    const transcodeVal = (isPlasma && !walletPay) ? document.getElementById('transcodeInput').value.trim() : null;
     const phone=normPhone($('custPhone').value);
     const errs={};
-    
+
     if(!Number.isFinite(qty)||qty<MIN_QTY)errs.qty=qty>0?'Minimum : '+MIN_QTY+' USD.':'Entre un montant (minimum '+MIN_QTY+' USD).';
     if(!merutag)errs.merutag='Renseigne « '+currentService.field_label+' ».';
-    
+
     if(isPlasma && merutag && (!/^0x[a-fA-F0-9]{40}$/.test(merutag) || /^0x0{40}$/.test(merutag))){
       errs.merutag = 'Adresse wallet invalide. Doit commencer par 0x et faire 42 caractères.';
     }
     if(phone.length<11)errs.custPhone='Numéro invalide. Exemple : 37 12 34 56.';
 
-    if(walletPay) {
-      // Paiement par solde : aucune preuve à fournir
-    } else if(isPocket) {
-      // Pocket Option : le serveur n'accepte que le paiement par solde (jamais de capture ni de Transcode)
-      errs.proof = 'Pocket Option : paiement par solde uniquement. Recharge ton portefeuille, puis paie avec ton solde.';
-    } else if(isPlasma) {
-      if(!transcodeVal) errs.proof = 'Tape le Transcode reçu par SMS.';
-      else if(transcodeVal.length !== codeLenFor($('payMethod').value)) errs.proof = 'Transcode invalide. Il doit contenir exactement '+codeLenFor($('payMethod').value)+' chiffres.';
-    } else {
-      if(!proofFile)errs.proof='Ajoute la capture de ton paiement.';
-      else if(!proofFile.type.startsWith('image/'))errs.proof='La preuve doit être une image.';
-      else if(proofFile.size>5*1024*1024)errs.proof='Image trop grande (5 Mo max).';
-    }
-
     showFieldErrs(errs);
     if(Object.keys(errs).length){scrollToErr();return;}
-    if(!opts.skipConfirm && !(await askConfirm({qty,merutag,phone,total:qty*getRateForAmount(qty)})))return;
+    if(!(await askConfirm({qty,merutag,phone,total:qty*getRateForAmount(qty)})))return;
     const {data:{user}}=await sb.auth.getUser();
     if(!user){setMsg('orderMsg','Session expirée. Reconnecte-toi.','err');return;}
-    
-    let path = null;
 
-    if(walletPay) {
-      setSubmitLoading(true,'Paiement avec ton solde…');
-    } else if(!isPlasma) {
-      setSubmitLoading(true,'Envoi de la preuve…');
-      const ext=(proofFile.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');
-      path=`${user.id}/${crypto.randomUUID()}.${ext}`;
-      const {error:upErr}=await sb.storage.from('payment-proofs').upload(path,proofFile,{contentType:proofFile.type,upsert:false});
-      if(upErr){setSubmitLoading(false);setMsg('orderMsg','Impossible d\'envoyer la preuve.','err');return;}
-    } 
-    else {
-      setSubmitLoading(true, 'Vérification du paiement…');
-      setSendStep(0);
-      // Vérification côté serveur : le navigateur ne touche plus à sms_logs.
-      // La réservation du SMS est faite par verify-receipt (atomique).
-      const { data: chk, error: chkErr } = await sb.functions.invoke('check-transcode', {
-        body: {
-          transcode: transcodeVal,
-          payment_method: $('payMethod').value,
-          amount_htg: qty * getRateForAmount(qty)
-        }
-      });
-
-      if(chkErr) {
-        setSubmitLoading(false);
-        setMsg('orderMsg', '⚠️ Vérification momentanément indisponible. Réessaie dans un instant.', 'err');
-        return;
-      }
-      if(!chk?.found) {
-        setSubmitLoading(false);
-        setMsg('orderMsg', '❌ Transcode introuvable, déjà utilisé ou montant différent. Vérifie le SMS ou attends 1 minute (le temps que notre serveur reçoive le SMS).', 'err');
-        return;
-      }
-    }
-    
-    setSubmitLoading(true,'Enregistrement…');
-    if(isPlasma) setSendStep(1);
-    const appliedRate = getRateForAmount(qty);
-    const total=qty*appliedRate;
-    
-    const {data:ins,error}=await (walletPay ? walletBuy({service:currentService.id,qty,merutag,phone}) : sb.from('orders').insert({
-      user_id:user.id,
-      amount_usd:qty,
-      total_htg:total,
-      merutag,
-      service:currentService.id,
-      customer_phone:phone||null,
-      customer_email:user.email||null,
-      full_name:profile?.full_name||user.email,
-      payment_method:$('payMethod').value,
-      payment_ref: transcodeVal || null,
-      transcode: transcodeVal || null,
-      payment_proof_path:path
-    }).select('id').single());
-
+    setSubmitLoading(true,'Paiement avec ton solde…');
+    const total=qty*getRateForAmount(qty);
+    const {data:ins,error}=await walletBuy({service:currentService.id,qty,merutag,phone});
     setSubmitLoading(false);
-    if(error){if(path)await sb.storage.from('payment-proofs').remove([path]);setMsg('orderMsg',(error&&error.userMessage)||'Impossible d\'enregistrer la commande.','err');return;}
+    if(error){setMsg('orderMsg',(error&&error.userMessage)||'Impossible d\'enregistrer la commande.','err');return;}
 
-    if(currentService.id === 'Plasma One Auto'){
+    if(isPlasma){
       setSubmitLoading(true,'Envoi des USDT…');
-      setSendStep(2);
       try {
         const { data: verif, error: verifErr } = await sb.functions.invoke('verify-receipt', {
           body: { orderId: ins.id }
@@ -448,11 +311,11 @@ document.addEventListener('DOMContentLoaded',()=>{
           console.error('verify-receipt error:', verifErr);
           showToast('ℹ️ Commande reçue · vérification en cours');
         } else if(verif?.auto_validated && verif?.envoi?.startsWith('envoye')){
-          showToast(walletPay?'✅ −'+fmt(total)+' HTG · payé avec ton solde · 💸 USDT envoyés':'✅ Reçu vérifié · 💸 USDT envoyés', 8000);
+          showToast('✅ −'+fmt(total)+' HTG · payé avec ton solde · 💸 USDT envoyés', 8000);
         } else if(verif?.auto_validated && verif?.envoi?.startsWith('broadcast')){
-          showToast(walletPay?'✅ −'+fmt(total)+' HTG · payé avec ton solde · 💸 USDT en route':'✅ Reçu vérifié · 💸 USDT en route', 8000);
+          showToast('✅ −'+fmt(total)+' HTG · payé avec ton solde · 💸 USDT en route', 8000);
         } else if(verif?.auto_validated){
-          showToast(walletPay?'✅ −'+fmt(total)+' HTG · payé avec ton solde · traitement en cours':'✅ Reçu vérifié · traitement en cours', 8000);
+          showToast('✅ −'+fmt(total)+' HTG · payé avec ton solde · traitement en cours', 8000);
         } else if(verif?.user_message){
           showToast('⚠️ ' + verif.user_message, 10000);
           setTimeout(() => {
@@ -472,9 +335,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     lastOrderId=ins?.id||null;
     $('svNum').textContent=ins?.id?'#'+String(ins.id).slice(0,6).toUpperCase():'—';
     $('svAmt').textContent=qty+' USD · '+fmt(total)+' HTG';
-    // Sous-titre de l'écran de succès : avec le solde, le paiement est déjà débité donc validé
+    // Sous-titre de l'écran de succès : le paiement est déjà débité du solde, donc validé
     const svSub=document.querySelector('#successView .sv-card > p:not(#svNote)');
-    if(svSub) svSub.textContent = walletPay ? 'Ton paiement est validé.' : 'Nous vérifions ton paiement.';
+    if(svSub) svSub.textContent = 'Ton paiement est validé.';
     const afterHours = !isOpenNow();
     if(isPlasma || isPocket){
       // Services automatiques : pas de notion d'horaires, les USDT partent dès que le paiement est vérifié
@@ -490,183 +353,21 @@ document.addEventListener('DOMContentLoaded',()=>{
       const note = $('svNote');
       if(note) note.textContent = 'On te prévient sur WhatsApp dès que c\'est prêt.';
     }
-    originalProofFile = null;
     clearMeruForm();
     $('successView').classList.add('show');$('successView').setAttribute('aria-hidden','false');
     launchConfetti();
     pushNudgeShow();
     loadMyOrders();
-    if(walletPay)payWalletRefresh();
+    payWalletRefresh();
   };
 
-  async function doSubmitOrder(opts){
+  async function doSubmitOrder(){
     if(orderInFlight)return;
     orderInFlight=true;
-    try{ await doSubmitOrderInner(opts||{}); }
-    finally{
-      orderInFlight=false;
-      const ti=$('transcodeInput');
-      if(ti && !ti.value) acReset(); // commande envoyée : on repart de zéro
-      else if($('transcodeStatus') && $('transcodeStatus').querySelector('.send-steps')) acSetStatus(''); // échec/validation : on retire le message bloqué
-    }
+    try{ await doSubmitOrderInner(); }
+    finally{ orderInFlight=false; }
   }
-  $('submitOrder').addEventListener('click',()=>{ acCancelCountdown(false); doSubmitOrder({}); });
-
-  // ── Vérification automatique du Transcode + envoi avec compte à rebours (annulable) ──
-  const AUTO_DELAY_S=8, AUTO_RETRY_MS=5000, AUTO_MAX_TRIES=12;
-  let acTimer=null, acRetry=null, acTries=0, acFoundKey='', acCancelledKey='', acCountdown=null, acBusy=false;
-
-  function acIsPlasma(){ return !!currentService && currentService.id==='Plasma One Auto'; }
-  function acParams(){
-    const qty=Number($('qty').value);
-    const code=(($('transcodeInput')||{}).value||'').replace(/\D/g,'');
-    const method=$('payMethod').value;
-    const total=qty>0?qty*getRateForAmount(qty):0;
-    const wallet=$('merutag').value.trim();
-    const phone=normPhone($('custPhone').value);
-    const key=code+'|'+method+'|'+total;               // ce qui est vérifié auprès du serveur
-    const sendKey=key+'|'+wallet+'|'+phone;            // tout ce qui part dans la commande
-    return {qty,code,method,total,wallet,phone,key,sendKey};
-  }
-  function acFormReady(){
-    const p=acParams();
-    return Number.isFinite(p.qty) && p.qty>=MIN_QTY && /^0x[a-fA-F0-9]{40}$/.test(p.wallet) && p.phone.length>=11;
-  }
-  function acEls(){
-    let st=$('transcodeStatus');
-    if(!st){
-      st=document.createElement('div');
-      st.id='transcodeStatus';st.setAttribute('role','status');st.setAttribute('aria-live','polite');
-      st.style.cssText='margin-top:10px;font-size:14px;font-weight:600;color:var(--text-strong);';
-      $('transcodeHelp').after(st);
-    }
-    let box=$('autoSendBox');
-    if(!box){
-      box=document.createElement('div');
-      box.id='autoSendBox';box.className='hidden';
-      box.style.cssText='margin-top:12px;padding:14px;border:1px solid var(--primary-line);border-radius:14px;background:var(--surface);';
-      box.innerHTML='<div id="autoSendText" style="font-size:15px;color:var(--text-strong);line-height:1.5"></div>'
-        +'<button id="autoSendCancel" type="button" style="margin-top:10px;width:100%;padding:12px;border-radius:12px;border:1px solid var(--primary-line);background:var(--primary-soft);color:var(--text-strong);font-weight:700;font-size:15px;cursor:pointer">Annuler</button>';
-      st.after(box);
-      $('autoSendCancel').addEventListener('click',()=>{
-        acCancelCountdown(true);
-        acSetStatus('Envoi automatique annulé. Appuie sur « Confirmer ma commande » quand tu es prêt.');
-      });
-    }
-    return {st,box};
-  }
-  function acSetStatus(t){ acEls().st.textContent=t||''; }
-  // Étapes d'envoi animées : 0 = vérification, 1 = enregistrement, 2 = envoi des USDT
-  const SEND_STEPS=['Vérification du paiement','Enregistrement de la commande','Envoi des USDT'];
-  function setSendStep(i){
-    const st=acEls().st;
-    st.innerHTML='<div class="send-steps">'+SEND_STEPS.map((t,n)=>{
-      const c=n<i?'done':(n===i?'active':'');
-      return '<div class="send-step '+c+'"><span class="ss-ic">'+(n<i?'✓':'')+'</span><span class="ss-tx">'+t+'</span></div>';
-    }).join('')+'</div>';
-  }
-
-  function acCancelCountdown(byUser){
-    if(acCountdown){
-      clearInterval(acCountdown.t);
-      if(byUser) acCancelledKey=acCountdown.key;
-      acCountdown=null;
-    }
-    const box=$('autoSendBox'); if(box) box.classList.add('hidden');
-  }
-  function acReset(){
-    clearTimeout(acTimer); clearTimeout(acRetry);
-    acTries=0; acFoundKey=''; acCancelledKey='';
-    acCancelCountdown(false);
-    if($('transcodeStatus')) acSetStatus('');
-  }
-
-  function acStartCountdown(){
-    if(acCountdown||orderInFlight||!acIsPlasma())return;
-    const p=acParams();
-    if(p.key!==acFoundKey||p.sendKey===acCancelledKey||!acFormReady())return;
-    const {box}=acEls();
-    let left=AUTO_DELAY_S;
-    const render=()=>{
-      $('autoSendText').innerHTML='Envoi automatique de <b>'+esc(p.qty)+' USD</b> ('+esc(fmt(p.total))+' HTG) vers :'
-        +'<div style="margin:6px 0;font-family:monospace;font-size:13px;word-break:break-all">'+esc(p.wallet)+'</div>'
-        +'dans <b>'+left+' s</b>. Vérifie l\u2019adresse, sinon appuie sur Annuler.';
-    };
-    box.classList.remove('hidden'); render();
-    box.scrollIntoView({behavior:'smooth',block:'center'});
-    const t=setInterval(()=>{
-      left--;
-      if(left>0){ render(); return; }
-      // La visibilité doit être lue AVANT de masquer l'encadré (un élément masqué n'a pas d'offsetParent)
-      const stillOnPage = box.offsetParent!==null;
-      clearInterval(t); acCountdown=null; box.classList.add('hidden');
-      // Dernier contrôle : rien n'a changé, le formulaire est toujours valide et visible à l'écran
-      const now=acParams();
-      if(stillOnPage && now.sendKey===p.sendKey && acFormReady() && !orderInFlight){
-        setSendStep(0);
-        doSubmitOrder({skipConfirm:true});
-      }
-    },1000);
-    acCountdown={t,key:p.sendKey};
-  }
-
-  async function acCheck(){
-    if(!acIsPlasma())return;
-    if(acBusy)return;
-    const p=acParams();
-    if(p.code.length!==codeLenFor(p.method))return;
-    if(!(p.qty>=MIN_QTY)){ acSetStatus('Choisis d\u2019abord un montant pour vérifier ton paiement.'); return; }
-    acBusy=true;
-    acSetStatus('Vérification du paiement…');
-    let found=false, failed=false;
-    try{
-      const {data,error}=await sb.functions.invoke('check-transcode',{
-        body:{transcode:p.code,payment_method:p.method,amount_htg:p.total}
-      });
-      if(error) failed=true; else found=!!(data&&data.found);
-    }catch(e){ failed=true; }
-    acBusy=false;
-    // Le client a modifié sa saisie pendant la vérification : on relance sur la nouvelle valeur
-    if(acParams().key!==p.key){ clearTimeout(acTimer); acTimer=setTimeout(acCheck,300); return; }
-    if(found){
-      acFoundKey=p.key;
-      if(acFormReady()){ acSetStatus('✅ Paiement trouvé.'); acStartCountdown(); }
-      else acSetStatus('✅ Paiement trouvé. Complète ton adresse wallet et ton numéro : l\u2019envoi démarrera ensuite automatiquement.');
-      return;
-    }
-    if(failed){ acSetStatus('⚠️ Vérification indisponible. Tu peux quand même appuyer sur « Confirmer ma commande ».'); return; }
-    acTries++;
-    if(acTries<AUTO_MAX_TRIES){
-      acSetStatus('⏳ Pas encore trouvé (SMS en attente, code ou montant à vérifier)… nouvel essai '+acTries+'/'+AUTO_MAX_TRIES);
-      acRetry=setTimeout(acCheck,AUTO_RETRY_MS);
-    }else{
-      acSetStatus('❌ Paiement introuvable. Vérifie ton code et le montant payé, ou écris-nous sur WhatsApp.');
-    }
-  }
-
-  $('transcodeInput').addEventListener('input',()=>{
-    const p=acParams();
-    clearTimeout(acTimer); clearTimeout(acRetry);
-    acCancelCountdown(false);
-    acFoundKey=''; acCancelledKey=''; acTries=0;
-    if(p.code.length!==codeLenFor(p.method)){ acSetStatus(''); return; }
-    acTimer=setTimeout(acCheck,900);
-  });
-  // Montant, opérateur, adresse ou téléphone modifiés : on annule le compte à rebours et on réévalue
-  function acOnChange(){
-    if(!acIsPlasma())return;
-    const p=acParams();
-    if(acCountdown && (acCountdown.key!==p.sendKey || !acFormReady())) acCancelCountdown(false);
-    if(p.code.length!==codeLenFor(p.method))return;
-    clearTimeout(acTimer);
-    if(p.key!==acFoundKey){ clearTimeout(acRetry); acFoundKey=''; acTries=0; acTimer=setTimeout(acCheck,900); }
-    else if(!acCountdown){ acTimer=setTimeout(acStartCountdown,900); }
-  }
-  ['qty','merutag','custPhone','payMethod'].forEach(id=>{
-    const el=$(id);
-    if(el){ el.addEventListener('input',acOnChange); el.addEventListener('change',acOnChange); }
-  });
-
+  $('submitOrder').addEventListener('click',()=>doSubmitOrder());
 
   (function(){
     const so=$('prefSound'),te=$('prefTest');
@@ -743,7 +444,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     setMsg('settingsMsg','Service « '+r.name+' » ajouté ✓','ok');
   }
 
-  updatePayInfo();updateTotal();loadSettings();
+  updateTotal();loadSettings();
   updateOpeningHoursNotice();
   setInterval(updateOpeningHoursNotice, 60_000);
   // Supabase déconseille d'attendre (await) d'autres appels Supabase dans ce callback : risque de blocage.
