@@ -45,10 +45,14 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 const _recoveryLinkError=/error_code=|error=access_denied/.test(_urlAtLoad);
 
+// Coordonnées de paiement : valeurs de SECOURS. La table « settings » (pay_moncash_*, pay_natcash_*)
+// fait foi : elle est lue au chargement par loadPayInfoFromSettings() et remplace ces valeurs.
 const PAY_INFO = {
   MonCash: { name:"Wollens Clerveaux", number:"46467495", logo:"moncash.png", qr:"moncash-qr.jpg" },
   NatCash: { name:"Suzanne Pascal",   number:"40034963", logo:"natcash.png", qr:null }
 };
+// Le QR MonCash est une image fixe de CE numéro : si la base donne un autre numéro, on masque le QR
+const PAY_QR_NUMBER = { MonCash: PAY_INFO.MonCash.number };
 // THEME_KEY en v2 : remet tout le monde en mode nuit une fois (anciens choix « clair » auto-enregistrés ignorés)
 const FORM_KEY_PREFIX='cashboost_meru_form_',THEME_KEY='cashboost_theme_v2';
 const $=id=>document.getElementById(id),$$=s=>document.querySelectorAll(s);
@@ -147,6 +151,28 @@ function markAhNotified(id){
 }
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Lit les noms et numéros de paiement dans la table « settings » et met à jour l'affichage.
+// En cas d'erreur (hors ligne, lecture refusée) : on garde les valeurs de secours de PAY_INFO.
+async function loadPayInfoFromSettings(){
+  try{
+    const keys=['pay_moncash_name','pay_moncash_number','pay_natcash_name','pay_natcash_number'];
+    const {data,error}=await sb.from('settings').select('key,value').in('key',keys);
+    if(error||!data)return;
+    const m=Object.fromEntries(data.map(r=>[r.key,String(r.value??'').trim()]));
+    const apply=(method,prefix)=>{
+      const name=m['pay_'+prefix+'_name'],number=m['pay_'+prefix+'_number'];
+      if(name)PAY_INFO[method].name=name;
+      if(number){
+        PAY_INFO[method].number=number;
+        if(PAY_QR_NUMBER[method]&&PAY_QR_NUMBER[method]!==number)PAY_INFO[method].qr=null;
+      }
+    };
+    apply('MonCash','moncash');apply('NatCash','natcash');
+    try{updatePayInfo();}catch(_){}
+  }catch(_){}
+}
+document.addEventListener('DOMContentLoaded',loadPayInfoFromSettings);
 
 function getRateForAmount(amount){
   const s = currentService;
