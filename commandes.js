@@ -127,9 +127,10 @@ async function redoOrder(o){
   if(!currentService||currentService.id!==o.service)return;
   // Free Fire : amount_usd est un coût interne, pas une quantité à ressaisir
   if(o.service!=='Free Fire')$('qty').value=o.amount_usd;
-  if(o.merutag)$('merutag').value=o.merutag;
+  // Pocket Option : l'adresse change à chaque recharge, on ne reprend jamais l'ancienne
+  if(o.merutag&&!noMemory())$('merutag').value=o.merutag;
   updateTotal();updateWalletStatus();
-  showToast('Commande préremplie · vérifie ton solde puis confirme');
+  showToast(noMemory()?'Commande préremplie · colle ta nouvelle adresse, vérifie ton solde puis confirme':'Commande préremplie · vérifie ton solde puis confirme');
 }
 // Colonnes strictement nécessaires à l'affichage : on ne charge plus « * »
 // (ocr_data, image_forensics, fraud_type, payout_nonce… n'ont rien à faire dans le navigateur du client)
