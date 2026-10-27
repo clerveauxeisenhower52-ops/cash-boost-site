@@ -2,6 +2,7 @@
    - lien de partage  ?ref=REF12345678  (mémorisé, appliqué à la connexion)
    - champ « Code de parrainage » (optionnel) à l'inscription
    - carte « Programme de parrainage » dans l'onglet Compte + écran de détails
+   - carte « Invite un ami » sur l'écran de succès d'une commande
    Tout le calcul des bonus est fait côté serveur (fonctions referral_* et trigger sur les dépôts). */
 (function(){
   'use strict';
@@ -87,7 +88,13 @@
       '.cbref-list small{display:block;margin-top:2px;font-size:11px;color:var(--muted,#9aa3b5)}'+
       '.cbref-gain{font-weight:700;color:var(--success,#22c55e);white-space:nowrap}'+
       '.cbref-empty{padding:18px 8px;text-align:center;font-size:13px;color:var(--muted,#9aa3b5)}'+
-      '.cbref-how{margin:0;padding-left:18px;display:grid;gap:6px;font-size:13px;line-height:1.45;color:var(--text,#fff)}';
+      '.cbref-how{margin:0;padding-left:18px;display:grid;gap:6px;font-size:13px;line-height:1.45;color:var(--text,#fff)}'+
+      '.cbref-order{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0 0;padding:14px;border:1px solid var(--line-strong,rgba(255,255,255,.12));border-radius:14px;background:var(--surface-elev,transparent);text-align:left}'+
+      '.cbref-order[hidden]{display:none}'+
+      '.cbref-order-tx{display:grid;gap:2px;font-size:13px;line-height:1.35;color:var(--muted,#9aa3b5)}'+
+      '.cbref-order-tx b{font-size:15px;color:var(--text-strong,var(--text,#fff))}'+
+      '.cbref-order-tx i{font-style:normal;font-weight:700;color:var(--text-strong,var(--text,#fff))}'+
+      '.cbref-order button{flex:none;margin:0;width:auto;padding:10px 14px}';
     document.head.appendChild(s);
   }
 
@@ -214,9 +221,42 @@
     await copyText(url,'Lien de parrainage copié');
   }
 
-  /* 9. Démarrage */
+  /* 9. Carte « Invite un ami » sur l'écran de succès d'une commande */
+  function buildOrderCard(){
+    var box=$id('orderSuccess'); if(!box) return null;
+    var c=$id('cbRefOrder'); if(c) return c;
+    c=document.createElement('div'); c.id='cbRefOrder'; c.className='cbref-order'; c.hidden=true;
+    c.innerHTML='<div class="cbref-order-tx"><b>🎁 Invite un ami</b>'+
+      '<span>Gagne <i id="cbRefOrderRate">0,5 %</i> sur chacun de ses dépôts.</span></div>'+
+      '<button id="cbRefOrderBtn" type="button" class="secondary-btn">Partager mon code</button>';
+    box.appendChild(c);
+    $id('cbRefOrderBtn').addEventListener('click',share);
+    return c;
+  }
+  async function showOrderCard(){
+    var c=buildOrderCard(); if(!c) return;
+    if(!data) await load();
+    if(data&&data.code){
+      setText('cbRefOrderRate',fmtN((Number(data.rate)||0.005)*100,1)+' %');
+      var box=$id('orderSuccess');
+      if(box&&box.classList.contains('show')) c.hidden=false;
+    }
+  }
+  function watchOrderSuccess(){
+    var box=$id('orderSuccess'); if(!box) return;
+    buildOrderCard();
+    var was=box.classList.contains('show');
+    new MutationObserver(function(){
+      var on=box.classList.contains('show');
+      if(on&&!was) showOrderCard();
+      else if(!on){ var c=$id('cbRefOrder'); if(c) c.hidden=true; }
+      was=on;
+    }).observe(box,{attributes:true,attributeFilter:['class']});
+  }
+
+  /* 10. Démarrage */
   function init(){
-    injectCss(); buildSignupField(); buildCard();
+    injectCss(); buildSignupField(); buildCard(); watchOrderSuccess();
     var pa=$id('page-account');
     function visible(){ return pa&&!pa.classList.contains('hidden'); }
     if(pa) new MutationObserver(function(){ if(visible()) load(); }).observe(pa,{attributes:true,attributeFilter:['class']});
