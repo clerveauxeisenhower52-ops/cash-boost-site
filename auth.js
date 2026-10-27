@@ -44,7 +44,15 @@ function resetGoogleButton() {
 window.addEventListener('pageshow', resetGoogleButton);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) resetGoogleButton(); });
 
-const SPLASH_MIN_MS=3500; // durée minimale d'affichage, même si l'app est prête avant
+// Durée minimale d'affichage de l'écran de démarrage : animation complète (3,5 s) à la toute première visite,
+// puis 1 s seulement pour les clients qui reviennent, même si l'app est prête avant.
+const SPLASH_MIN_MS=(function(){
+  try{
+    if(localStorage.getItem('cashboost_splash_seen')) return 1000;
+    localStorage.setItem('cashboost_splash_seen','1');
+  }catch(_){}
+  return 3500;
+})();
 let splashPct=0,splashTimer=null,splashDone=false,splashReady=false,splashStart=Date.now();
 function setSplashPct(p){splashPct=p;const b=$('splashBar'),t=$('splashPct');if(b)b.style.width=p+'%';if(t)t.textContent=Math.round(p)+'%';}
 function startSplashProgress(){
