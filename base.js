@@ -346,8 +346,10 @@ function showSavedHint(show){
   if(noMemory()) show = false;
   el.textContent=addrSvc()?'✓ Adresse mémorisée — préremplie pour toi':'✓ Tag mémorisé — prérempli pour toi';
   el.classList.toggle('show', !!show);
+  // La ligne « Sauvegardé automatiquement pour la prochaine fois » disparaît : quand l'adresse est préremplie,
+  // et toujours pour les services sans mémorisation (Pocket Option).
   const help = $('merutagHelp');
-  if(help) help.style.display = show ? 'none' : '';
+  if(help) help.style.display = (show || noMemory()) ? 'none' : '';
 }
 
 function clearMeruForm(){
