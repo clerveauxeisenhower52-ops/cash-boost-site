@@ -23,7 +23,7 @@ function askConfirm(o){
     $('cvTagLabel').textContent=currentService.field_label||'Compte';
     $('cvTag').textContent=o.merutag;
     $('cvPhone').textContent='+'+o.phone;
-    $('cvPay').textContent=(window.cbWallet&&window.cbWallet.on)?'Mon solde':$('payMethod').value;
+    $('cvPay').textContent='Mon solde';
     const needNet = !!addrSvc();
     const cvNetSpan = netBoxEl().querySelector('span'); if(cvNetSpan && addrSvc()) cvNetSpan.innerHTML = 'Je confirme que cette adresse est sur le réseau <b>'+addrSvc().net+'</b>. Sur un autre réseau, mes USDT seraient perdus.';
     const netBox = $('cvNet'), netCheck = $('cvNetCheck'), okBtn = $('cvOk');
@@ -41,23 +41,18 @@ function askConfirm(o){
 }
 function setFieldErr(key,msg){
   let el=$('err_'+key);
-  const anchor=key==='qty'?$('qty').closest('.amount-box'):key==='proof'?$('proofUploadZone'):$(key);
+  const anchor=key==='qty'?$('qty').closest('.amount-box'):$(key);
   if(!el){el=document.createElement('div');el.id='err_'+key;el.className='field-err';el.setAttribute('role','alert');anchor.after(el);}
   el.textContent=msg||'';el.classList.toggle('show',!!msg);anchor.classList.toggle('invalid',!!msg);
 }
-function showFieldErrs(errs){['qty','merutag','custPhone','proof'].forEach(k=>setFieldErr(k,errs[k]||''));}
+function showFieldErrs(errs){['qty','merutag','custPhone'].forEach(k=>setFieldErr(k,errs[k]||''));}
 function scrollToErr(){const el=document.querySelector('.field-err.show');if(el)el.scrollIntoView({behavior:'smooth',block:'center'});}
+// Prochaine étape à compléter (le paiement se fait toujours avec le solde : aucune preuve à fournir)
 function obNextStep(){
   const q=Number($('qty').value),qtyOk=Number.isFinite(q)&&q>=MIN_QTY;
   const infoOk=!!$('merutag').value.trim()&&normPhone($('custPhone').value).length>=11;
-  const isPlasma = currentService && currentService.id === 'Plasma One Auto';
-  const proofOk = (window.cbWallet&&window.cbWallet.on) ? true : isPlasma 
-    ? (document.getElementById('transcodeInput')?.value.trim().length === codeLenFor($('payMethod').value))
-    : !!( $('payProof').files?.[0] || $('payProofCamera').files?.[0] || originalProofFile );
-  
   if(!qtyOk)return {label:'Choisis un montant',target:'secAmount',wait:true};
   if(!infoOk)return {label:'Compléter mes infos',target:'secInfo',wait:true};
-  if(!proofOk)return {label: isPlasma ? 'Entrer le Transcode' : 'Ajouter la preuve', target: isPlasma ? 'transcodeSection' : 'proofUploadZone', wait:true};
   return {label:'Confirmer',target:null,wait:false};
 }
 function updateOrderBar(){
@@ -68,24 +63,16 @@ function updateProgress(){
   if(!$('orderProgress'))return;
   const q=Number($('qty').value),qtyOk=Number.isFinite(q)&&q>=MIN_QTY;
   const infoOk=!!$('merutag').value.trim()&&normPhone($('custPhone').value).length>=11;
-  const isPlasma = currentService && currentService.id === 'Plasma One Auto';
-  const proofOk = (window.cbWallet&&window.cbWallet.on) ? true : isPlasma 
-    ? (document.getElementById('transcodeInput')?.value.trim().length === codeLenFor($('payMethod').value))
-    : !!( $('payProof').files?.[0] || $('payProofCamera').files?.[0] || originalProofFile );
 
-  const raw=[qtyOk,infoOk,proofOk],st=raw.map((v,i)=>raw.slice(0,i+1).every(Boolean)),active=st.indexOf(false); // une étape n'est validée que si les précédentes le sont
+  const raw=[qtyOk,infoOk,true],st=raw.map((v,i)=>raw.slice(0,i+1).every(Boolean)),active=st.indexOf(false); // une étape n'est validée que si les précédentes le sont
   $$('#orderProgress .op-step').forEach((b,i)=>{b.classList.toggle('done',st[i]);b.classList.toggle('active',i===active);});
   $('orderProgress').style.setProperty('--op',st.filter(Boolean).length);
   $$('.quick button').forEach(b=>b.classList.toggle('selected',Number(b.dataset.amount)===q));
   const ot=$('obTotal'),nt=$('total').textContent;if(ot.textContent!==nt){ot.textContent=nt;ot.classList.remove('bump');void ot.offsetWidth;ot.classList.add('bump');}
-  const amt=q>0?q*getRateForAmount(q):0;
-  $('copyAmountVal').textContent=amt?fmt(amt)+' HTG':'';
-  const pab=$('payAmountBig');if(pab){pab.textContent=amt?fmt(amt)+' HTG':'Choisis d\'abord un montant';pab.classList.toggle('is-empty',!amt);}
   updateOrderBar();
   if(qtyOk&&$('err_qty'))setFieldErr('qty','');
   if($('merutag').value.trim()&&$('err_merutag'))setFieldErr('merutag','');
   if(normPhone($('custPhone').value).length>=11&&$('err_custPhone'))setFieldErr('custPhone','');
-  if(proofOk&&$('err_proof'))setFieldErr('proof','');
 }
 function updateWalletStatus(){
   const box=$('walletTools'),st=$('walletStatus'),inp=$('merutag');if(!box||!st||!inp)return;
@@ -107,59 +94,6 @@ function updateWalletStatus(){
   else if(v.length<42)msg='Il manque '+(42-v.length)+' caractère'+(42-v.length>1?'s':'')+'.';
   else if(v.length>42)msg='Trop long : '+(v.length-42)+' caractère'+(v.length-42>1?'s':'')+' en trop.';
   st.textContent=msg;st.classList.add('bad');
-}
-function updatePayInfo(){
-  const method=$('payMethod').value;
-  const info=PAY_INFO[method];
-  if(!info) return;
-  $('payName').textContent=info.name;
-  $('payNumber').textContent=info.number;
-  $('payAppName').textContent=method;
-  const qrApp=$('payQrApp');
-  if(qrApp) qrApp.textContent=method;
-  const logoImg=$('payRecipientLogo');
-  if(logoImg) logoImg.src=info.logo;
-  document.querySelectorAll('.pay-method-card').forEach(card=>{
-    card.classList.toggle('selected',card.dataset.method===method);
-  });
-  document.querySelectorAll('.proof-example-img').forEach(e=>{e.hidden=e.dataset.for!==method;});
-  renderPayQr(info.number);
-  
-  // Changement dynamique du texte d'aide pour le Transcode
-  const helpText = document.getElementById('transcodeHelp');
-  if(helpText) {
-    if(method === 'MonCash') {
-      const _ti=document.getElementById('transcodeInput'); if(_ti) _ti.maxLength=12;
-      helpText.innerHTML = "Ouvre ton SMS MonCash et copie le <b>Txn ID</b> (12 chiffres). Tes USDT seront envoyés instantanément.";
-    } else {
-      const _ti=document.getElementById('transcodeInput'); if(_ti) _ti.maxLength=14;
-      helpText.innerHTML = "Ouvre ton SMS NatCash et copie le <b>TransCode</b> (14 chiffres). Tes USDT seront envoyés instantanément.";
-    }
-  }
-}
-
-function renderPayQr(number){
-  const method = $('payMethod').value;
-  const info = PAY_INFO[method];
-  const img = $('payQrImg');
-  const canvas = $('payQrCanvas');
-  const box = img ? img.closest('.pay-qr-box') : null;
-  if(!img) return;
-  if(canvas){
-    canvas.style.display = 'none';
-    canvas.hidden = true;
-  }
-  if(info && info.qr){
-    if(box) box.style.display = '';
-    img.style.display = 'block';
-    img.hidden = false;
-    img.src = info.qr;
-    return;
-  }
-  img.style.display = 'none';
-  img.hidden = true;
-  img.removeAttribute('src');
-  if(box) box.style.display = 'none';
 }
 
 let lastOrderId=null,focusOrderUntil=0;
@@ -194,8 +128,7 @@ async function redoOrder(o){
   // Free Fire : amount_usd est un coût interne, pas une quantité à ressaisir
   if(o.service!=='Free Fire')$('qty').value=o.amount_usd;
   if(o.merutag)$('merutag').value=o.merutag;
-  if(o.payment_method&&['MonCash','NatCash'].includes(o.payment_method))$('payMethod').value=o.payment_method;
-  updatePayInfo();updateTotal();updateWalletStatus();
+  updateTotal();updateWalletStatus();
   showToast('Commande préremplie · vérifie ton solde puis confirme');
 }
 // Colonnes strictement nécessaires à l'affichage : on ne charge plus « * »

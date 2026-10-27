@@ -9,7 +9,6 @@ function addrSvc(s){s=s||currentService;return (s&&ADDR_SERVICES[s.id])||null;}
 const AUTO_SERVICE_IDS=['Plasma One Auto','pocket-option'];
 function isAutoSvc(s){s=s||currentService;return !!s&&AUTO_SERVICE_IDS.includes(s.id);}
 let RATE=140,EFFECTIVE_RATE=157.5,WHATSAPP='',MIN_QTY=5,SERVICES=[],currentService=null,profile=null,isSignup=false,currentUserId=null,recoveryMode=false,adminRealtimeChannel=null,clientRealtimeChannel=null;
-let originalProofFile = null;
 // Lien de réinitialisation : on lit l'URL AVANT que Supabase ne la nettoie, pour ne pas rater l'événement PASSWORD_RECOVERY
 const _urlAtLoad=(location.hash||'')+'&'+(location.search||'');
 if(/type=recovery/.test(_urlAtLoad))recoveryMode=true;
@@ -45,8 +44,9 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 const _recoveryLinkError=/error_code=|error=access_denied/.test(_urlAtLoad);
 
-// Coordonnées de paiement : valeurs de SECOURS. La table « settings » (pay_moncash_*, pay_natcash_*)
-// fait foi : elle est lue au chargement par loadPayInfoFromSettings() et remplace ces valeurs.
+// Coordonnées des comptes de DÉPÔT du portefeuille (MonCash / NatCash) : valeurs de SECOURS.
+// La table « settings » (pay_moncash_*, pay_natcash_*) fait foi : elle est lue au chargement
+// par loadPayInfoFromSettings() et remplace ces valeurs.
 const PAY_INFO = {
   MonCash: { name:"Wollens Clerveaux", number:"46467495", logo:"moncash.png", qr:"moncash-qr.jpg" },
   NatCash: { name:"Suzanne Pascal",   number:"40034963", logo:"natcash.png", qr:null }
@@ -152,7 +152,7 @@ function markAhNotified(id){
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Lit les noms et numéros de paiement dans la table « settings » et met à jour l'affichage.
+// Lit les noms et numéros des comptes de dépôt dans la table « settings ».
 // En cas d'erreur (hors ligne, lecture refusée) : on garde les valeurs de secours de PAY_INFO.
 async function loadPayInfoFromSettings(){
   try{
@@ -169,7 +169,6 @@ async function loadPayInfoFromSettings(){
       }
     };
     apply('MonCash','moncash');apply('NatCash','natcash');
-    try{updatePayInfo();}catch(_){}
   }catch(_){}
 }
 document.addEventListener('DOMContentLoaded',loadPayInfoFromSettings);
@@ -233,14 +232,12 @@ function saveMeruForm(){
   if(!k) return;
   localStorage.setItem(k, JSON.stringify({
     qty: $('qty').value,
-    merutag: $('merutag').value,
-    payMethod: $('payMethod').value
+    merutag: $('merutag').value
   }));
   const ik = identityKey();
   if(ik){
     localStorage.setItem(ik, JSON.stringify({
-      merutag: $('merutag').value.trim(),
-      payMethod: $('payMethod').value
+      merutag: $('merutag').value.trim()
     }));
   }
   const pk = phoneKey();
@@ -267,7 +264,6 @@ async function restoreMeruForm(){
       if(s){
         if(s.qty !== undefined) $('qty').value = s.qty;
         if(s.merutag !== undefined) $('merutag').value = s.merutag;
-        if(s.payMethod === 'MonCash' || s.payMethod === 'NatCash') $('payMethod').value = s.payMethod;
         restored = true;
       }
     } catch(_){}
@@ -279,8 +275,6 @@ async function restoreMeruForm(){
         const id = JSON.parse(localStorage.getItem(ik) || 'null');
         if(id){
           if(id.merutag) $('merutag').value = id.merutag;
-          if((id.payMethod === 'MonCash' || id.payMethod === 'NatCash') && !$('payMethod').value)
-            $('payMethod').value = id.payMethod;
           restored = true;
         }
       } catch(_){}
@@ -289,7 +283,7 @@ async function restoreMeruForm(){
   if(!$('merutag').value.trim() && currentUserId && currentService){
     try {
       const { data } = await sb.from('orders')
-        .select('merutag,payment_method,customer_phone,amount_usd')
+        .select('merutag,customer_phone')
         .eq('user_id', currentUserId)
         .eq('service', currentService.id)
         .order('created_at', { ascending: false })
@@ -297,8 +291,6 @@ async function restoreMeruForm(){
         .maybeSingle();
       if(data){
         if(data.merutag) $('merutag').value = data.merutag;
-        if(data.payment_method === 'MonCash' || data.payment_method === 'NatCash')
-          $('payMethod').value = data.payment_method;
         if(data.customer_phone && !$('custPhone').value){
           let ph = String(data.customer_phone).replace(/\D/g,'');
           if(ph.startsWith('509') && ph.length === 11) ph = ph.slice(3);
@@ -320,7 +312,6 @@ async function restoreMeruForm(){
       }
     } catch(_){}
   }
-  updatePayInfo();
   updateTotal();
   showSavedHint(restored && !!$('merutag').value.trim());
 }
@@ -339,8 +330,7 @@ function clearMeruForm(){
   const ik = identityKey();
   if(ik){
     localStorage.setItem(ik, JSON.stringify({
-      merutag: $('merutag').value.trim(),
-      payMethod: $('payMethod').value
+      merutag: $('merutag').value.trim()
     }));
   }
   const pk = phoneKey();
@@ -357,13 +347,6 @@ function clearMeruForm(){
     }
   }
   $('qty').value = '';
-  const _tc = document.getElementById('transcodeInput'); if(_tc) _tc.value = '';
-  $('payProof').value = '';
-  $('payProofCamera').value = '';
-  $('proofPreview').classList.remove('show');
-  $('proofPreviewImg').removeAttribute('src');
-  $('proofUploadZone').classList.remove('filled');
-  updatePayInfo();
   updateTotal();
 }
 
