@@ -1,6 +1,11 @@
 function updateTotal(){_updateTotal();updateProgress();}
 function _updateTotal(){
   const raw=$('qty').value.trim(),q=Number(raw),t=$('total');
+  // Montant sous le minimum du service : message d'erreur et pas de prix affiché
+  const low=!!raw&&Number.isFinite(q)&&q>0&&q<MIN_QTY;
+  if(low)setFieldErr('qty','Minimum : '+MIN_QTY+' USD.');
+  else if($('err_qty'))setFieldErr('qty','');
+  if(low){$('summaryUsd').textContent='$'+q;t.textContent='—';return;}
   if(!raw||!Number.isFinite(q)||q<=0){$('summaryUsd').textContent='—';t.textContent='—';return;}
   $('summaryUsd').textContent='$'+q;
   const appliedRate = getRateForAmount(q);
