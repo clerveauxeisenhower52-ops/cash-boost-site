@@ -3,7 +3,7 @@ const SUPABASE_KEY = "sb_publishable_6Qfm6jAesBFJPQ3KX0O8mA_6NPu5dVd";
 
 // Services dont le champ est une adresse de portefeuille (0x…) : bouton Coller, vérification de l'adresse,
 // avertissement de réseau et confirmation du réseau avant d'envoyer.
-const ADDR_SERVICES={'Plasma One Auto':{net:'Plasma',others:'BSC, Tron, Ethereum…'},'karta':{net:'BNB Smart Chain (BEP20)',others:'Tron, Ethereum, Plasma…'},'pocket-option':{net:'BNB Smart Chain (BEP20)',others:'Tron, Ethereum, Plasma…'}};
+const ADDR_SERVICES={'Plasma One Auto':{net:'BNB Smart Chain (BEP20)',others:'Tron, Ethereum, Plasma…'},'karta':{net:'BNB Smart Chain (BEP20)',others:'Tron, Ethereum, Plasma…'},'pocket-option':{net:'BNB Smart Chain (BEP20)',others:'Tron, Ethereum, Plasma…'}};
 function addrSvc(s){s=s||currentService;return (s&&ADDR_SERVICES[s.id])||null;}
 // Services automatiques : pas d'horaires d'ouverture (les USDT partent dès que le paiement est vérifié)
 const AUTO_SERVICE_IDS=['Plasma One Auto','pocket-option'];
