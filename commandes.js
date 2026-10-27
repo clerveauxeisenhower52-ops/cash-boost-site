@@ -201,71 +201,6 @@ async function redoOrder(o){
 // Colonnes strictement nécessaires à l'affichage : on ne charge plus « * »
 // (ocr_data, image_forensics, fraud_type, payout_nonce… n'ont rien à faire dans le navigateur du client)
 const MY_ORDER_COLS='id,amount_usd,total_htg,merutag,status,created_at,payment_method,payment_proof_path,service,tx_hash,payout_status,pack_id,client_message,auto_validation_reason';
-
-// ---------- Historique : recherche et filtres par statut ----------
-let orderFilter='all',orderQuery='';
-function orderGroup(o){
-  if(o.status==='complétée')return 'done';
-  if(o.status==='rejetée'&&!clientReason(o).review)return 'rejected';
-  return 'pending'; // en attente, ou rejetée mais en cours de vérification
-}
-function ensureOrderFilterBar(){
-  const list=$('ordersList');if(!list)return;
-  if(!$('ofCss')){
-    const s=document.createElement('style');s.id='ofCss';
-    s.textContent=
-      '#orderFilterBar{margin:0 0 12px}'+
-      '#orderFilterBar[hidden]{display:none}'+
-      '#orderSearch{width:100%;box-sizing:border-box;height:44px;padding:0 14px;border-radius:14px;border:1px solid var(--line-strong,rgba(255,255,255,.12));background:var(--surface,transparent);color:var(--text,inherit);font:inherit;font-size:16px}'+
-      '.of-chips{display:flex;gap:8px;margin-top:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}'+
-      '.of-chips::-webkit-scrollbar{display:none}'+
-      '.of-chips button{flex:none;padding:8px 14px;border-radius:999px;border:1px solid var(--line-strong,rgba(255,255,255,.12));background:transparent;color:var(--text,inherit);font:600 13px Inter,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}'+
-      '.of-chips button.active{background:var(--primary-soft,rgba(0,229,255,.12));border-color:var(--primary,#00e5ff)}';
-    document.head.appendChild(s);
-  }
-  let bar=$('orderFilterBar');
-  if(!bar){
-    bar=document.createElement('div');bar.id='orderFilterBar';
-    bar.innerHTML='<input id="orderSearch" type="search" placeholder="Rechercher une commande" autocomplete="off" enterkeyhint="search" aria-label="Rechercher une commande">'+
-      '<div class="of-chips" role="group" aria-label="Filtrer par statut">'+
-      '<button type="button" data-of="all">Toutes</button><button type="button" data-of="pending">En cours</button>'+
-      '<button type="button" data-of="done">Complétées</button><button type="button" data-of="rejected">Rejetées</button></div>';
-    list.insertAdjacentElement('beforebegin',bar);
-    $('orderSearch').addEventListener('input',e=>{orderQuery=e.target.value;applyOrderFilter();});
-    bar.querySelectorAll('[data-of]').forEach(b=>{b.onclick=()=>{orderFilter=b.dataset.of;applyOrderFilter();};});
-  }
-  bar.hidden=false;
-}
-function applyOrderFilter(){
-  const list=$('ordersList');if(!list)return;
-  const all=window._myOrders||[];
-  const byId=new Map(all.map(o=>[String(o.id),o]));
-  const q=orderQuery.trim().toLowerCase();
-  const inp=$('orderSearch');if(inp&&inp.value!==orderQuery)inp.value=orderQuery;
-  document.querySelectorAll('#orderFilterBar [data-of]').forEach(b=>b.classList.toggle('active',b.dataset.of===orderFilter));
-  let shown=0;
-  list.querySelectorAll('.order[data-oid]').forEach(el=>{
-    const o=byId.get(el.dataset.oid);
-    let ok=!!o;
-    if(ok&&orderFilter!=='all')ok=orderGroup(o)===orderFilter;
-    if(ok&&q){
-      // Free Fire : amount_usd est un coût interne, on ne le cherche pas
-      const hay=[svcName(o.service),o.service==='Free Fire'?'':o.amount_usd,o.total_htg,o.merutag,o.payment_method].join(' ').toLowerCase();
-      ok=hay.includes(q);
-    }
-    el.style.display=ok?'':'none';
-    if(ok)shown++;
-  });
-  let none=list.querySelector('#orderFilterNone');
-  const empty=shown===0&&all.length>0;
-  if(empty&&!none){
-    none=document.createElement('div');none.id='orderFilterNone';none.className='order-meta';
-    none.style.cssText='padding:16px 0;text-align:center';
-    none.textContent='Aucune commande ne correspond.';
-    list.appendChild(none);
-  }else if(!empty&&none)none.remove();
-}
-
 async function loadMyOrders(){
   const el=$('ordersList');
   el.innerHTML='<div class="skeleton-order"></div><div class="skeleton-order"></div>';
@@ -296,7 +231,7 @@ async function loadMyOrders(){
       $('totalAchats').textContent='G '+fmt(sum);
     }
   }
-  if(!data?.length){const fb=$('orderFilterBar');if(fb)fb.hidden=true;el.innerHTML='<div class="empty-state"><div class="empty-ico">🧾</div><h3>Aucune commande pour le moment</h3><p>Ta première recharge apparaîtra ici.</p><button type="button" class="primary-btn" id="emptyGo">Faire une recharge</button></div>';$('emptyGo').onclick=()=>showPage('home');return;}
+  if(!data?.length){el.innerHTML='<div class="empty-state"><div class="empty-ico">🧾</div><h3>Aucune commande pour le moment</h3><p>Ta première recharge apparaîtra ici.</p><button type="button" class="primary-btn" id="emptyGo">Faire une recharge</button></div>';$('emptyGo').onclick=()=>showPage('home');return;}
   el.innerHTML=data.map(o=>{
     const done=o.status==='complétée';
     const rejected=o.status==='rejetée';
@@ -330,8 +265,6 @@ async function loadMyOrders(){
     btn.onclick=()=>openService(btn.dataset.reorder);
   });
   window._myOrders=data;
-  if(Date.now()<focusOrderUntil){orderFilter='all';orderQuery='';} // une commande qu'on vient de passer ne doit pas être masquée par un filtre
-  ensureOrderFilterBar();applyOrderFilter();
   el.querySelectorAll('[data-redo]').forEach(btn=>{
     btn.onclick=()=>{const o=(window._myOrders||[]).find(x=>String(x.id)===btn.dataset.redo);if(o)redoOrder(o);};
   });
