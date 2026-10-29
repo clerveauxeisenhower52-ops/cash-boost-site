@@ -38,13 +38,19 @@ export async function getPubgCategory(): Promise<any|null> {
 export async function getOffers(categoryId:string):Promise<any>{
   return fz('GET','/topups/offers?category_id='+encodeURIComponent(categoryId));
 }
-export async function validatePubgPlayer(pid:string,categoryId:string):Promise<{supported:boolean;valid:boolean|null;region?:string;player_name?:string;fieldKey?:string}> {
+export async function validatePubgPlayer(pid:string,_purchaseCategoryId?:string):Promise<{supported:boolean;valid:boolean|null;region?:string;player_name?:string;fieldKey?:string}> {
+  // FazerCards has a separate validation namespace: e.g. "pubg_mobile".
+  // It is NOT the purchasable top-up category (e.g. "pubg_mobile_auto").
   const list=await fz('GET','/topups/validate-id');
-  const items:any[]=(list.items||[]).filter((i:any)=>/pubg/i.test(i.name||'') && /mobile/i.test(i.name||''));
-  const item=items.find((i:any)=>String(i.category_id)===String(categoryId))||items.find((i:any)=>/global/i.test(i.name||''))||items[0];
-  if(!item)return {supported:false,valid:null};
-  const fieldKey=item.fields?.find((f:any)=>/player|game|account|uid|id/i.test(String(f.key||'')))?.key||item.fields?.[0]?.key||'player_id';
-  const r=await fz('POST','/topups/validate-id',{category_id:item.category_id,fields:{[fieldKey]:pid}});
-  const playerName = r.player_name || r.player?.name || r.account?.name || r.nickname || r.name || null;
-  return {supported:true,valid:r.valid===true,region:r.region||r.player?.region,player_name:typeof playerName==='string'?playerName:null,fieldKey};
+  const items:any[]=(list.items||[]);
+  const item=items.find((i:any)=>norm(i.name)==='pubgmobile')
+    ||items.find((i:any)=>/pubg/i.test(String(i.name||''))&&/mobile/i.test(String(i.name||'')));
+  if(!item?.category_id)return {supported:false,valid:null};
+  const fields:any[]=Array.isArray(item.fields)?item.fields:[];
+  const field=fields.find((f:any)=>String(f.key||'').toLowerCase()==='player_id')
+    ||fields.find((f:any)=>/player|game|account|uid|id/i.test(String(f.key||'')));
+  if(!field?.key)return {supported:false,valid:null};
+  const r=await fz('POST','/topups/validate-id',{category_id:item.category_id,fields:{[field.key]:pid}});
+  const playerName=r.player_name||r.player?.name||r.account?.name||r.nickname||r.name||null;
+  return {supported:true,valid:r.valid===true,region:r.region||r.player?.region,player_name:typeof playerName==='string'?playerName:null,fieldKey:field.key};
 }
