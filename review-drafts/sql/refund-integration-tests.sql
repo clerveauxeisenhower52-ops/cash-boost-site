@@ -12,7 +12,8 @@ BEGIN
   INSERT INTO auth.users(id) VALUES(v_user), (v_other_user);
 
   -- Valid direct refund and duplicate idempotency.
-  INSERT INTO wallets(user_id,balance_htg) VALUES(v_user, 500);
+  -- Wallet starts at the post-purchase balance; the debit row records 400 remaining.
+  INSERT INTO wallets(user_id,balance_htg) VALUES(v_user, 400);
   INSERT INTO orders(id,user_id,total_htg,payment_method,status)
     VALUES(v_order,v_user,100,'Solde','en attente');
   INSERT INTO wallet_transactions(user_id,type,amount_htg,balance_after,provider,reference,order_id)
@@ -23,7 +24,7 @@ BEGIN
     RAISE EXCEPTION 'valid refund failed: %', v_result;
   END IF;
   SELECT balance_htg INTO v_balance FROM wallets WHERE user_id=v_user;
-  IF v_balance <> 600 THEN RAISE EXCEPTION 'wrong balance after refund: %', v_balance; END IF;
+  IF v_balance <> 500 THEN RAISE EXCEPTION 'wrong balance after refund: %', v_balance; END IF;
 
   v_result := public.wallet_refund_order(v_order::text);
   IF v_result->>'status' <> 'already_refunded' THEN
@@ -42,13 +43,14 @@ BEGIN
   IF v_result->>'status' <> 'not_wallet_payment' THEN RAISE EXCEPTION 'non-Solde order accepted: %', v_result; END IF;
 
   -- Trigger chain: BEFORE trigger refunds, AFTER text overload must not double-credit.
-  INSERT INTO wallets(user_id,balance_htg) VALUES(v_other_user, 200);
+  -- Likewise, begin at the 150 balance after the 50 purchase debit.
+  INSERT INTO wallets(user_id,balance_htg) VALUES(v_other_user, 150);
   UPDATE orders SET payment_method='Solde' WHERE id=v_other_order;
   INSERT INTO wallet_transactions(user_id,type,amount_htg,balance_after,provider,reference,order_id)
     VALUES(v_other_user,'purchase',-50,150,'Solde','order:'||v_other_order::text,v_other_order::text);
   UPDATE orders SET status='rejetée' WHERE id=v_other_order;
   SELECT balance_htg INTO v_balance FROM wallets WHERE user_id=v_other_user;
-  IF v_balance <> 250 THEN RAISE EXCEPTION 'trigger double-credit or missed refund, balance=%', v_balance; END IF;
+  IF v_balance <> 200 THEN RAISE EXCEPTION 'trigger double-credit or missed refund, balance=%', v_balance; END IF;
   SELECT count(*) INTO v_count FROM wallet_transactions WHERE type='refund' AND order_id=v_other_order::text;
   IF v_count <> 1 THEN RAISE EXCEPTION 'trigger created % refunds, expected 1', v_count; END IF;
 
