@@ -84,6 +84,17 @@
       '.cb-sum .rate b{color:#16a34a}'+
       '.cb-sum .fee b{color:#ea580c}'+
       '.cb-note{margin:12px 0 0;padding:12px;border:1px solid var(--primary-line,rgba(59,130,246,.35));border-radius:12px;background:var(--primary-soft,rgba(59,130,246,.12));font-size:13px;line-height:1.45;color:var(--text)}'+
+      '.cb-sim{margin:12px 0;padding:12px;border:1px solid var(--line-strong,rgba(255,255,255,.14));border-radius:14px;background:var(--surface-elev,transparent)}'+
+      '.cb-sim h4{margin:0 0 8px;font-size:15px;color:var(--text-strong,inherit)}'+
+      '.cb-sim label{display:block;margin:0 0 6px;font-size:13px;color:var(--muted,#9aa3b5)}'+
+      '.cb-sim input{box-sizing:border-box;width:100%;min-height:46px;padding:10px 12px;border:1px solid var(--line-strong,rgba(255,255,255,.2));border-radius:10px;background:var(--surface,#fff);color:var(--text-strong,#111);font:inherit;font-size:16px}'+
+      '.cb-sim-results{display:grid;gap:7px;margin-top:10px;font-size:13px}'+
+      '.cb-sim-results div{display:flex;justify-content:space-between;gap:10px}'+
+      '.cb-sim-results span{color:var(--muted,#9aa3b5)}'+
+      '.cb-sim-results b{text-align:right;color:var(--text-strong,inherit)}'+
+      '.cb-sim-results .net b{color:#16a34a}'+
+      '.cb-sim-msg{margin:8px 0 0;font-size:12px;line-height:1.4;color:var(--muted,#9aa3b5)}'+
+      '.cb-sim-msg.warn{color:var(--danger,#dc2626)}'+
       '.cb-qr{display:flex;justify-content:center;margin:14px 0}'+
       '.cb-qr[hidden]{display:none}'+
       '.cb-addr{font-size:13px!important;letter-spacing:0!important;word-break:break-all;line-height:1.4}'+
@@ -166,6 +177,16 @@
           'style="width:180px;height:180px;max-width:100%;image-rendering:pixelated;background:#fff;padding:8px;border-radius:12px;display:block"></div>'+
         '<div class="cb-sum" id="cbSum"></div>'+
         '<div class="cb-note" id="cbNote"></div>'+
+        '<section class="cb-sim" aria-labelledby="cbSimTitle">'+
+        '<h4 id="cbSimTitle">Simulateur de frais</h4>'+
+        '<label for="cbSimAmount">Montant que tu prévois d’envoyer (USDT)</label>'+
+        '<input id="cbSimAmount" type="number" min="0" step="any" inputmode="decimal" placeholder="Ex. : 10" autocomplete="off">'+
+        '<div class="cb-sim-results" aria-live="polite">'+
+        '<div><span>Montant brut estimé</span><b id="cbSimGross">— HTG</b></div>'+
+        '<div><span id="cbSimFeeLabel">Frais estimés</span><b id="cbSimFee">— HTG</b></div>'+
+        '<div class="net"><span>Montant net estimé</span><b id="cbSimNet">— HTG</b></div></div>'+
+        '<p id="cbSimMsg" class="cb-sim-msg">Saisis un montant pour voir l’estimation. Aucun dépôt ne sera effectué.</p>'+
+        '</section>'+
         '<ul class="cb-list" id="cbList"></ul>'+
       '</div>'+
       '<div class="cb-pending" id="cbPending" role="status" aria-live="polite" hidden></div>'+
@@ -188,6 +209,7 @@
       render();
     });
     $id('cbConfirm').addEventListener('change',updateGate);
+    $id('cbSimAmount').addEventListener('input',updateSimulator);
     $id('cbGen').addEventListener('click',function(){
       var b=this; if(b.disabled||!info) return;
       var c=$id('cbConfirm');
@@ -255,6 +277,9 @@
     row('Montant envoyé','Libre (minimum '+min+' USDT)');
     if(rate>0) row('Taux appliqué','1 USDT = '+fmtNum(rate,2)+' HTG','rate');
     if(fee>0) row('Frais déduits automatiquement',fmtNum(fee,2)+' % du montant converti','fee');
+    var simFeeRowLabel=$id('cbSimFeeLabel');
+    if(simFeeRowLabel) simFeeRowLabel.textContent='Frais estimés ('+fmtNum(fee,2)+' %)';
+    updateSimulator();
     $id('cbNote').textContent=fee>0
       ?('Après confirmation blockchain, le montant reçu est converti au taux'+(rate>0?' de 1 USDT = '+fmtNum(rate,2)+' HTG':' en vigueur')+', puis les frais de '+fmtNum(fee,2)+' % sont déduits automatiquement. Le montant net est crédité à ton portefeuille.')
       :('Après confirmation blockchain, le montant reçu est converti au taux'+(rate>0?' de 1 USDT = '+fmtNum(rate,2)+' HTG':' en vigueur')+' puis crédité automatiquement à ton portefeuille.');
@@ -265,6 +290,27 @@
     li('En dessous de <b>'+min+' USDT</b>, le dépôt n\u2019est pas crédité.');
     li('Ton solde est crédité automatiquement en 1 à 3 minutes. Tu peux laisser cette fenêtre ouverte.');
     drawQr(info.address);
+  }
+
+  /* Calcul indicatif local uniquement : aucune requête réseau ni écriture en base. */
+  function updateSimulator(){
+    var input=$id('cbSimAmount'), grossEl=$id('cbSimGross'), feeEl=$id('cbSimFee'), netEl=$id('cbSimNet'), msg=$id('cbSimMsg');
+    if(!input||!grossEl||!feeEl||!netEl||!msg) return;
+    var raw=String(input.value||'').trim(), amount=Number(raw);
+    var rate=Number(info&&info.rate_htg)||0, min=Number(info&&info.min_usdt)||5, feePct=Number(info&&info.fee_percent)||0;
+    if(!raw||!isFinite(amount)||amount<=0||rate<=0){
+      grossEl.textContent=feeEl.textContent=netEl.textContent='— HTG';
+      msg.className='cb-sim-msg'; msg.textContent='Saisis un montant pour voir l’estimation. Aucun dépôt ne sera effectué.';
+      return;
+    }
+    var gross=amount*rate;
+    var net=Math.round(gross*(1-feePct/100)*100)/100;
+    var fees=Math.max(0,Math.round((gross-net)*100)/100);
+    grossEl.textContent=fmtNum(gross,2)+' HTG';
+    feeEl.textContent=fmtNum(fees,2)+' HTG';
+    netEl.textContent=fmtNum(net,2)+' HTG';
+    if(amount<min){ msg.className='cb-sim-msg warn'; msg.textContent='Attention : le minimum est de '+fmtNum(min,2)+' USDT. Ce montant ne serait pas crédité.'; }
+    else { msg.className='cb-sim-msg'; msg.textContent='Estimation indicative, basée sur le taux et les frais actuels. Le crédit réel dépend du montant reçu et de la confirmation blockchain.'; }
   }
 
   /* ---------- Historique des dépôts USDT du client ---------- */
