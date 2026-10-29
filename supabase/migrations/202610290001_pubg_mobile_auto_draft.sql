@@ -15,7 +15,7 @@ create table if not exists public.pubg_pack_costs (
   pack_id text primary key references public.pubg_packs(id) on delete cascade,
   fazer_product text,
   fazer_offer_id text,
-  cost_usd numeric(12,2) not null check (cost_usd > 0),
+  cost_usd numeric(12,2) check (cost_usd is null or cost_usd > 0),
   updated_at timestamptz not null default now()
 );
 
@@ -44,16 +44,15 @@ on conflict (id) do update set
 -- automatic refill path have been verified.
 
 insert into public.pubg_pack_costs (pack_id, cost_usd) values
-  ('pubg-60', 0.88),
-  ('pubg-325', 4.39),
-  ('pubg-660', 8.79),
-  ('pubg-1800', 21.97),
-  ('pubg-3850', 43.94),
-  ('pubg-8100', 87.87)
-on conflict (pack_id) do update set
-  cost_usd = excluded.cost_usd,
-  updated_at = now();
-
+  ('pubg-60', null),
+  ('pubg-325', null),
+  ('pubg-660', null),
+  ('pubg-1800', null),
+  ('pubg-3850', null),
+  ('pubg-8100', null)
+on conflict (pack_id) do nothing;
+-- Fill FazerCards product/offer IDs and verified provider costs after checking its live catalog.
+-- The fulfilment function refuses to order while cost_usd is null.
 alter table public.pubg_packs enable row level security;
 alter table public.pubg_pack_costs enable row level security;
 
