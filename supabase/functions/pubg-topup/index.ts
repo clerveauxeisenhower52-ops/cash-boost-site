@@ -25,8 +25,15 @@ async function hold(o:any,reason:string){
   await alert('Commande '+String(o.id).slice(0,8)+' suspendue : '+reason);
   return {ok:false,held:true,reason};
 }
+// Attente silencieuse (ex. recharge du solde FazerCards en cours) : pas d'alerte à chaque passage, une seule après 15 min.
+async function wait(o:any,reason:string){
+  await sb.from('orders').update({payout_status:'pending',payout_locked_at:null,auto_validation_reason:reason.slice(0,300)}).eq('id',o.id);
+  const age=Date.now()-new Date(o.created_at).getTime();
+  if(age>15*60*1000&&age<17*60*1000)await alert('Commande '+String(o.id).slice(0,8)+' en attente depuis plus de 15 min : '+reason);
+  return {ok:false,waiting:true,reason};
+}
 async function reject(o:any,reason:string){
-  await sb.from('orders').update({status:'rejetée',payout_status:'failed',auto_validation_reason:reason.slice(0,300),client_message:'La recharge PUBG a échoué. Le remboursement nécessite une vérification par le support.'}).eq('id',o.id);
+  await sb.from('orders').update({status:'rejetée',payout_status:'failed',auto_validation_reason:reason.slice(0,300),client_message:'La recharge PUBG a échoué. Ton solde est remboursé automatiquement.'}).eq('id',o.id);
   await alert('Commande '+String(o.id).slice(0,8)+' rejetée : '+reason);
   return {ok:false,rejected:true,reason};
 }
@@ -43,9 +50,10 @@ async function checkOrder(o:any){
     return {ok:true,done:false,status:st||'processing'};
   }catch(e){return {ok:true,done:false,status:'check_error',error:String((e as any)?.message||e)};}
 }
+// Ne reconnaît que des offres « UC » (jamais « WOW Coins » ni les passes).
 function offerUcCount(name:string):number|null{
   const s=String(name||'');
-  const m=s.match(/(?:^|[^0-9])(60|325|660|1800|3850|8100)\s*(?:uc|unknown cash|unknown cashes)?(?:[^0-9]|$)/i);
+  const m=s.match(/^\s*(60|325|660|1800|3850|8100)\s*(?:uc|unknown cash|unknown cashes)\s*$/i);
   return m?Number(m[1]):null;
 }
 async function fulfil(orderId:string){
@@ -85,6 +93,10 @@ async function fulfil(orderId:string){
   const price=Number(offer.price_usd);
   if(!Number.isFinite(price)||price<=0)return hold(o,'Prix FazerCards invalide pour '+pack.label);
   if(price>Number(cost.cost_usd)*MAX_DRIFT)return hold(o,'Prix FazerCards '+price+' USD supérieur au seuil autorisé pour '+pack.label);
+  // Le solde FazerCards doit couvrir la commande : sinon on attend la recharge automatique au lieu d'échouer et de rembourser le client.
+  let fzBalance:number;
+  try{fzBalance=Number((await fz('GET','/balance')).balance);}catch(e){return wait(o,'Solde FazerCards illisible : '+String((e as any)?.message||e));}
+  if(!Number.isFinite(fzBalance)||fzBalance<price)return wait(o,'Solde FazerCards insuffisant ('+(Number.isFinite(fzBalance)?fzBalance.toFixed(2):'?')+' USD pour '+price+' USD) : recharge automatique en cours');
   const fieldKey=catalog.fields?.find((f:any)=>/player|game|account|uid|id/i.test(String(f.key||'')))?.key||validation.fieldKey||'player_id';
   try{
     const r=await fz('POST','/topups/order',{category_id:cat.category_id,offer_id:offer.offer_id,fields:{[fieldKey]:pid}},o.id);
