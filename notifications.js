@@ -174,3 +174,80 @@ function setSubmitLoading(loading,text){
   else{btn.disabled=false;txt.textContent=(window.cbWallet&&window.cbWallet.on)?'Payer avec mon solde':'Confirmer ma commande';sp.classList.add('hidden');}
 }
 
+
+
+// ===== Cloche de notifications dans l'en-tête =====
+async function refreshHeaderNotifUI(){
+  const info=$('hdrNotifInfo'),action=$('hdrNotifAction'),dot=$('hdrNotifDot');
+  if(!info||!action)return;
+  if(!currentUserId){
+    info.textContent='Connecte-toi à ton compte Cash Boost pour activer les alertes de tes recharges et commandes.';
+    action.textContent='Aller au compte';action.dataset.mode='account';
+    if(dot)dot.classList.add('hidden');
+    return;
+  }
+  if(!pushSupported()){
+    info.textContent='Les notifications push ne sont pas disponibles dans ce navigateur. Tu peux toujours consulter le statut de tes commandes dans Cash Boost.';
+    action.disabled=true;action.textContent='Non disponible';action.dataset.mode='unavailable';
+    if(dot)dot.classList.add('hidden');
+    return;
+  }
+  if(isIOS()&&!isStandalone()){
+    info.textContent='Sur iPhone, ajoute d’abord Cash Boost à l’écran d’accueil, puis ouvre l’application pour activer les notifications.';
+    action.disabled=true;action.textContent='Installation nécessaire';action.dataset.mode='unavailable';
+    if(dot)dot.classList.add('hidden');
+    return;
+  }
+  action.disabled=false;
+  if(Notification.permission==='denied'){
+    info.textContent='Les notifications sont bloquées par ton navigateur. Autorise-les dans les paramètres du site, puis reviens ici.';
+    action.disabled=true;action.textContent='Vérifier les paramètres';action.dataset.mode='unavailable';
+    if(dot)dot.classList.add('hidden');
+    return;
+  }
+  const sub=await currentPushSub();
+  if(sub&&Notification.permission==='granted'){
+    info.textContent='Les notifications sont activées. Tu peux recevoir une alerte lorsque ta recharge est terminée.';
+    action.textContent='Désactiver les notifications';action.dataset.mode='off';
+    if(dot)dot.classList.remove('hidden');
+    await savePushSub(sub);
+  }else{
+    info.textContent='Active les notifications pour être averti lorsque ta recharge ou ta commande est terminée.';
+    action.textContent='Activer les notifications';action.dataset.mode='on';
+    if(dot)dot.classList.add('hidden');
+  }
+}
+function closeHeaderNotif(){const modal=$('notifModal');if(modal)modal.classList.add('hidden');const trigger=$('hdrNotifBtn');if(trigger)trigger.focus();}
+$('hdrNotifBtn')?.addEventListener('click',async()=>{const modal=$('notifModal');if(!modal)return;modal.classList.remove('hidden');await refreshHeaderNotifUI();});
+document.querySelectorAll('[data-notif-close]').forEach(el=>el.addEventListener('click',closeHeaderNotif));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('notifModal')?.classList.contains('hidden'))closeHeaderNotif();});
+$('hdrNotifAction')?.addEventListener('click',async()=>{
+  const action=$('hdrNotifAction');if(!action)return;
+  if(action.dataset.mode==='account'){
+    closeHeaderNotif();
+    document.querySelector('[data-page="account"]')?.click();
+    return;
+  }
+  if(action.dataset.mode==='unavailable')return;
+  action.disabled=true;
+  const mode=action.dataset.mode;
+  if(mode==='off'){
+    await disablePush();
+    showToast('Notifications désactivées');
+  }else{
+    if(!currentUserId){
+      action.disabled=false;
+      $('hdrNotifInfo').textContent='Connecte-toi à ton compte Cash Boost avant d’activer les notifications.';
+      return;
+    }
+    const result=await enablePush();
+    if(result==='granted')showToast('Notifications activées ✓');
+    else if(result==='unsupported')$('hdrNotifInfo').textContent='Les notifications push ne sont pas prises en charge par ce navigateur.';
+    else if(result==='denied')$('hdrNotifInfo').textContent='Autorisation refusée. Tu peux autoriser les notifications dans les paramètres du navigateur.';
+    else if(result==='save_error')$('hdrNotifInfo').textContent='Autorisation obtenue, mais impossible d’enregistrer cet appareil. Réessaie plus tard.';
+    else $('hdrNotifInfo').textContent='Impossible d’activer les notifications pour le moment. Réessaie.';
+  }
+  action.disabled=false;
+  await refreshHeaderNotifUI();
+  refreshPushUI();
+});
