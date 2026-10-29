@@ -26,7 +26,7 @@ async function hold(o:any,reason:string){
   return {ok:false,held:true,reason};
 }
 async function reject(o:any,reason:string){
-  await sb.from('orders').update({status:'rejetée',payout_status:'failed',auto_validation_reason:reason.slice(0,300),client_message:'La recharge PUBG n’a pas pu être effectuée. Le remboursement du solde sera traité automatiquement.'}).eq('id',o.id);
+  await sb.from('orders').update({status:'rejetée',payout_status:'failed',auto_validation_reason:reason.slice(0,300),client_message:'La recharge PUBG a échoué. Le remboursement nécessite une vérification par le support.'}).eq('id',o.id);
   await alert('Commande '+String(o.id).slice(0,8)+' rejetée : '+reason);
   return {ok:false,rejected:true,reason};
 }
