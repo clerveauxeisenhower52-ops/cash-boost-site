@@ -190,3 +190,33 @@ begin
   return new;
 end;
 $function$;
+
+
+-- Dedicated order trigger: PUBG orders must never be sent to the Free Fire handler.
+create or replace function public.notify_pubg_topup()
+returns trigger
+language plpgsql
+security definer
+set search_path to 'public', 'extensions'
+as $function$
+begin
+  if NEW.service = 'PUBG Mobile (Auto)' then
+    perform net.http_post(
+      url := 'https://ljddntmrcarbwfiqvyor.supabase.co/functions/v1/pubg-topup',
+      headers := jsonb_build_object(
+        'Content-Type', 'application/json',
+        'x-webhook-secret', (select value from public.internal_secrets where name = 'webhook_secret')
+      ),
+      body := jsonb_build_object('orderId', NEW.id::text)
+    );
+  end if;
+  return NEW;
+end;
+$function$;
+
+drop trigger if exists trg_pubg_topup on public.orders;
+create trigger trg_pubg_topup
+after insert on public.orders
+for each row
+when (NEW.service = 'PUBG Mobile (Auto)')
+execute function public.notify_pubg_topup();
