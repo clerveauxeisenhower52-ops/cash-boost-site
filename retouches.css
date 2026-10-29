@@ -29,3 +29,14 @@
 .cb-net-logo svg{width:38px !important;height:38px !important}
 /* Plasma : barres du logo agrandies pour mieux remplir le rond */
 .cb-net[data-net="plasma"] .cb-net-logo svg g{transform:translate(32px,32px) scale(.115) translate(-540px,-363px)}
+
+
+/* Mobile Android: relever le menu fixe pour qu'il ne soit pas masqué par la barre système */
+@media (max-width: 700px) {
+  .bottom {
+    bottom: calc(22px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  body:not(.landing-active) {
+    padding-bottom: calc(var(--nav-h) + var(--cb-fixed-total-clearance, 224px) + 22px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
