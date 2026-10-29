@@ -106,12 +106,6 @@ envoi: `echec:${msg}`,
 userMessage: "Le paiement est enregistré. L'état du transfert doit être vérifié manuellement avant tout remboursement ou nouvel envoi.",
 };
 }
-if (sendResult?.pending && sendResult?.tx) {
-return { ok: true, envoi: `broadcast:${sendResult.tx}`, userMessage: "Paiement vérifié. Tes USDT sont en route." };
-}
-if (sendResult?.tx) {
-return { ok: true, envoi: `envoye:${sendResult.tx}`, userMessage: "Paiement vérifié. Tes USDT ont été envoyés." };
-}
 // "skipped" ne prouve pas qu'un transfert a été confirmé. Garder la commande
 // en attente de rapprochement manuel et ne déclencher aucun remboursement automatique.
 if (sendResult?.skipped) {
@@ -131,6 +125,12 @@ if (sendResult?.skipped) {
       ? "Commande en vérification manuelle. Aucun nouvel envoi ni remboursement automatique ne doit être lancé avant vérification de la transaction."
       : "État de la commande non enregistré correctement. Contacte le support; ne relance pas l'envoi et ne demande pas de remboursement avant vérification blockchain.",
   };
+}
+if (sendResult?.pending && sendResult?.tx) {
+return { ok: true, envoi: `broadcast:${sendResult.tx}`, userMessage: "Paiement vérifié. Tes USDT sont en route." };
+}
+if (sendResult?.tx) {
+return { ok: true, envoi: `envoye:${sendResult.tx}`, userMessage: "Paiement vérifié. Tes USDT ont été envoyés." };
 }
 return {
   ok: false,
