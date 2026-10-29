@@ -21,7 +21,7 @@
 // =====================================================================
 
 // ⚠️ À changer quand tu modifies CE fichier ou veux vider le cache de tous les clients.
-const CACHE_NAME = 'cashboost-v10';
+const CACHE_NAME = 'cashboost-v11';
 const CORE_ASSETS = [
   './',
   './index.html',
