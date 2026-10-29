@@ -192,7 +192,7 @@
           'Impossible de vérifier le compte auprès du fournisseur. Réessaie plus tard.';
         vstate='err';canRetry=true;okPid=null;info=null;return paint();
       }
-      okPid=pid;info={player_name:data.player_name,region:data.region||''};
+      okPid=pid;info={player_name:data.player_name,region:data.region||'',verified:true};
       vstate='ok';paint();
     }catch(_){
       if(my!==seq)return;
