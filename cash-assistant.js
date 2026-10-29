@@ -95,7 +95,7 @@
     send.textContent = '…';
     const waiting = addMessage('Je cherche une réponse…', 'bot');
     try {
-      if (!window.sb || !sb.auth || !sb.functions) throw new Error('assistant_unavailable');
+      if (typeof sb === 'undefined' || !sb.auth || !sb.functions) throw new Error('assistant_unavailable');
       const { data: sessionData } = await sb.auth.getSession();
       if (!sessionData?.session?.access_token) {
         waiting.textContent = 'Connecte-toi à ton compte Cash Boost pour utiliser cet assistant. Tu peux aussi contacter le support via WhatsApp.';
