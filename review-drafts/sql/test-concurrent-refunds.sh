@@ -7,6 +7,7 @@ USER_ID="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 ORDER_ID="bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
 
 "${PSQL[@]}" <<SQL
+INSERT INTO auth.users(id) VALUES ('$USER_ID');
 INSERT INTO wallets(user_id,balance_htg) VALUES ('$USER_ID',500);
 INSERT INTO orders(id,user_id,total_htg,payment_method,status)
 VALUES ('$ORDER_ID','$USER_ID',100,'Solde','en attente');
