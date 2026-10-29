@@ -157,10 +157,14 @@
     <button type="button" class="notif-backdrop" data-notif-close aria-label="Fermer les notifications"></button>
     <div class="notif-sheet">
       <div class="notif-head"><div><span class="notif-eyebrow">CASH BOOST</span><h2 id="notifTitle">Notifications</h2></div><button type="button" class="notif-close" data-notif-close aria-label="Fermer">×</button></div>
-      <div class="notif-status-icon" aria-hidden="true">🔔</div>
-      <p id="hdrNotifInfo" class="notif-info">Active les notifications pour être averti lorsque ta recharge est terminée.</p>
-      <button id="hdrNotifAction" type="button" class="primary-btn notif-action">Activer les notifications</button>
-      <p class="notif-footnote">Tu peux modifier cette autorisation dans les paramètres de ton navigateur.</p>
+      <div class="notif-history-head"><span>Activité récente</span><button type="button" id="notifMarkAll" class="notif-mark-all">Tout marquer comme lu</button></div>
+      <div id="notifList" class="notif-list"><p class="notif-empty">Chargement des notifications…</p></div>
+      <div class="notif-push-settings">
+        <div class="notif-status-icon" aria-hidden="true">🔔</div>
+        <p id="hdrNotifInfo" class="notif-info">Active les notifications pour être averti lorsque ta recharge est terminée.</p>
+        <button id="hdrNotifAction" type="button" class="primary-btn notif-action">Activer les notifications</button>
+        <p class="notif-footnote">Tu peux modifier cette autorisation dans les paramètres de ton navigateur.</p>
+      </div>
     </div>
   </section>
   <main>
