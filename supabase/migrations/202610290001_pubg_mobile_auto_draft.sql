@@ -77,8 +77,8 @@ declare
   v_uid uuid := auth.uid();
   v_n int; v_owner uuid; v_prev jsonb;
   v_svc record; v_pack record; v_cost numeric;
-  v_phone text := regexp_replace(coalesce(p_phone,''), '\\D', '', 'g');
-  v_pid text := regexp_replace(coalesce(p_player_id,''), '\\s', '', 'g');
+  v_phone text := regexp_replace(coalesce(p_phone,''), '\D', '', 'g');
+  v_pid text := regexp_replace(coalesce(p_player_id,''), '\s', '', 'g');
   v_bal numeric; v_new numeric; v_name text; v_email text; v_order_id text; v_res jsonb;
 begin
   if v_uid is null then
