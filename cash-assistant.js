@@ -18,6 +18,7 @@
     .cb-as-msg{max-width:90%;padding:11px 13px;border-radius:15px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.45;font-size:14px}
     .cb-as-msg.bot{align-self:flex-start;background:#20222d;color:#f3f4f6;border-bottom-left-radius:5px}
     .cb-as-msg.user{align-self:flex-end;background:#2563eb;color:white;border-bottom-right-radius:5px}
+    .cb-as-wa{align-self:flex-start;display:inline-block;margin-top:-4px;padding:9px 13px;border-radius:999px;background:#16a34a;color:#fff;font-weight:700;font-size:13px;text-decoration:none}
     .cb-as-quick{display:flex;flex-wrap:wrap;gap:7px;padding:0 12px 10px}
     .cb-as-quick button{border:1px solid #3c4355;border-radius:999px;background:#171923;color:#dbeafe;padding:8px 10px;font-size:12px;cursor:pointer}
     .cb-as-form{display:flex;gap:8px;padding:12px;border-top:1px solid #30313d;background:#171923}
@@ -34,9 +35,9 @@
   root.id = 'cb-smart-assistant';
   root.innerHTML = `
     <section id="cb-assistant-panel" role="dialog" aria-modal="false" aria-labelledby="cb-as-title">
-      <header class="cb-as-head"><div class="cb-as-mark" aria-hidden="true">CB</div><div style="flex:1"><div class="cb-as-title" id="cb-as-title">Assistant Cash Boost</div><div class="cb-as-sub">Aide pour les services et les commandes</div></div><button type="button" class="cb-as-close" id="cb-as-close" aria-label="Fermer">×</button></header>
-      <div id="cb-assistant-messages" aria-live="polite"><div class="cb-as-msg bot">Salut ! Je peux t’aider à comprendre les services, les paiements et le suivi des commandes. Je ne peux pas effectuer de paiement ni modifier ton portefeuille.</div></div>
-      <div class="cb-as-quick" id="cb-as-quick"><button type="button">Suivre ma commande</button><button type="button">Moyens de paiement</button><button type="button">Parrainage</button><button type="button">Contacter le support</button></div>
+      <header class="cb-as-head"><div class="cb-as-mark" aria-hidden="true">CB</div><div style="flex:1"><div class="cb-as-title" id="cb-as-title">Assistant Cash Boost</div><div class="cb-as-sub">Aide pour les services, dépôts et commandes</div></div><button type="button" class="cb-as-close" id="cb-as-close" aria-label="Fermer">×</button></header>
+      <div id="cb-assistant-messages" aria-live="polite"><div class="cb-as-msg bot">Salut ! Je peux t’aider à comprendre les services, les dépôts, les paiements et le suivi des commandes. Je ne peux pas effectuer de paiement ni modifier ton portefeuille. Pour un dossier personnel, le support WhatsApp est là.</div></div>
+      <div class="cb-as-quick" id="cb-as-quick"><button type="button">Faire un dépôt</button><button type="button">Suivre ma commande</button><button type="button">Services disponibles</button><button type="button">Parrainage</button><button type="button">Contacter le support</button></div>
       <form class="cb-as-form" id="cb-as-form"><input id="cb-assistant-input" maxlength="1000" autocomplete="off" placeholder="Écris ta question…" aria-label="Ta question"><button id="cb-assistant-send" type="submit">Envoyer</button></form>
       <div class="cb-as-note">Ne partage jamais ton mot de passe, code PIN ou clé privée.</div>
     </section>
@@ -53,7 +54,20 @@
   const quick = root.querySelector('#cb-as-quick');
   const history = [];
   let busy = false;
+  let serverSupportUrl = '';
 
+  const QUESTIONS = {
+    'Faire un dépôt': 'Comment ajouter des fonds à mon portefeuille avec MonCash ou NatCash ?',
+    'Suivre ma commande': 'Comment suivre ma commande ?',
+    'Services disponibles': 'Quels services sont disponibles et quels sont les montants minimum ?',
+    'Parrainage': 'Comment fonctionne le programme de parrainage ?'
+  };
+
+  function supportUrl() {
+    const link = Array.from(document.querySelectorAll('a[href*="wa.me"],a[href*="whatsapp.com"]'))
+      .map(a => a.href).find(h => /wa\.me\/\d{6,}|whatsapp\.com\/send/.test(h));
+    return link || serverSupportUrl || '';
+  }
   function addMessage(text, role) {
     const node = document.createElement('div');
     node.className = 'cb-as-msg ' + (role === 'user' ? 'user' : 'bot');
@@ -61,6 +75,18 @@
     messagesEl.appendChild(node);
     messagesEl.scrollTop = messagesEl.scrollHeight;
     return node;
+  }
+  function addSupportLink() {
+    const url = supportUrl();
+    if (!url) return;
+    const a = document.createElement('a');
+    a.className = 'cb-as-wa';
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.textContent = '💬 Support WhatsApp';
+    messagesEl.appendChild(a);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
   }
   function toggle(open) {
     panel.classList.toggle('open', open);
@@ -72,13 +98,15 @@
   quick.addEventListener('click', e => {
     const b = e.target.closest('button');
     if (!b || busy) return;
-    input.value = b.textContent === 'Suivre ma commande'
-      ? 'Comment suivre ma commande ?'
-      : b.textContent === 'Moyens de paiement'
-        ? 'Quels sont les moyens de paiement disponibles et comment vérifier un paiement ?'
-        : b.textContent === 'Parrainage'
-          ? 'Comment fonctionne le programme de parrainage ?'
-          : 'Comment contacter le support ?';
+    const label = b.textContent.trim();
+    if (label === 'Contacter le support') {
+      quick.style.display = 'none';
+      addMessage(label, 'user');
+      addMessage('Pour un problème sur une commande, un dépôt ou ton compte, écris au support. Prépare le numéro de commande (#XXXXXX dans « Commandes »), le montant et l’heure. Ne partage jamais ton mot de passe.', 'bot');
+      addSupportLink();
+      return;
+    }
+    input.value = QUESTIONS[label] || label;
     form.requestSubmit();
   });
 
@@ -94,27 +122,42 @@
     send.disabled = true;
     send.textContent = '…';
     const waiting = addMessage('Je cherche une réponse…', 'bot');
+    let showSupport = false;
     try {
       if (typeof sb === 'undefined' || !sb.auth || !sb.functions) throw new Error('assistant_unavailable');
       const { data: sessionData } = await sb.auth.getSession();
       if (!sessionData?.session?.access_token) {
         waiting.textContent = 'Connecte-toi à ton compte Cash Boost pour utiliser cet assistant. Tu peux aussi contacter le support via WhatsApp.';
+        showSupport = true;
         return;
       }
       history.push({ role: 'user', content: message });
       const { data, error } = await sb.functions.invoke('cash-boost-assistant', {
         body: { messages: history.slice(-8) }
       });
-      if (error) throw error;
+      if (error) {
+        let body = null;
+        try { body = await error.context?.json?.(); } catch (_) {}
+        if (body && typeof body.answer === 'string' && body.answer) {
+          waiting.textContent = body.answer;
+          if (history[history.length - 1]?.role === 'user') history.pop();
+          return;
+        }
+        throw error;
+      }
+      if (typeof data?.support_url === 'string' && /^https:\/\/wa\.me\/\d+$/.test(data.support_url)) serverSupportUrl = data.support_url;
       const answer = typeof data?.answer === 'string' ? data.answer : '';
       if (!answer) throw new Error('empty_answer');
       waiting.textContent = answer;
       history.push({ role: 'assistant', content: answer });
       while (history.length > 8) history.shift();
+      showSupport = /support|whatsapp/i.test(answer);
     } catch (_) {
-      waiting.textContent = 'Je ne peux pas répondre pour le moment. Réessaie plus tard ou contacte le support WhatsApp depuis le site. Ne partage aucun mot de passe ni code secret.';
+      waiting.textContent = 'Je ne peux pas répondre pour le moment. Réessaie plus tard ou contacte le support WhatsApp. Ne partage aucun mot de passe ni code secret.';
+      showSupport = true;
       if (history[history.length - 1]?.role === 'user') history.pop();
     } finally {
+      if (showSupport) addSupportLink();
       busy = false;
       send.disabled = false;
       send.textContent = 'Envoyer';
