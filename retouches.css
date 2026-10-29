@@ -34,7 +34,7 @@
 /* Mobile Android: relever le menu fixe pour qu'il ne soit pas masqué par la barre système */
 @media (max-width: 700px) {
   .bottom {
-    bottom: calc(22px + env(safe-area-inset-bottom, 0px)) !important;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
   }
   body:not(.landing-active) {
     padding-bottom: calc(var(--nav-h) + var(--cb-fixed-total-clearance, 224px) + 22px + env(safe-area-inset-bottom, 0px)) !important;
