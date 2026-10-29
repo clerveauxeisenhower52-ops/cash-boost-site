@@ -397,8 +397,11 @@ async function auto() {
     .is('tx_hash', null).gt('created_at', since).limit(50);
   if (!orders || orders.length === 0) return { idle: true };
 
-  const { data: costs } = await sb.from('freefire_pack_costs').select('pack_id, cost_usd');
-  const costOf = new Map((costs || []).map((c: any) => [c.pack_id, Number(c.cost_usd)]));
+  const [{ data: costs }, { data: pubgCosts }] = await Promise.all([
+    sb.from('freefire_pack_costs').select('pack_id, cost_usd'),
+    sb.from('pubg_pack_costs').select('pack_id, cost_usd'),
+  ]);
+  const costOf = new Map([...(costs || []), ...(pubgCosts || [])].map((c: any) => [c.pack_id, Number(c.cost_usd)]));
   let needed = 0;
   for (const o of orders) needed += costOf.get(o.pack_id) || 0;
   if (needed <= 0) return { idle: true };
