@@ -1,4 +1,4 @@
-/* PUBG Mobile (Auto) : page de commande (même présentation que les autres services), achat de packs avec le solde (fonction SQL pubg_purchase) + vérification automatique du compte */
+/* PUBG Mobile (Auto) : page de commande; la vérification du joueur par le fournisseur reste à confirmer. */
 (function(){
   const st=document.createElement('style');
   st.textContent=`
@@ -79,7 +79,7 @@
     <div class="field">
       <label for="pgbPid">ID joueur (Player ID)</label>
       <div class="pgbin"><input id="pgbPid" inputmode="numeric" maxlength="15" autocomplete="off" placeholder="ex. 123456789"><span id="pgbDot" class="pgbdot"></span></div>
-      <p class="field-help">Région Global. Vérification du format uniquement : vérifie soigneusement ton ID.</p>
+      <p class="field-help">Région Global. Le site vérifie seulement le format de l’ID, pas l’existence du compte.</p>
       <div id="pgbV"></div>
     </div>
     <div class="field">
@@ -144,7 +144,7 @@
     const v=$('pgbV');
     if(vstate==='load')v.innerHTML='<div class="pgbcard load">Vérification en cours…</div>';
     else if(vstate==='ok'){
-      v.innerHTML='<div class="pgbcard ok"><b>✓ Compte vérifié</b><small>Nom joueur</small><b id="pgbName"></b><small>ID joueur</small>'+esc(okPid)+(info&&info.region?'<small>Serveur</small>'+esc(info.region):'')+'</div>'
+      v.innerHTML='<div class="pgbcard ok"><b>✓ Format de l’ID vérifié</b><small>État de vérification</small><b id="pgbName"></b><small>ID joueur</small>'+esc(okPid)+(info&&info.region?'<small>Serveur</small>'+esc(info.region):'')+'</div>'
         +'<label class="terms"><input type="checkbox" id="pgbConf"'+(conf?' checked':'')+'><span>Je confirme que ce compte est le mien</span></label>';
       $('pgbName').textContent=(info&&info.player_name)||'—';
       $('pgbConf').onchange=()=>{conf=$('pgbConf').checked;paint();};
@@ -175,7 +175,7 @@
     // Vérification du format uniquement : la validation du compte PUBG par FazerCards reste à confirmer.
     await Promise.resolve();
     if(my!==seq||curPid()!==pid)return;
-    okPid=pid;info={player_name:'Format vérifié uniquement',region:'Global'};
+    okPid=pid;info={player_name:'Format de l’ID vérifié uniquement',region:'Global'};
     vstate='ok';paint();
   }
 
@@ -192,7 +192,7 @@
     $('pgbProgress').style.display='none';
     if(io)io.disconnect();
     $('pgbBar').classList.add('ob-hidden');
-    $('pgbCard').innerHTML='<div class="pgb-done"><div class="sv-check">✓</div><h2>Commande reçue</h2><p>Tes diamants arrivent en quelques instants. Si la recharge échoue, ton solde est remboursé automatiquement.</p><button type="button" id="pgbOrders" class="primary-btn">Voir mes commandes</button><button type="button" id="pgbAgain" class="secondary-btn" style="margin-top:10px">Commander à nouveau</button></div>';
+    $('pgbCard').innerHTML='<div class="pgb-done"><div class="sv-check">✓</div><h2>Commande reçue</h2><p>Tes UC seront livrées automatiquement après confirmation du fournisseur. Si la recharge échoue, ton solde est remboursé automatiquement.</p><button type="button" id="pgbOrders" class="primary-btn">Voir mes commandes</button><button type="button" id="pgbAgain" class="secondary-btn" style="margin-top:10px">Commander à nouveau</button></div>';
     $('pgbOrders').onclick=()=>{showPage('orders');try{loadMyOrders();}catch(_){}};
     $('pgbAgain').onclick=()=>open();
     window.scrollTo({top:0,behavior:'smooth'});
