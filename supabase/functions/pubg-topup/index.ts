@@ -5,7 +5,14 @@ const sb=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVI
 const INTERNAL_SECRET=Deno.env.get('INTERNAL_SECRET')||'';
 const MAX_DRIFT=1.15;
 const FAIL_STATUSES=new Set(['failed','failure','canceled','cancelled','rejected','refunded','error','declined','expired']);
-const json=(b:unknown,s=200)=>new Response(JSON.stringify(b),{status:s,headers:{'Content-Type':'application/json'}});
+const corsHeaders={
+  'Access-Control-Allow-Origin':'*',
+  'Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type, x-webhook-secret',
+  'Access-Control-Allow-Methods':'POST, OPTIONS',
+  'Access-Control-Max-Age':'86400'
+};
+const json=(b:unknown,s=200)=>new Response(JSON.stringify(b),{status:s,headers:{...corsHeaders,'Content-Type':'application/json'}});
+
 const sleep=(ms:number)=>new Promise(r=>setTimeout(r,ms));
 function safeEqual(a:string,b:string){const x=new TextEncoder().encode(a),y=new TextEncoder().encode(b);if(x.length!==y.length)return false;let d=0;for(let i=0;i<x.length;i++)d|=x[i]^y[i];return d===0;}
 async function authorized(req:Request){
