@@ -1,0 +1,21 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+
+const source = await readFile(new URL("./index.ts", import.meta.url), "utf8");
+const skipped = source.indexOf("if (sendResult?.skipped)");
+const pending = source.indexOf("if (sendResult?.pending && sendResult?.tx)");
+const txSuccess = source.indexOf("if (sendResult?.tx)");
+assert.ok(skipped >= 0, "skipped branch exists");
+assert.ok(pending >= 0 && txSuccess >= 0, "tx success branches exist");
+assert.ok(skipped < pending && skipped < txSuccess, "skipped is handled before all tx success branches");
+const skippedEnd = source.indexOf('envoi: "etat_inattendu"', skipped);
+const skippedBlock = source.slice(skipped, skippedEnd);
+assert.match(skippedBlock, /status: "en attente"/, "skipped keeps order pending");
+assert.match(skippedBlock, /auto_validated: false/, "skipped is not auto-validated");
+assert.match(skippedBlock, /vérification manuelle/, "skipped requires manual reconciliation");
+assert.doesNotMatch(skippedBlock, /ok: true/, "skipped is never reported as success");
+const ambiguous = source.indexOf("Envoi USDT non confirmé (");
+assert.ok(ambiguous >= 0, "ambiguous transfer error is recorded");
+const ambiguousTail = source.slice(ambiguous, source.indexOf("if (sendResult?.skipped)", ambiguous));
+assert.doesNotMatch(ambiguousTail, /envoi USDT échoué/, "ambiguous errors do not invoke auto-refund trigger phrase");
+console.log("PASS: skipped/ambiguous transfer state static assertions");
