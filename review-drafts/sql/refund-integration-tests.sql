@@ -9,6 +9,8 @@ DECLARE
   v_count integer;
   v_balance numeric;
 BEGIN
+  INSERT INTO auth.users(id) VALUES(v_user), (v_other_user);
+
   -- Valid direct refund and duplicate idempotency.
   INSERT INTO wallets(user_id,balance_htg) VALUES(v_user, 500);
   INSERT INTO orders(id,user_id,total_htg,payment_method,status)
