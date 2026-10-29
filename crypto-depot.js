@@ -252,12 +252,12 @@
       d.appendChild(s); d.appendChild(b); sum.appendChild(d);
     }
     row('Réseau',n.short);
-    row('Montant','Libre (minimum '+min+' USDT)');
+    row('Montant envoyé','Libre (minimum '+min+' USDT)');
     if(rate>0) row('Taux appliqué','1 USDT = '+fmtNum(rate,2)+' HTG','rate');
-    if(fee>0) row('Frais de service',fmtNum(fee,2)+' %','fee');
+    if(fee>0) row('Frais déduits automatiquement',fmtNum(fee,2)+' % du montant converti','fee');
     $id('cbNote').textContent=fee>0
-      ?('Ton solde est crédité du montant reçu après déduction des frais ('+fmtNum(fee,2)+' %)'+(rate>0?', converti au taux 1 USDT = '+fmtNum(rate,2)+' HTG.':'.'))
-      :('Ton solde est crédité automatiquement après confirmation'+(rate>0?', au taux 1 USDT = '+fmtNum(rate,2)+' HTG.':'.'));
+      ?('Après confirmation blockchain, le montant reçu est converti au taux'+(rate>0?' de 1 USDT = '+fmtNum(rate,2)+' HTG':' en vigueur')+', puis les frais de '+fmtNum(fee,2)+' % sont déduits automatiquement. Le montant net est crédité à ton portefeuille.')
+      :('Après confirmation blockchain, le montant reçu est converti au taux'+(rate>0?' de 1 USDT = '+fmtNum(rate,2)+' HTG':' en vigueur')+' puis crédité automatiquement à ton portefeuille.');
 
     var list=$id('cbList'); list.innerHTML='';
     function li(html,cls){ var e=document.createElement('li'); if(cls)e.className=cls; e.innerHTML=html; list.appendChild(e); }
@@ -280,7 +280,7 @@
     var ul=$id('cbHist'), title=$id('cbHistTitle'); if(!ul||!title) return;
     try{
       var r=await sb.from('crypto_deposits')
-        .select('id,network,tx_hash,amount_usdt,amount_htg,status,created_at')
+        .select('id,network,tx_hash,amount_usdt,rate_htg,amount_htg,status,created_at')
         .eq('user_id',currentUserId).order('created_at',{ascending:false}).limit(10);
       var rows=(r&&r.data)||[];
       ul.innerHTML='';
@@ -290,11 +290,15 @@
         var main=document.createElement('div'); main.className='cb-h-main';
         var amt=document.createElement('b'); amt.textContent=fmtNum(d.amount_usdt,2)+' USDT';
         var sub=document.createElement('small');
-        sub.textContent=(NET_LABEL[d.network]||String(d.network||''))+' · '+fmtDate(d.created_at)+(d.status==='credited'?' · +'+fmtNum(d.amount_htg,0)+' HTG':'');
+        var gross=Number(d.amount_usdt||0)*Number(d.rate_htg||0), net=Number(d.amount_htg||0), fees=Math.max(0,gross-net);
+        sub.textContent=(NET_LABEL[d.network]||String(d.network||''))+' · '+fmtDate(d.created_at);
+        if(d.status==='credited') sub.textContent+=' · Brut: '+fmtNum(gross,2)+' HTG · Frais: '+fmtNum(fees,2)+' HTG · Net: +'+fmtNum(net,2)+' HTG';
+        else if(d.status==='below_min') sub.textContent+=' · Minimum requis non atteint — aucun crédit';
+        else sub.textContent+=' · Crédit en attente de confirmation';
         main.appendChild(amt); main.appendChild(sub);
         var side=document.createElement('div'); side.className='cb-h-side';
         var ok=d.status==='credited';
-        var badge=document.createElement('span'); badge.className='cb-badge'+(ok?' ok':''); badge.textContent=ok?'Crédité':'En cours';
+        var badge=document.createElement('span'); badge.className='cb-badge'+(ok?' ok':''); badge.textContent=ok?'Crédité':(d.status==='below_min'?'Sous le minimum':'En cours');
         side.appendChild(badge);
         var base=EXPLORER[d.network];
         if(base&&/^0x[0-9a-fA-F]{64}$/.test(d.tx_hash||'')){
