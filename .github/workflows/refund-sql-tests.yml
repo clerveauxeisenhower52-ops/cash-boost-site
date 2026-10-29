@@ -1,3 +1,4 @@
+# Free isolated PostgreSQL tests only; never connects to production Supabase.
 name: Refund SQL draft integration tests
 on:
   push:
