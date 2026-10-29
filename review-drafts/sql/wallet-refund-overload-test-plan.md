@@ -1,65 +1,43 @@
-# Test plan — wallet refund overload unification
+# Test plan — wallet refund overload unification and verify-receipt safety
 
-**Status:** local static checks passed; PostgreSQL execution/integration tests have not occurred.
-**Target:** `review-drafts/sql/wallet-refund-overload-unification.sql`
+**Status:** GitHub Actions integration suite passed on commit `d1162e7973628de2506aa4798197a6374aedb931`.
+**Workflow:** https://github.com/clerveauxeisenhower52-ops/cash-boost-site/actions/runs/40802733781
+**Branch:** `review/fix-skipped-usdt-status`
 **Production safety:** no deployment, no wallet balance changes, no refunds, no USDT transfer.
 
-## Environment status
+## Environment and production status
 
-- A Supabase development branch named `wallet-refund-test` was requested after the user approved the quoted $0.01344/hour cost.
-- Supabase rejected branch creation because branching is supported only on the Pro plan or above.
-- No branch was created and no Supabase SQL was executed.
-- The live function definitions and schema were inspected through read-only queries.
-- The migration remains a review draft. Do not apply it to production.
+- Supabase project: `ljddntmrcarbwfiqvyor`.
+- The live schema was inspected read-only; `wallets.balance_htg` is the balance column and `wallet_transactions.order_id` is text.
+- The live `verify-receipt` Edge Function is active at version 92 with `verify_jwt=false`.
+- Read-only inspection of version 92 found a safety issue in the send-result handling: a `skipped` result can fall through to an `ok: true` response, and an ambiguous send error uses the phrase `envoi USDT échoué`, which the live SQL trigger uses to initiate automatic refund handling. This could be unsafe when broadcast status is uncertain.
+- A corrected `verify-receipt` draft is on this review branch. It handles `skipped` before success branches, returns `ok:false`, leaves the order pending for manual reconciliation, and avoids the automatic-refund trigger phrase for ambiguous send outcomes.
+- The Supabase branch `wallet-refund-test` could not be created because database branching requires Pro or above. No branch was created and no SQL draft was executed against production.
+- The SQL wrapper remains a review draft. Do not apply it to production without a separate deployment decision and backup/rollback review.
 
-## Automated local static checks
+## Automated CI results
 
-A Node.js script, `check-refund-draft.mjs`, was run against a local copy of the SQL draft. **12/12 static checks passed**:
+GitHub Actions run `40802733781` completed successfully on commit `d1162e7973628de2506aa4798197a6374aedb931`. All workflow steps passed:
 
-- [x] Preserves `wallet_refund_order(text) RETURNS jsonb`.
-- [x] Retains `SECURITY DEFINER` and pins `search_path` to `public`.
-- [x] Handles malformed UUID text.
-- [x] Requires an existing order.
-- [x] Rejects payment methods other than `Solde`.
-- [x] Requires a negative purchase debit.
-- [x] Checks existing refunds by `order_id` and canonical `reference`.
-- [x] Delegates the actual refund to `wallet_refund_order(uuid)`.
-- [x] Reads the actual `wallets.balance_htg` column.
-- [x] Contains no blockchain RPC, send function, or network call.
-- [x] Is explicitly marked review-only.
-- [x] No production SQL was applied.
+- [x] Create disposable PostgreSQL fixture schema.
+- [x] Compile and apply the draft SQL to the disposable database.
+- [x] Run SQL integration assertions.
+- [x] Run concurrent refund attempts.
+- [x] Run static transfer-state safety checks for the `verify-receipt` draft.
 
-**Limit:** these are source-pattern/static checks, not a PostgreSQL parser, SQL compilation, or execution test.
+The SQL integration test reports: valid refund, duplicate, malformed ID, non-`Solde`, and trigger single-credit checks passed. The concurrency test reports that eight simultaneous refund attempts resulted in exactly one wallet credit and one refund row. The static safety check passed for the `skipped` handling and ambiguous-send wording.
 
-## Logic-only simulated cases
+## Remaining validation limits
 
-| Case | Expected result | Static assessment |
-|---|---|---|
-| Text ID is malformed | `ok=false, status=invalid_order_id` | Pass: guarded UUID cast |
-| UUID parses but order does not exist | `ok=false, status=order_not_found` | Pass: order lookup is checked |
-| Order payment method is not `Solde` | `ok=false, status=not_wallet_payment` | Pass: payment method is checked |
-| No purchase debit exists | `ok=false, status=no_purchase` | Pass: no refund delegated |
-| Purchase debit amount is zero or positive | `ok=false, status=no_purchase` | Pass: debit must be negative |
-| Refund already exists by order ID or canonical reference | `ok=true, status=already_refunded` | Pass: early idempotency branch |
-| Valid wallet-funded order with a purchase debit and no refund | Calls UUID overload; returns `refunded` only if UUID function returns true | Pass by control-flow inspection; DB behavior untested |
-| UUID implementation returns false | `ok=false, status=refund_not_applied` | Pass: false result handled |
-| Two refund attempts race | At most one refund should persist | Not verified; requires concurrent DB test |
+The CI fixture is disposable and models the relevant schema; it is not the live Supabase database. The successful CI run validates the draft against that fixture, not a live production migration. The `verify-receipt` draft has not been deployed, so production is still running version 92 with the issue described above.
 
-## Required tests before approval
+Before production release:
+1. Review the exact diff between active version 92 and the draft.
+2. Confirm the production environment variables and `send-usdt-bnb` response contract without exposing secret values.
+3. Decide explicitly on a controlled deployment window and rollback plan.
+4. Deploy the Edge Function only after explicit authorization; verify behavior using non-financial/test-only inputs and logs.
+5. Schedule the SQL wrapper migration separately, after confirming the UUID overload and trigger behavior in an isolated Supabase environment. Do not use a real wallet refund as a test.
 
-These still require a disposable PostgreSQL/Supabase environment:
+## Safety invariant
 
-1. Compile the migration against the actual schema.
-2. Valid refund on a synthetic wallet-funded order.
-3. Duplicate call for the same order.
-4. Concurrent calls for the same order.
-5. Existing refund identified by `reference` but missing/mismatched `order_id`.
-6. Missing wallet row and missing purchase debit.
-7. Non-`Solde` order and malformed/nonexistent UUID.
-8. Trigger path: transition to `rejetée` invokes both BEFORE and AFTER triggers without double credit.
-9. Confirm unique constraints and error handling.
-10. Confirm no transfer function or blockchain RPC is invoked.
-
-## Important review caveat
-
-The wrapper's pre-check is not a substitute for the UUID function's transactional safeguards. The UUID implementation locks the wallet and checks existing refunds before crediting; concurrent and trigger cases still need integration tests. Supabase branching is unavailable on the current plan, so the remaining safe options are a local PostgreSQL instance or a plan that supports branching. Do not apply the migration to production as a workaround.
+No ambiguous blockchain send result should be represented as successful, retried automatically, or automatically refunded until the transaction status has been reconciled. A `skipped` result is not proof of a successful transfer.
