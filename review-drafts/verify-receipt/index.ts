@@ -84,17 +84,16 @@ const b = await (sendErr as any).context.json();
 msg = b?.error || msg;
 } catch (_) {}
 }
-await majOrder(orderId, {
+const updateOk = await majOrder(orderId, {
 status: "en attente",
 auto_validated: false,
-auto_validation_reason: `Validée mais envoi USDT échoué (${msg}) · à traiter manuellement`,
+auto_validation_reason: `Envoi USDT non confirmé (${msg}) · rapprochement manuel requis avant tout nouvel envoi ou remboursement`,
 });
-// Commande payée par solde : un déclencheur base de données rembourse le client automatiquement
-let rembourse = false;
-if (order?.payment_method === "Solde") {
-const { data: apres } = await supabase.from("orders").select("status").eq("id", orderId).maybeSingle();
-rembourse = apres?.status === "rejetée";
+if (!updateOk) {
+  console.error(`[verify-receipt] impossible de marquer la commande ${orderId} pour rapprochement manuel`);
 }
+// Ne pas déclencher le remboursement automatique sur une erreur ambiguë :
+// le transfert peut avoir été diffusé même si l'appel a retourné une erreur.
 if (/insuffisant|solde/i.test(msg)) {
 await alerterAdmin(
 "ALERTE WALLET",
@@ -104,9 +103,7 @@ await alerterAdmin(
 return {
 ok: false,
 envoi: `echec:${msg}`,
-userMessage: rembourse
-? "L'envoi des USDT a échoué. Ton solde a été remboursé automatiquement : tu peux réessayer dans quelques minutes."
-: "Ton paiement est bien reçu. On traite ta commande manuellement et tu recevras tes USDT très vite.",
+userMessage: "Le paiement est enregistré. L'état du transfert doit être vérifié manuellement avant tout remboursement ou nouvel envoi.",
 };
 }
 if (sendResult?.pending && sendResult?.tx) {
