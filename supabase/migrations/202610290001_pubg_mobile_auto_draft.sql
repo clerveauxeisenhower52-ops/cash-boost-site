@@ -19,6 +19,15 @@ create table if not exists public.pubg_pack_costs (
   updated_at timestamptz not null default now()
 );
 
+-- Add the service as hidden/inactive so the site cannot offer it before launch approval.
+insert into public.services (id, name, description, delivery, field_label, field_placeholder,
+  rate, effective_rate, min_qty, active, sort, visible, rate_tiers)
+values ('PUBG Mobile (Auto)', 'PUBG Mobile — Recharge automatique',
+  'Recharge PUBG Mobile UC', 'Livraison automatique après confirmation fournisseur',
+  'ID joueur PUBG Mobile', 'Entre ton ID joueur',
+  1, 1, 1, false, 90, false, '[]'::jsonb)
+on conflict (id) do nothing;
+
 insert into public.pubg_packs (id, label, uc, price_htg, active, sort) values
   ('pubg-60',   '60 UC',   60,   190,   false, 1),
   ('pubg-325',  '325 UC',  325,  900,   false, 2),
