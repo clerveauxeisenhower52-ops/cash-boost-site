@@ -149,11 +149,11 @@ Deno.serve(async(req)=>{
     const body=await req.json().catch(()=>({}));
     if(body.action==='validate'){
       const auth=req.headers.get('Authorization')||'';
-      const token=auth.replace(/^Bearer\\s+/i,'');
+      const token=auth.replace(/^Bearer\s+/i,'');
       if(!token)return new Response('unauthorized',{status:401});
       const {data:userData,error:userError}=await sb.auth.getUser(token);
       if(userError||!userData?.user)return new Response('unauthorized',{status:401});
-      const pid=String(body.playerId||'').replace(/\\s/g,'');
+      const pid=String(body.playerId||'').replace(/\s/g,'');
       if(!/^[0-9]{5,20}$/.test(pid))return json({ok:false,valid:false,error:'invalid_player_id'},400);
       const category=await getPubgCategory();
       if(!category)return json({ok:false,valid:false,error:'pubg_validation_unavailable'});
