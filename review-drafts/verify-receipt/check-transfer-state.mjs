@@ -8,7 +8,7 @@ const txSuccess = source.indexOf("if (sendResult?.tx)");
 assert.ok(skipped >= 0, "skipped branch exists");
 assert.ok(pending >= 0 && txSuccess >= 0, "tx success branches exist");
 assert.ok(skipped < pending && skipped < txSuccess, "skipped is handled before all tx success branches");
-const skippedEnd = source.indexOf('envoi: "etat_inattendu"', skipped);
+const skippedEnd = source.indexOf("if (sendResult?.pending && sendResult?.tx)", skipped);
 const skippedBlock = source.slice(skipped, skippedEnd);
 assert.match(skippedBlock, /status: "en attente"/, "skipped keeps order pending");
 assert.match(skippedBlock, /auto_validated: false/, "skipped is not auto-validated");
