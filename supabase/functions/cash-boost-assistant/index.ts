@@ -55,7 +55,7 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({
         model: "gpt-4.1-mini",
         instructions: SYSTEM_PROMPT,
-        input: allowed.map((m: any) => ({ role: m.role, content: [{ type: "input_text", text: m.content }] })),
+        input: allowed.map((m: any) => ({ role: m.role, content: m.content })),
         max_output_tokens: 260,
         store: false,
       }),
