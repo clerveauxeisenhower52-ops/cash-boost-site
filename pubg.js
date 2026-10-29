@@ -79,7 +79,7 @@
     <div class="field">
       <label for="pgbPid">ID joueur (Player ID)</label>
       <div class="pgbin"><input id="pgbPid" inputmode="numeric" maxlength="15" autocomplete="off" placeholder="ex. 123456789"><span id="pgbDot" class="pgbdot"></span></div>
-      <p class="field-help">Région Global. Le site vérifie seulement le format de l’ID, pas l’existence du compte.</p>
+      <p class="field-help">Le compte est vérifié auprès du fournisseur avant le paiement.</p>
       <div id="pgbV"></div>
     </div>
     <div class="field">
@@ -172,11 +172,24 @@
     const pid=curPid(),my=++seq;
     if(!/^[0-9]{5,20}$/.test(pid)){vstate='err';vmsg='Player ID invalide : vérifie les chiffres saisis.';canRetry=false;return paint();}
     vstate='load';paint();
-    // Vérification du format uniquement : la validation du compte PUBG par FazerCards reste à confirmer.
-    await Promise.resolve();
-    if(my!==seq||curPid()!==pid)return;
-    okPid=pid;info={player_name:'Format de l’ID vérifié uniquement',region:'Global'};
-    vstate='ok';paint();
+    try{
+      const {data,error}=await sb.functions.invoke('pubg-topup',{body:{action:'validate',playerId:pid}});
+      if(my!==seq||curPid()!==pid)return;
+      if(error||!data?.ok||data.valid!==true||!data.player_name){
+        const reason=data?.error;
+        vmsg=reason==='player_name_unavailable'?'Le fournisseur n’a pas renvoyé le nom du joueur. Paiement bloqué.':
+          reason==='provider_validation_unsupported'?'La vérification PUBG n’est pas prise en charge par le fournisseur.':
+          reason==='player_not_verified'?'ID joueur non reconnu par le fournisseur.':
+          'Impossible de vérifier le compte auprès du fournisseur. Réessaie plus tard.';
+        vstate='err';canRetry=true;okPid=null;info=null;return paint();
+      }
+      okPid=pid;info={player_name:data.player_name,region:data.region||''};
+      vstate='ok';paint();
+    }catch(_){
+      if(my!==seq)return;
+      vmsg='Service de vérification indisponible. Réessaie plus tard.';
+      vstate='err';canRetry=true;okPid=null;info=null;paint();
+    }
   }
 
   // Bouton de la barre collante : va à la prochaine étape à compléter, puis paie
@@ -202,7 +215,7 @@
     if(busy)return;
     const pid=curPid(),ph=phoneNorm(),p=curPack();
     if(!p)return msg('Choisis un pack.','err');
-    if(!okPid||okPid!==pid)return msg('Vérifie le format de ton Player ID.','err');
+    if(!okPid||okPid!==pid||!info?.player_name)return msg('Le compte PUBG doit être vérifié avant le paiement.','err');
     if(!conf)return msg('Coche la case pour confirmer que ce compte est le tien.','err');
     if(ph.length<11)return msg('Numéro invalide. Exemple : 37 12 34 56.','err');
     busy=true;paint();msg('');
