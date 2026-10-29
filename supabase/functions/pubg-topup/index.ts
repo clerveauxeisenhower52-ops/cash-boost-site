@@ -146,8 +146,24 @@ async function catalogDiag(){
 Deno.serve(async(req)=>{
   try{
     if(req.method!=='POST')return new Response('Method not allowed',{status:405});
-    if(!(await authorized(req)))return new Response('forbidden',{status:403});
     const body=await req.json().catch(()=>({}));
+    if(body.action==='validate'){
+      const auth=req.headers.get('Authorization')||'';
+      const token=auth.replace(/^Bearer\\s+/i,'');
+      if(!token)return new Response('unauthorized',{status:401});
+      const {data:userData,error:userError}=await sb.auth.getUser(token);
+      if(userError||!userData?.user)return new Response('unauthorized',{status:401});
+      const pid=String(body.playerId||'').replace(/\\s/g,'');
+      if(!/^[0-9]{5,20}$/.test(pid))return json({ok:false,valid:false,error:'invalid_player_id'},400);
+      const category=await getPubgCategory();
+      if(!category)return json({ok:false,valid:false,error:'pubg_validation_unavailable'});
+      const result=await validatePubgPlayer(pid,String(category.category_id));
+      if(!result.supported)return json({ok:false,valid:false,error:'provider_validation_unsupported'});
+      if(result.valid!==true)return json({ok:false,valid:false,error:'player_not_verified'});
+      if(!result.player_name)return json({ok:false,valid:false,error:'player_name_unavailable'});
+      return json({ok:true,valid:true,player_name:result.player_name,region:result.region||null});
+    }
+    if(!(await authorized(req)))return new Response('forbidden',{status:403});
     if(body.action==='catalog')return json(await catalogDiag());
     if(body.action==='sweep')return json(await sweep());
     const id=String(body.orderId||body.record?.id||'');
