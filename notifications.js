@@ -176,78 +176,141 @@ function setSubmitLoading(loading,text){
 
 
 
-// ===== Cloche de notifications dans l'en-tête =====
-async function refreshHeaderNotifUI(){
-  const info=$('hdrNotifInfo'),action=$('hdrNotifAction'),dot=$('hdrNotifDot');
-  if(!info||!action)return;
+// ===== Centre d'historique des notifications + réglage push =====
+let headerNotifChannel=null;
+const notifKindIcon={success:'✓',warning:'!',order:'🛒',info:'🔔'};
+function formatNotifDate(value){
+  try{return new Intl.DateTimeFormat('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(value));}
+  catch(_){return '';}
+}
+function updateNotifDot(count){
+  const dot=$('hdrNotifDot');
+  if(!dot)return;
+  dot.classList.toggle('hidden',!count);
+  dot.title=count?count+' notification(s) non lue(s)':'Aucune notification non lue';
+  dot.setAttribute('aria-label',count?count+' notifications non lues':'Aucune notification non lue');
+}
+function renderNotifList(rows){
+  const list=$('notifList');
+  if(!list)return;
+  list.replaceChildren();
   if(!currentUserId){
-    info.textContent='Connecte-toi à ton compte Cash Boost pour activer les alertes de tes recharges et commandes.';
+    const p=document.createElement('p');p.className='notif-empty';p.textContent='Connecte-toi pour consulter tes notifications personnelles.';list.appendChild(p);return;
+  }
+  if(!rows||!rows.length){
+    const p=document.createElement('p');p.className='notif-empty';p.textContent='Aucune notification pour le moment. Tes nouvelles commandes, recharges et dépôts confirmés apparaîtront ici.';list.appendChild(p);return;
+  }
+  rows.forEach(row=>{
+    const item=document.createElement('button');
+    item.type='button';item.className='notif-item'+(row.read_at?'':' is-unread');
+    const icon=document.createElement('span');icon.className='notif-item-icon kind-'+(row.kind||'info');icon.textContent=notifKindIcon[row.kind]||'🔔';
+    const body=document.createElement('span');body.className='notif-item-body';
+    const title=document.createElement('strong');title.className='notif-item-title';title.textContent=row.title||'Notification';
+    const message=document.createElement('span');message.className='notif-item-message';message.textContent=row.message||'';
+    const date=document.createElement('time');date.className='notif-item-date';date.dateTime=row.created_at||'';date.textContent=formatNotifDate(row.created_at);
+    body.append(title,message,date);item.append(icon,body);
+    item.addEventListener('click',async()=>{
+      if(!row.read_at){
+        const now=new Date().toISOString();
+        const {error}=await sb.from('user_notifications').update({read_at:now}).eq('id',row.id).eq('user_id',currentUserId);
+        if(!error)row.read_at=now;
+      }
+      if(row.target_path){
+        const pageMap={commandes:'orders',orders:'orders',portefeuille:'wallet',wallet:'wallet',compte:'account',account:'account'};
+        const page=pageMap[row.target_path];
+        if(page)document.querySelector('[data-page="'+page+'"]')?.click();
+      }
+      await loadUserNotifications();
+      if(row.target_path)closeHeaderNotif();
+    });
+    list.appendChild(item);
+  });
+}
+async function loadUserNotifications(){
+  const list=$('notifList');
+  if(!list)return;
+  if(!currentUserId){renderNotifList([]);updateNotifDot(0);return;}
+  list.innerHTML='<p class="notif-empty">Chargement des notifications…</p>';
+  const {data,error}=await sb.from('user_notifications')
+    .select('id,kind,title,message,target_path,metadata,created_at,read_at')
+    .eq('user_id',currentUserId).order('created_at',{ascending:false}).limit(30);
+  if(error){
+    list.innerHTML='';
+    const p=document.createElement('p');p.className='notif-empty';p.textContent='Impossible de charger les notifications. Réessaie dans un instant.';list.appendChild(p);
+    return;
+  }
+  renderNotifList(data||[]);
+  updateNotifDot((data||[]).filter(n=>!n.read_at).length);
+  if(headerNotifChannel){sb.removeChannel(headerNotifChannel);headerNotifChannel=null;}
+  headerNotifChannel=sb.channel('user-notifications-'+currentUserId)
+    .on('postgres_changes',{event:'*',schema:'public',table:'user_notifications',filter:'user_id=eq.'+currentUserId},()=>loadUserNotifications())
+    .subscribe();
+}
+async function refreshHeaderNotifUI(){
+  const info=$('hdrNotifInfo'),action=$('hdrNotifAction');
+  if(!info||!action)return;
+  action.disabled=false;
+  if(!currentUserId){
+    info.textContent='Connecte-toi à ton compte Cash Boost pour activer les alertes push.';
     action.textContent='Aller au compte';action.dataset.mode='account';
-    if(dot)dot.classList.add('hidden');
     return;
   }
   if(!pushSupported()){
-    info.textContent='Les notifications push ne sont pas disponibles dans ce navigateur. Tu peux toujours consulter le statut de tes commandes dans Cash Boost.';
+    info.textContent='Les notifications push ne sont pas disponibles dans ce navigateur. Consulte les notifications récentes dans la liste ci-dessus.';
     action.disabled=true;action.textContent='Non disponible';action.dataset.mode='unavailable';
-    if(dot)dot.classList.add('hidden');
     return;
   }
   if(isIOS()&&!isStandalone()){
     info.textContent='Sur iPhone, ajoute d’abord Cash Boost à l’écran d’accueil, puis ouvre l’application pour activer les notifications.';
     action.disabled=true;action.textContent='Installation nécessaire';action.dataset.mode='unavailable';
-    if(dot)dot.classList.add('hidden');
     return;
   }
-  action.disabled=false;
   if(Notification.permission==='denied'){
     info.textContent='Les notifications sont bloquées par ton navigateur. Autorise-les dans les paramètres du site, puis reviens ici.';
     action.disabled=true;action.textContent='Vérifier les paramètres';action.dataset.mode='unavailable';
-    if(dot)dot.classList.add('hidden');
     return;
   }
   const sub=await currentPushSub();
   if(sub&&Notification.permission==='granted'){
-    info.textContent='Les notifications sont activées. Tu peux recevoir une alerte lorsque ta recharge est terminée.';
+    info.textContent='Les notifications push sont activées sur cet appareil.';
     action.textContent='Désactiver les notifications';action.dataset.mode='off';
-    if(dot)dot.classList.remove('hidden');
     await savePushSub(sub);
   }else{
-    info.textContent='Active les notifications pour être averti lorsque ta recharge ou ta commande est terminée.';
+    info.textContent='Active les notifications push pour recevoir une alerte lorsque ta recharge ou ta commande est terminée.';
     action.textContent='Activer les notifications';action.dataset.mode='on';
-    if(dot)dot.classList.add('hidden');
   }
 }
 function closeHeaderNotif(){const modal=$('notifModal');if(modal)modal.classList.add('hidden');const trigger=$('hdrNotifBtn');if(trigger)trigger.focus();}
-$('hdrNotifBtn')?.addEventListener('click',async()=>{const modal=$('notifModal');if(!modal)return;modal.classList.remove('hidden');await refreshHeaderNotifUI();});
+$('hdrNotifBtn')?.addEventListener('click',async()=>{
+  const modal=$('notifModal');if(!modal)return;
+  modal.classList.remove('hidden');
+  await loadUserNotifications();
+  await refreshHeaderNotifUI();
+});
 document.querySelectorAll('[data-notif-close]').forEach(el=>el.addEventListener('click',closeHeaderNotif));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('notifModal')?.classList.contains('hidden'))closeHeaderNotif();});
+$('notifMarkAll')?.addEventListener('click',async()=>{
+  if(!currentUserId)return;
+  const {error}=await sb.from('user_notifications').update({read_at:new Date().toISOString()}).eq('user_id',currentUserId).is('read_at',null);
+  if(error){showToast('Impossible de marquer les notifications comme lues.');return;}
+  await loadUserNotifications();
+});
 $('hdrNotifAction')?.addEventListener('click',async()=>{
   const action=$('hdrNotifAction');if(!action)return;
   if(action.dataset.mode==='account'){
-    closeHeaderNotif();
-    document.querySelector('[data-page="account"]')?.click();
-    return;
+    closeHeaderNotif();document.querySelector('[data-page="account"]')?.click();return;
   }
   if(action.dataset.mode==='unavailable')return;
   action.disabled=true;
-  const mode=action.dataset.mode;
-  if(mode==='off'){
-    await disablePush();
-    showToast('Notifications désactivées');
+  if(action.dataset.mode==='off'){
+    await disablePush();showToast('Notifications push désactivées');
   }else{
-    if(!currentUserId){
-      action.disabled=false;
-      $('hdrNotifInfo').textContent='Connecte-toi à ton compte Cash Boost avant d’activer les notifications.';
-      return;
-    }
     const result=await enablePush();
-    if(result==='granted')showToast('Notifications activées ✓');
+    if(result==='granted')showToast('Notifications push activées ✓');
     else if(result==='unsupported')$('hdrNotifInfo').textContent='Les notifications push ne sont pas prises en charge par ce navigateur.';
     else if(result==='denied')$('hdrNotifInfo').textContent='Autorisation refusée. Tu peux autoriser les notifications dans les paramètres du navigateur.';
     else if(result==='save_error')$('hdrNotifInfo').textContent='Autorisation obtenue, mais impossible d’enregistrer cet appareil. Réessaie plus tard.';
     else $('hdrNotifInfo').textContent='Impossible d’activer les notifications pour le moment. Réessaie.';
   }
-  action.disabled=false;
-  await refreshHeaderNotifUI();
-  refreshPushUI();
+  action.disabled=false;await refreshHeaderNotifUI();refreshPushUI();
 });
