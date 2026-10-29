@@ -1,42 +1,25 @@
 # Test plan — wallet refund overload unification and verify-receipt safety
 
-**Status:** GitHub Actions integration suite passed on commit `d1162e7973628de2506aa4798197a6374aedb931`.
-**Workflow:** https://github.com/clerveauxeisenhower52-ops/cash-boost-site/actions/runs/40802733781
-**Branch:** `review/fix-skipped-usdt-status`
-**Production safety:** no deployment, no wallet balance changes, no refunds, no USDT transfer.
+**Status:** applied to production on 2026-10-28/29. Merged to `main` via PR #28.
+**CI:** GitHub Actions run https://github.com/clerveauxeisenhower52-ops/cash-boost-site/actions/runs/40802733781 passed on commit `d1162e7973628de2506aa4798197a6374aedb931`.
+**Rollback:** `review-drafts/sql/wallet-refund-text-rollback.sql` restores the previous `wallet_refund_order(text)` definition.
 
-## Environment and production status
+## Production status
 
 - Supabase project: `ljddntmrcarbwfiqvyor`.
-- The live schema was inspected read-only; `wallets.balance_htg` is the balance column and `wallet_transactions.order_id` is text.
-- The live `verify-receipt` Edge Function is active at version 92 with `verify_jwt=false`.
-- Read-only inspection of version 92 found a safety issue in the send-result handling: a `skipped` result can fall through to an `ok: true` response, and an ambiguous send error uses the phrase `envoi USDT échoué`, which the live SQL trigger uses to initiate automatic refund handling. This could be unsafe when broadcast status is uncertain.
-- A corrected `verify-receipt` draft is on this review branch. It handles `skipped` before success branches, returns `ok:false`, leaves the order pending for manual reconciliation, and avoids the automatic-refund trigger phrase for ambiguous send outcomes.
-- The Supabase branch `wallet-refund-test` could not be created because database branching requires Pro or above. No branch was created and no SQL draft was executed against production.
-- The SQL wrapper remains a review draft. Do not apply it to production without a separate deployment decision and backup/rollback review.
+- `verify-receipt` Edge Function: active at version 93 with `verify_jwt=false`. The deployed code already contains the corrected send-result handling (same as `review-drafts/verify-receipt/index.ts`): `skipped` and ambiguous send errors keep the order pending for manual reconciliation, return `ok:false`, and no longer use the `envoi USDT échoué` phrase that triggers automatic refunds.
+- SQL migration `wallet_refund_order_text_delegates_to_uuid` applied: the `wallet_refund_order(text)` overload now validates the order ID and delegates the credit to `wallet_refund_order(uuid)`. Triggers `orders_auto_refund_trg` and `orders_refund_wallet_trg` unchanged. `anon` and `authenticated` still cannot execute the function.
 
-## Automated CI results
+## Verification performed
 
-GitHub Actions run `40802733781` completed successfully on commit `d1162e7973628de2506aa4798197a6374aedb931`. All workflow steps passed:
+- Read-only check of existing data: 2 refunds, each matching a rejected `Solde` order, same user, same amount as the purchase debit; no rejected `Solde` order without a refund; no negative wallet balance.
+- Post-migration read-only check: text overload delegates to the UUID overload, privileges unchanged, both triggers present, refund count unchanged.
+- CI on a disposable PostgreSQL database: valid refund, duplicate refund, malformed ID, non-`Solde` order, trigger single-credit, and 8 concurrent refund attempts (exactly one credit and one refund row). Static checks of the `verify-receipt` transfer-state handling passed.
 
-- [x] Create disposable PostgreSQL fixture schema.
-- [x] Compile and apply the draft SQL to the disposable database.
-- [x] Run SQL integration assertions.
-- [x] Run concurrent refund attempts.
-- [x] Run static transfer-state safety checks for the `verify-receipt` draft.
+## Limits
 
-The SQL integration test reports: valid refund, duplicate, malformed ID, non-`Solde`, and trigger single-credit checks passed. The concurrency test reports that eight simultaneous refund attempts resulted in exactly one wallet credit and one refund row. The static safety check passed for the `skipped` handling and ambiguous-send wording.
-
-## Remaining validation limits
-
-The CI fixture is disposable and models the relevant schema; it is not the live Supabase database. The successful CI run validates the draft against that fixture, not a live production migration. The `verify-receipt` draft has not been deployed, so production is still running version 92 with the issue described above.
-
-Before production release:
-1. Review the exact diff between active version 92 and the draft.
-2. Confirm the production environment variables and `send-usdt-bnb` response contract without exposing secret values.
-3. Decide explicitly on a controlled deployment window and rollback plan.
-4. Deploy the Edge Function only after explicit authorization; verify behavior using non-financial/test-only inputs and logs.
-5. Schedule the SQL wrapper migration separately, after confirming the UUID overload and trigger behavior in an isolated Supabase environment. Do not use a real wallet refund as a test.
+- The CI fixture models the schema; it is not the live database.
+- No real wallet refund was used as a test. Monitor the next rejected `Solde` orders: each must receive exactly one refund.
 
 ## Safety invariant
 
