@@ -45,5 +45,6 @@ export async function validatePubgPlayer(pid:string,categoryId:string):Promise<{
   if(!item)return {supported:false,valid:null};
   const fieldKey=item.fields?.find((f:any)=>/player|game|account|uid|id/i.test(String(f.key||'')))?.key||item.fields?.[0]?.key||'player_id';
   const r=await fz('POST','/topups/validate-id',{category_id:item.category_id,fields:{[fieldKey]:pid}});
-  return {supported:true,valid:r.valid===true,region:r.region,player_name:r.player_name,fieldKey};
+  const playerName = r.player_name || r.player?.name || r.account?.name || r.nickname || r.name || null;
+  return {supported:true,valid:r.valid===true,region:r.region||r.player?.region,player_name:typeof playerName==='string'?playerName:null,fieldKey};
 }
