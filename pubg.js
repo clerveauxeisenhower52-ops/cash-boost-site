@@ -41,7 +41,7 @@
   const msg=(t,c)=>{const m=$('pgbMsg');if(m){m.className='msg '+(c||'');m.textContent=t;}};
   const goTo=id=>{const e=$(id);if(e)e.scrollIntoView({behavior:'smooth',block:'center'});};
 
-  // Page « PUBG Mobile (Auto) » : s'apgbiche comme la page de commande des autres services
+  // Page « PUBG Mobile (Auto) » : s'affiche comme la page de commande des autres services
   const baseShow=window.showPage;
   window.showPage=function(p){
     if(p==='pubg'){
@@ -78,8 +78,8 @@
     <div class="section-head"><span class="step">2</span><div><h2>Compte PUBG Mobile</h2><p>Entre ton ID joueur PUBG Mobile</p></div></div>
     <div class="field">
       <label for="pgbPid">ID joueur (Player ID)</label>
-      <div class="pgbin"><input id="pgbPid" inputmode="numeric" maxlength="15" autocomplete="opgb" placeholder="ex. 123456789"><span id="pgbDot" class="pgbdot"></span></div>
-      <p class="field-help">Réservé aux comptes du serveur Nord-Amérique (Global).</p>
+      <div class="pgbin"><input id="pgbPid" inputmode="numeric" maxlength="15" autocomplete="off" placeholder="ex. 123456789"><span id="pgbDot" class="pgbdot"></span></div>
+      <p class="field-help">Région Global. Vérification du format uniquement : vérifie soigneusement ton ID.</p>
       <div id="pgbV"></div>
     </div>
     <div class="field">
@@ -159,7 +159,7 @@
     $('pgbSumTotal').textContent=tot;$('pgbBarTotal').textContent=tot;
     $('pgbBal').textContent='Solde : '+fmt(bal)+' HTG';
     const h=$('pgbPayHint');
-    if(p&&bal<Number(p.price_htg)){h.textContent='Solde insupgbisant : il te manque '+fmt(Number(p.price_htg)-bal)+' HTG. Ajoute des fonds pour continuer.';h.classList.remove('hidden');}
+    if(p&&bal<Number(p.price_htg)){h.textContent='Solde insuffisant : il te manque '+fmt(Number(p.price_htg)-bal)+' HTG. Ajoute des fonds pour continuer.';h.classList.remove('hidden');}
     else h.classList.add('hidden');
     const d1=!!p,d2=vstate==='ok'&&conf&&phoneNorm().length>=11,done=[d1,d2,false],act=done.findIndex(x=>!x);
     pg.querySelectorAll('#pgbProgress .op-step').forEach((b,i)=>{b.classList.toggle('done',done[i]);b.classList.toggle('active',i===act);});
@@ -172,11 +172,10 @@
     const pid=curPid(),my=++seq;
     if(!/^[0-9]{5,20}$/.test(pid)){vstate='err';vmsg='Player ID invalide : vérifie les chiffres saisis.';canRetry=false;return paint();}
     vstate='load';paint();
-    // FazerCards n'a pas encore été confirmé comme proposant une validation d'ID PUBG.
-    // On vérifie uniquement le format; le client doit confirmer l'ID avant paiement.
+    // Vérification du format uniquement : la validation du compte PUBG par FazerCards reste à confirmer.
     await Promise.resolve();
     if(my!==seq||curPid()!==pid)return;
-    okPid=pid;info={player_name:'Validation de format uniquement',region:'Global'};
+    okPid=pid;info={player_name:'Format vérifié uniquement',region:'Global'};
     vstate='ok';paint();
   }
 
@@ -220,7 +219,7 @@
       return;
     }
     reqId=null;
-    const M={insupgbicient_funds:'Solde insupgbisant. Ajoute des fonds dans ton portefeuille.',service_unavailable:'Ce service est indisponible pour le moment.',invalid_input:'Informations invalides. Vérifie ton Player ID et ton numéro.',unauthenticated:'Session expirée. Reconnecte-toi.',confirmation_required:'Coche la case pour confirmer que ce compte est le tien.'};
+    const M={insufficient_funds:'Solde insuffisant. Ajoute des fonds dans ton portefeuille.',service_unavailable:'Ce service est indisponible pour le moment.',invalid_input:'Informations invalides. Vérifie ton Player ID et ton numéro.',unauthenticated:'Session expirée. Reconnecte-toi.',confirmation_required:'Coche la case pour confirmer que ce compte est le tien.'};
     msg(M[r.status]||'Paiement impossible.','err');
   }
 
