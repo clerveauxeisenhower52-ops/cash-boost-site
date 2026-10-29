@@ -67,13 +67,14 @@
 
   const style = document.createElement('style');
   style.textContent = `
-    #cb-smart-assistant{position:fixed;right:16px;bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:9998;font-family:inherit;color:#f8fafc}
+    #cb-smart-assistant{position:fixed;right:12px;bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:9998;font-family:inherit;color:#f8fafc}
     #cb-smart-assistant *{box-sizing:border-box}
-    #cb-assistant-launch{display:grid;place-items:center;width:58px;height:58px;padding:0;border:2px solid #22d3ee;border-radius:50%;background:#0b1220;color:#22d3ee;font-weight:900;box-shadow:0 8px 28px #0891b266;cursor:pointer}
+    #cb-assistant-launch{display:grid;place-items:center;width:48px;height:48px;padding:0;border:2px solid #22d3ee;border-radius:50%;background:#0b1220;color:#22d3ee;font-weight:900;box-shadow:0 8px 28px #0891b266;cursor:pointer;transition:transform .25s ease,opacity .25s ease}
+    #cb-assistant-launch.cb-away{transform:translateX(90px);opacity:0;pointer-events:none}
     .cb-as-avatar{display:grid;place-items:center;overflow:hidden;border-radius:50%;background:#0b1220;border:2px solid #22d3ee;color:#22d3ee;font-weight:900;font-size:13px}
     .cb-as-avatar img{width:62%;height:62%;object-fit:contain;display:block}
     #cb-assistant-launch .cb-as-avatar{width:100%;height:100%;border:0}
-    #cb-assistant-panel{display:none;position:fixed;right:12px;bottom:calc(156px + env(safe-area-inset-bottom,0px));width:min(390px,calc(100vw - 24px));height:min(590px,calc(100dvh - 190px));background:#11121a;border:1px solid #343541;border-radius:22px;overflow:hidden;box-shadow:0 20px 70px #0009;flex-direction:column}
+    #cb-assistant-panel{display:none;position:fixed;right:12px;bottom:calc(144px + env(safe-area-inset-bottom,0px));width:min(390px,calc(100vw - 24px));height:min(590px,calc(100dvh - 190px));background:#11121a;border:1px solid #343541;border-radius:22px;overflow:hidden;box-shadow:0 20px 70px #0009;flex-direction:column}
     #cb-assistant-panel.open{display:flex}
     .cb-as-head{display:flex;align-items:center;gap:10px;padding:14px 16px;background:#171923;border-bottom:1px solid #30313d}
     .cb-as-head .cb-as-avatar{width:42px;height:42px;flex:none}
@@ -92,8 +93,8 @@
     #cb-assistant-send{border:0;border-radius:13px;background:#22d3ee;color:#06202a;font-weight:800;padding:0 15px;cursor:pointer}
     #cb-assistant-send:disabled{opacity:.5;cursor:wait}
     .cb-as-note{font-size:11px;color:#9ca3af;text-align:center;padding:0 12px 9px;background:#171923}
-    @media(max-width:480px){#cb-smart-assistant{right:12px}#cb-assistant-panel{right:8px;bottom:calc(148px + env(safe-area-inset-bottom,0px));height:min(570px,calc(100dvh - 170px));width:calc(100vw - 16px)}}
-    @media(prefers-reduced-motion:no-preference){#cb-assistant-launch{transition:transform .15s ease}#cb-assistant-launch:active{transform:scale(.95)}}
+    @media(max-width:480px){#cb-smart-assistant{right:12px}#cb-assistant-panel{right:8px;bottom:calc(138px + env(safe-area-inset-bottom,0px));height:min(570px,calc(100dvh - 160px));width:calc(100vw - 16px)}}
+    @media(prefers-reduced-motion:no-preference){#cb-assistant-launch:active{transform:scale(.95)}}
   `;
   document.head.appendChild(style);
 
@@ -176,8 +177,18 @@
   function toggle(open) {
     panel.classList.toggle('open', open);
     launch.setAttribute('aria-expanded', String(open));
-    if (open) input.focus();
+    if (open) { launch.classList.remove('cb-away'); input.focus(); }
   }
+  // Le bouton rond se cache pendant le défilement et revient quand on s'arrête
+  let idleTimer;
+  function slideAway() {
+    if (panel.classList.contains('open')) return;
+    launch.classList.add('cb-away');
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => launch.classList.remove('cb-away'), 700);
+  }
+  window.addEventListener('scroll', slideAway, { passive: true, capture: true });
+  window.addEventListener('touchmove', slideAway, { passive: true });
   launch.addEventListener('click', () => toggle(!panel.classList.contains('open')));
   close.addEventListener('click', () => toggle(false));
   langBtn.addEventListener('click', () => {
