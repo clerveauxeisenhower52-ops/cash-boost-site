@@ -116,15 +116,20 @@ return { ok: true, envoi: `envoye:${sendResult.tx}`, userMessage: "Paiement vér
 // en attente de rapprochement manuel et ne déclencher aucun remboursement automatique.
 if (sendResult?.skipped) {
   const reason = String(sendResult?.reason || "état non confirmé");
-  await majOrder(orderId, {
+  const updateOk = await majOrder(orderId, {
     status: "en attente",
     auto_validated: false,
     auto_validation_reason: `Envoi USDT non confirmé (${reason}) · vérification manuelle requise, ne pas relancer avant vérification blockchain`,
   });
+  if (!updateOk) {
+    console.error(`[verify-receipt] impossible de marquer la commande ${orderId} après un envoi ignoré`);
+  }
   return {
     ok: false,
     envoi: `a_verifier:${reason}`,
-    userMessage: "Commande en vérification manuelle. Aucun nouvel envoi ni remboursement automatique ne doit être lancé avant vérification de la transaction.",
+    userMessage: updateOk
+      ? "Commande en vérification manuelle. Aucun nouvel envoi ni remboursement automatique ne doit être lancé avant vérification de la transaction."
+      : "État de la commande non enregistré correctement. Contacte le support; ne relance pas l'envoi et ne demande pas de remboursement avant vérification blockchain.",
   };
 }
 return {
