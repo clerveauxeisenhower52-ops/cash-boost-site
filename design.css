@@ -702,3 +702,24 @@ button:focus-visible, a:focus-visible {
 /* ── Cartes services : image plein cadre, zone carrée (aucun rognage ni bord noir) ── */
 .services-list .service-card:not(.soon) .service-visual{padding:0;overflow:hidden;height:auto;aspect-ratio:1/1}
 .services-list .service-card:not(.soon) .service-visual img{display:block;width:100%;height:100%;max-width:none;max-height:none;object-fit:cover;border-radius:0}
+
+
+/* Header notification bell and compact mobile notification sheet */
+.hdr-notif-btn{position:relative;flex:0 0 42px;width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text);box-shadow:0 6px 18px rgba(0,0,0,.06);cursor:pointer}
+.hdr-notif-btn:active{transform:scale(.97)}
+.hdr-notif-dot{position:absolute;right:7px;top:6px;width:8px;height:8px;border-radius:50%;background:#ef4444;border:2px solid var(--surface)}
+.notif-modal{position:fixed;inset:0;z-index:8000;display:flex;align-items:flex-end;justify-content:center;padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px))}
+.notif-modal.hidden{display:none!important}
+.notif-backdrop{position:absolute;inset:0;border:0;background:rgba(5,8,18,.55);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.notif-sheet{position:relative;z-index:1;width:100%;max-width:480px;padding:22px 20px 18px;border:1px solid var(--line);border-radius:24px;background:var(--surface);color:var(--text);box-shadow:0 22px 70px rgba(0,0,0,.22);animation:notifSheetIn .2s ease-out}
+.notif-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.notif-eyebrow{font-size:10px;letter-spacing:.16em;font-weight:800;color:var(--primary)}
+.notif-head h2{margin:4px 0 0;font-size:23px;line-height:1.2}
+.notif-close{width:38px;height:38px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);color:var(--text);font-size:25px;line-height:1}
+.notif-status-icon{display:grid;place-items:center;width:62px;height:62px;margin:22px auto 14px;border-radius:20px;background:var(--primary-soft);font-size:28px}
+.notif-info{margin:0 auto 18px;max-width:340px;text-align:center;font-size:15px;line-height:1.55;color:var(--muted)}
+.notif-action{width:100%;min-height:48px;justify-content:center}
+.notif-footnote{margin:12px 0 0;text-align:center;font-size:11px;line-height:1.45;color:var(--muted)}
+@keyframes notifSheetIn{from{transform:translateY(14px);opacity:.65}to{transform:translateY(0);opacity:1}}
+@media(min-width:700px){.notif-modal{align-items:center}.notif-sheet{border-radius:24px}}
+@media(prefers-reduced-motion:reduce){.notif-sheet{animation:none}}
