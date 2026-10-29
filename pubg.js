@@ -1,4 +1,4 @@
-/* PUBG Mobile (Auto) : page de commande; la vérification du joueur par le fournisseur reste à confirmer. */
+/* PUBG Mobile (Auto) : page de commande. L'ID joueur est vérifié chez le fournisseur avant le paiement (fonction pubg-validate). */
 (function(){
   const st=document.createElement('style');
   st.textContent=`
@@ -79,7 +79,7 @@
     <div class="field">
       <label for="pgbPid">ID joueur (Player ID)</label>
       <div class="pgbin"><input id="pgbPid" inputmode="numeric" maxlength="15" autocomplete="off" placeholder="ex. 123456789"><span id="pgbDot" class="pgbdot"></span></div>
-      <p class="field-help">Région Global. Le site vérifie seulement le format de l’ID, pas l’existence du compte.</p>
+      <p class="field-help">Région Global. Ton ID est vérifié avant le paiement.</p>
       <div id="pgbV"></div>
     </div>
     <div class="field">
@@ -142,11 +142,14 @@
     const p=curPack();
     $('pgbDot').className='pgbdot '+vstate;
     const v=$('pgbV');
-    if(vstate==='load')v.innerHTML='<div class="pgbcard load">Vérification en cours…</div>';
+    if(vstate==='load')v.innerHTML='<div class="pgbcard load">Vérification du compte en cours…</div>';
     else if(vstate==='ok'){
-      v.innerHTML='<div class="pgbcard ok"><b>✓ Format de l’ID vérifié</b><small>État de vérification</small><b id="pgbName"></b><small>ID joueur</small>'+esc(okPid)+(info&&info.region?'<small>Serveur</small>'+esc(info.region):'')+'</div>'
+      const ver=!!(info&&info.verified);
+      v.innerHTML='<div class="pgbcard ok"><b>'+(ver?'✓ Compte trouvé':'✓ Format de l’ID vérifié')+'</b>'
+        +(ver?'<small>Nom du joueur</small><b id="pgbName"></b>':'<small>Vérification du compte</small>Indisponible pour le moment : ton ID sera contrôlé après le paiement, et ton solde sera remboursé automatiquement s’il est introuvable.')
+        +'<small>ID joueur</small>'+esc(okPid)+(info&&info.region?'<small>Serveur</small>'+esc(info.region):'')+'</div>'
         +'<label class="terms"><input type="checkbox" id="pgbConf"'+(conf?' checked':'')+'><span>Je confirme que ce compte est le mien</span></label>';
-      $('pgbName').textContent=(info&&info.player_name)||'—';
+      if(ver)$('pgbName').textContent=(info&&info.player_name)||'Compte confirmé (nom non communiqué)';
       $('pgbConf').onchange=()=>{conf=$('pgbConf').checked;paint();};
     }
     else if(vstate==='err'){
@@ -168,15 +171,25 @@
     $('pgbPay').textContent=busy?'Paiement en cours…':'Payer avec mon solde';
   }
 
+  // Vérifie l'ID chez le fournisseur (lecture seule, aucun débit). Si la vérification est indisponible,
+  // on garde le contrôle de format : le fournisseur revérifie après le paiement et le client est remboursé si l'ID est introuvable.
   async function check(){
     const pid=curPid(),my=++seq;
     if(!/^[0-9]{5,20}$/.test(pid)){vstate='err';vmsg='Player ID invalide : vérifie les chiffres saisis.';canRetry=false;return paint();}
     vstate='load';paint();
-    // Vérification du format uniquement : la validation du compte PUBG par FazerCards reste à confirmer.
-    await Promise.resolve();
+    let d=null;
+    try{
+      const x=await sb.functions.invoke('pubg-validate',{body:{player_id:pid}});
+      if(x.error){try{d=await x.error.context.json();}catch(_){d=null;}}
+      else d=x.data;
+    }catch(_){d=null;}
     if(my!==seq||curPid()!==pid)return;
-    okPid=pid;info={player_name:'Format de l’ID vérifié uniquement',region:'Global'};
-    vstate='ok';paint();
+    const s=d&&d.status;
+    if(s==='valid'){okPid=pid;info={verified:true,player_name:d.player_name||'',region:d.region||'Global'};vstate='ok';return paint();}
+    if(s==='invalid'){vstate='err';vmsg='ID joueur introuvable chez PUBG Mobile (région Global). Vérifie les chiffres.';canRetry=false;return paint();}
+    if(s==='wrong_region'){vstate='err';vmsg='Ce compte n’est pas en région Global : la recharge n’est pas possible.';canRetry=false;return paint();}
+    if(s==='rate_limited'){vstate='err';vmsg='Trop de vérifications. Attends quelques minutes puis réessaie.';canRetry=true;return paint();}
+    okPid=pid;info={verified:false,region:'Global'};vstate='ok';paint();
   }
 
   // Bouton de la barre collante : va à la prochaine étape à compléter, puis paie
@@ -202,7 +215,7 @@
     if(busy)return;
     const pid=curPid(),ph=phoneNorm(),p=curPack();
     if(!p)return msg('Choisis un pack.','err');
-    if(!okPid||okPid!==pid)return msg('Vérifie le format de ton Player ID.','err');
+    if(!okPid||okPid!==pid)return msg('Vérifie ton Player ID.','err');
     if(!conf)return msg('Coche la case pour confirmer que ce compte est le tien.','err');
     if(ph.length<11)return msg('Numéro invalide. Exemple : 37 12 34 56.','err');
     busy=true;paint();msg('');
