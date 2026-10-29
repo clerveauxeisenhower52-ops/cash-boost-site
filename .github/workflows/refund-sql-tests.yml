@@ -1,0 +1,51 @@
+# Free isolated PostgreSQL tests only; never connects to production Supabase.
+name: Refund SQL draft integration tests
+on:
+  push:
+    branches: [review/fix-skipped-usdt-status]
+    paths:
+      - 'review-drafts/sql/**'
+      - 'review-drafts/verify-receipt/**'
+      - '.github/workflows/refund-sql-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  postgres-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: tester
+          POSTGRES_PASSWORD: tester
+          POSTGRES_DB: refund_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tester -d refund_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: review/fix-skipped-usdt-status
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Create disposable fixture schema
+        env:
+          PGPASSWORD: tester
+        run: psql -h localhost -U tester -d refund_test -v ON_ERROR_STOP=1 -f review-drafts/sql/refund-test-fixture.sql
+      - name: Compile and apply draft to disposable database
+        env:
+          PGPASSWORD: tester
+        run: psql -h localhost -U tester -d refund_test -v ON_ERROR_STOP=1 -f review-drafts/sql/wallet-refund-overload-unification.sql
+      - name: Run integration assertions
+        env:
+          PGPASSWORD: tester
+        run: psql -h localhost -U tester -d refund_test -v ON_ERROR_STOP=1 -f review-drafts/sql/refund-integration-tests.sql
+      - name: Test concurrent refund attempts
+        run: bash review-drafts/sql/test-concurrent-refunds.sh
+      - name: Check verify-receipt transfer-state safety
+        run: node review-drafts/verify-receipt/check-transfer-state.mjs
