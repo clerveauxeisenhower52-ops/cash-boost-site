@@ -151,8 +151,9 @@ async function catalogDiag(){
   };
 }
 Deno.serve(async(req)=>{
+  if(req.method==='OPTIONS')return new Response('ok',{headers:corsHeaders});
   try{
-    if(req.method!=='POST')return new Response('Method not allowed',{status:405});
+    if(req.method!=='POST')return new Response('Method not allowed',{status:405,headers:corsHeaders});
     const body=await req.json().catch(()=>({}));
     if(body.action==='validate'){
       const auth=req.headers.get('Authorization')||'';
