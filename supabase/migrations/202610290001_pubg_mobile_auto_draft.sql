@@ -26,7 +26,7 @@ values ('PUBG Mobile (Auto)', 'PUBG Mobile — Recharge automatique',
   'Recharge PUBG Mobile UC', 'Livraison automatique après confirmation fournisseur',
   'ID joueur PUBG Mobile', 'Entre ton ID joueur',
   1, 1, 1, false, 90, false, '[]'::jsonb)
-on conflict (id) do nothing;
+on conflict (id) do update set active = false, visible = false;
 
 insert into public.pubg_packs (id, label, uc, price_htg, active, sort) values
   ('pubg-60',   '60 UC',   60,   190,   false, 1),
@@ -113,6 +113,10 @@ begin
     return jsonb_build_object('ok', false, 'status', 'service_unavailable');
   end if;
   select cost_usd into v_cost from pubg_pack_costs where pack_id = v_pack.id;
+  if v_cost is null or v_cost <= 0 then
+    delete from wallet_purchase_requests where request_id = p_request_id;
+    return jsonb_build_object('ok', false, 'status', 'service_unavailable');
+  end if;
 
   select balance_htg into v_bal from wallets where user_id = v_uid for update;
   if not found or v_bal < v_pack.price_htg then
@@ -219,3 +223,8 @@ after insert on public.orders
 for each row
 when (NEW.service = 'PUBG Mobile (Auto)')
 execute function public.notify_pubg_topup();
+
+
+-- Only signed-in users may invoke the wallet purchase RPC.
+revoke all on function public.pubg_purchase(uuid, text, text, text, boolean) from public, anon;
+grant execute on function public.pubg_purchase(uuid, text, text, text, boolean) to authenticated;
