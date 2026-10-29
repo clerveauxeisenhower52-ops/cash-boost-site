@@ -32,7 +32,8 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
     const apiKey = Deno.env.get("OPENAI_API_KEY");
-    if (!supabaseUrl || !anonKey) throw new Error("missing_supabase_config");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !anonKey || !serviceRoleKey) throw new Error("missing_supabase_config");
     const authClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false } });
     const { data: { user }, error: authError } = await authClient.auth.getUser();
     if (authError || !user) {
@@ -40,6 +41,15 @@ Deno.serve(async (req: Request) => {
     }
     if (!apiKey) {
       return new Response(JSON.stringify({ error: "assistant_not_configured", answer: "L’assistant intelligent n’est pas encore configuré. Contacte le support Cash Boost pour le moment." }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    const adminClient = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+    const { data: allowedRequest, error: rateLimitError } = await adminClient.rpc("cash_boost_assistant_allow_request", { p_user_id: user.id });
+    if (rateLimitError) {
+      console.error("assistant_rate_limit_error");
+      return new Response(JSON.stringify({ error: "rate_limit_check_unavailable" }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (allowedRequest !== true) {
+      return new Response(JSON.stringify({ error: "rate_limit_exceeded", answer: "Tu as posé beaucoup de questions en peu de temps. Attends quelques minutes puis réessaie." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "300" } });
     }
     const body = await req.json().catch(() => ({}));
     const messages = Array.isArray(body?.messages) ? body.messages.slice(-8) : [];
