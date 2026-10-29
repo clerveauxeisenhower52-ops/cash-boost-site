@@ -149,9 +149,20 @@
 <div id="appView" class="app hidden">
   <header class="topbar">
     <div class="brand">Cash Boost</div>
+    <button id="hdrNotifBtn" type="button" class="hdr-notif-btn" aria-label="Ouvrir les notifications" aria-haspopup="dialog" aria-controls="notifModal"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg><span id="hdrNotifDot" class="hdr-notif-dot hidden" aria-hidden="true"></span></button>
     <button id="hdrWallet" type="button" class="hdr-wallet" aria-label="Ouvrir mon portefeuille"><span class="hdr-wallet-ic" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span id="hdrWalletAmt">0 HTG</span></button>
     <div id="userName" class="user-name"></div>
   </header>
+  <section id="notifModal" class="notif-modal hidden" role="dialog" aria-modal="true" aria-labelledby="notifTitle">
+    <button type="button" class="notif-backdrop" data-notif-close aria-label="Fermer les notifications"></button>
+    <div class="notif-sheet">
+      <div class="notif-head"><div><span class="notif-eyebrow">CASH BOOST</span><h2 id="notifTitle">Notifications</h2></div><button type="button" class="notif-close" data-notif-close aria-label="Fermer">×</button></div>
+      <div class="notif-status-icon" aria-hidden="true">🔔</div>
+      <p id="hdrNotifInfo" class="notif-info">Active les notifications pour être averti lorsque ta recharge est terminée.</p>
+      <button id="hdrNotifAction" type="button" class="primary-btn notif-action">Activer les notifications</button>
+      <p class="notif-footnote">Tu peux modifier cette autorisation dans les paramètres de ton navigateur.</p>
+    </div>
+  </section>
   <main>
     <section id="page-home" class="page">
       <div class="cbh">
