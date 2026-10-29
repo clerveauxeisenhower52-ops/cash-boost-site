@@ -144,12 +144,16 @@
     const v=$('pgbV');
     if(vstate==='load')v.innerHTML='<div class="pgbcard load">Vérification du compte en cours…</div>';
     else if(vstate==='ok'){
-      const ver=!!(info&&info.verified);
-      v.innerHTML='<div class="pgbcard ok"><b>'+(ver?'✓ Compte trouvé':'✓ Format de l’ID vérifié')+'</b>'
-        +(ver?'<small>Nom du joueur</small><b id="pgbName"></b>':'<small>Vérification du compte</small>Indisponible pour le moment : ton ID sera contrôlé après le paiement, et ton solde sera remboursé automatiquement s’il est introuvable.')
-        +'<small>ID joueur</small>'+esc(okPid)+(info&&info.region?'<small>Serveur</small>'+esc(info.region):'')+'</div>'
+      const ver=!!(info&&info.verified&&info.player_name);
+      if(!ver){
+        vstate='err';okPid=null;info=null;conf=false;
+        v.innerHTML='<div class="pgbcard err">Le compte PUBG n’a pas été vérifié auprès du fournisseur. Le paiement est bloqué. Réessaie plus tard.</div>';
+        return;
+      }
+      v.innerHTML='<div class="pgbcard ok"><b>✓ Compte PUBG confirmé</b><small>Nom du joueur</small><b id="pgbName"></b>'
+        +'<small>ID joueur</small>'+esc(okPid)+(info.region?'<small>Serveur</small>'+esc(info.region):'')+'</div>'
         +'<label class="terms"><input type="checkbox" id="pgbConf"'+(conf?' checked':'')+'><span>Je confirme que ce compte est le mien</span></label>';
-      if(ver)$('pgbName').textContent=(info&&info.player_name)||'Compte confirmé (nom non communiqué)';
+      $('pgbName').textContent=info.player_name;
       $('pgbConf').onchange=()=>{conf=$('pgbConf').checked;paint();};
     }
     else if(vstate==='err'){
