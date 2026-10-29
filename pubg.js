@@ -1,4 +1,4 @@
-/* PUBG Mobile (Auto) : page de commande; la vérification du joueur par le fournisseur reste à confirmer. */
+/* PUBG Mobile (Auto) : page de commande. L'ID joueur est vérifié chez le fournisseur avant le paiement (fonction pubg-validate). */
 (function(){
   const st=document.createElement('style');
   st.textContent=`
@@ -142,11 +142,14 @@
     const p=curPack();
     $('pgbDot').className='pgbdot '+vstate;
     const v=$('pgbV');
-    if(vstate==='load')v.innerHTML='<div class="pgbcard load">Vérification en cours…</div>';
+    if(vstate==='load')v.innerHTML='<div class="pgbcard load">Vérification du compte en cours…</div>';
     else if(vstate==='ok'){
-      v.innerHTML='<div class="pgbcard ok"><b>✓ Format de l’ID vérifié</b><small>État de vérification</small><b id="pgbName"></b><small>ID joueur</small>'+esc(okPid)+(info&&info.region?'<small>Serveur</small>'+esc(info.region):'')+'</div>'
+      const ver=!!(info&&info.verified);
+      v.innerHTML='<div class="pgbcard ok"><b>'+(ver?'✓ Compte trouvé':'✓ Format de l’ID vérifié')+'</b>'
+        +(ver?'<small>Nom du joueur</small><b id="pgbName"></b>':'<small>Vérification du compte</small>Indisponible pour le moment : ton ID sera contrôlé après le paiement, et ton solde sera remboursé automatiquement s’il est introuvable.')
+        +'<small>ID joueur</small>'+esc(okPid)+(info&&info.region?'<small>Serveur</small>'+esc(info.region):'')+'</div>'
         +'<label class="terms"><input type="checkbox" id="pgbConf"'+(conf?' checked':'')+'><span>Je confirme que ce compte est le mien</span></label>';
-      $('pgbName').textContent=(info&&info.player_name)||'—';
+      if(ver)$('pgbName').textContent=(info&&info.player_name)||'Compte confirmé (nom non communiqué)';
       $('pgbConf').onchange=()=>{conf=$('pgbConf').checked;paint();};
     }
     else if(vstate==='err'){
@@ -168,6 +171,8 @@
     $('pgbPay').textContent=busy?'Paiement en cours…':'Payer avec mon solde';
   }
 
+  // Vérifie l'ID chez le fournisseur (lecture seule, aucun débit). Si la vérification est indisponible,
+  // on garde le contrôle de format : le fournisseur revérifie après le paiement et le client est remboursé si l'ID est introuvable.
   async function check(){
     const pid=curPid(),my=++seq;
     if(!/^[0-9]{5,20}$/.test(pid)){vstate='err';vmsg='Player ID invalide : vérifie les chiffres saisis.';canRetry=false;return paint();}
