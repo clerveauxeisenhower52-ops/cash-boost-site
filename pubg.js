@@ -264,5 +264,5 @@
     }
   }
   const prev=window.openService;
-  window.openService=function(id){return id==='Recharger Pubg Mobile'?open():prev.apply(this,arguments);};
+  window.openService=function(id){return id==='PUBG Mobile (Auto)'?open():prev.apply(this,arguments);};
 })();
