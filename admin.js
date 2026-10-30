@@ -192,7 +192,9 @@ function renderServices(){
     const parts=String(s.name).split(/\s+[—–-]\s+/),variant=parts.slice(1).join(' ');
     const badgeKind=(s.id==='Free Fire'||/autom/i.test(variant))?'auto':(/manuel/i.test(variant)?'manuel':'');
     const badgeTxt=badgeKind==='auto'?'Auto':(badgeKind==='manuel'?'Manuel':'');
-    const title=esc(badgeKind?parts[0]:s.name)+(badgeKind?`<span class="svc-badge svc-badge-${badgeKind}">${badgeTxt}</span>`:'');
+    const displayName=badgeKind?parts[0]:s.name;
+    const safeTitle=esc(displayName).replace(/Nord-Amérique/g,'Nord&#8209;Amérique');
+    const title=safeTitle+(badgeKind?`<span class="svc-badge svc-badge-${badgeKind}">${badgeTxt}</span>`:'');
     // Dernière carte seule sur sa ligne -> pleine largeur
     const idxInGroup=ready?i:i-nbReady,groupSize=ready?nbReady:nbSoon;
     const wide=(groupSize%2===1&&idxInGroup===groupSize-1)?' wide':'';
