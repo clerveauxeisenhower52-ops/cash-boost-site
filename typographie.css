@@ -53,3 +53,6 @@ input::placeholder,textarea::placeholder{font-weight:400;opacity:.72}
   line-height:1;
   vertical-align:.08em;
 }
+
+/* Garde Nord-Amérique sur une seule ligne dans les cartes de services */
+.service-title h2 .svc-no-break{white-space:nowrap;display:inline-block}
