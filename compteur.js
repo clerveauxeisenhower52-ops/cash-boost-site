@@ -19,7 +19,7 @@
       el.id='cbDelivered';el.className='cb-delivered';el.setAttribute('role','status');
       anchor.parentNode.insertBefore(el,anchor);
     }
-    el.innerHTML='✅ <b></b> commandes livrées';
+    el.innerHTML='✅ <b></b> commandes livrées au total';
     el.querySelector('b').textContent=txt;
   }
   async function load(){
