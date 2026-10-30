@@ -1,15 +1,40 @@
-/* Cash Boost — typographie et lisibilité */
-:root{--cb-font-body:'Manrope','Inter',system-ui,-apple-system,sans-serif;--cb-font-display:'Space Grotesk','Manrope',sans-serif}
+/* Cash Boost — typographie élégante et lisible */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root{
+  --cb-font-body:'Manrope','Inter',system-ui,-apple-system,sans-serif;
+  --cb-font-display:'Cormorant Garamond',Georgia,serif;
+}
+
 html,body,button,input,select,textarea{font-family:var(--cb-font-body)}
-h1,h2,h3,h4,.brand,.splash-title,.svc-title,.hero-title,.cbh-title{font-family:var(--cb-font-display);letter-spacing:-.035em;text-wrap:balance}
-body{font-size:15px;line-height:1.58;font-weight:400}
-h1{font-weight:700;line-height:1.12}h2{font-weight:600;line-height:1.2}h3{font-weight:600;line-height:1.25}
-p,.field-help,.field-note,.note{line-height:1.6}
-label,.field label{font-weight:600;letter-spacing:-.01em}
-button,.primary-btn,.secondary-btn,.ghost-btn{font-weight:600;letter-spacing:.005em}
-input,textarea,select{font-weight:400}
+body{font-size:15px;line-height:1.58;font-weight:400;color:var(--text)}
+
+h1,h2,h3,h4,
+.svc-title,.hero-title,.cbh-title,
+.section-head h2,.account-section-title{
+  font-family:var(--cb-font-display);
+  font-weight:600;
+  letter-spacing:-.025em;
+  line-height:1.12;
+  text-wrap:balance;
+}
+
+h1{font-size:clamp(30px,6vw,38px);font-weight:700}
+h2{font-weight:600;line-height:1.18}
+h3,h4{font-weight:600;line-height:1.22}
+.svc-title{font-size:clamp(27px,5vw,34px);line-height:1.08;font-weight:600}
+.hero-title,.cbh-title{font-size:clamp(32px,6vw,42px);line-height:1.05;font-weight:700}
+.section-head h2{letter-spacing:-.02em}
+p,.field-help,.field-note,.note{font-family:var(--cb-font-body);line-height:1.6}
+label,.field label{font-family:var(--cb-font-body);font-weight:600;letter-spacing:-.01em}
+button,.primary-btn,.secondary-btn,.ghost-btn{font-family:var(--cb-font-body);font-weight:600;letter-spacing:.005em}
+input,textarea,select{font-family:var(--cb-font-body);font-weight:400}
 input::placeholder,textarea::placeholder{font-weight:400;opacity:.72}
-.svc-title{font-size:clamp(25px,5vw,32px);line-height:1.16}
-.section-head h2{letter-spacing:-.025em}.section-head p{font-size:14px}
-.hero p,.cbh-sub{max-width:58ch}
-@media(max-width:480px){body{font-size:14.5px}.svc-title{font-size:27px}.section-head h2{font-size:18px}}
+
+/* La marque et les éléments de navigation restent modernes */
+.brand,.splash-title{font-family:'Space Grotesk','Manrope',sans-serif}
+@media(max-width:480px){
+  body{font-size:14.5px}
+  .svc-title{font-size:29px}
+  .section-head h2{font-size:24px}
+}
