@@ -1,1 +1,1 @@
-Relance du déploiement de production (Karta et Pocket Option : protection de l'adresse wallet).
+Relance du déploiement de production (suppression du code PIN du portefeuille : achats et transferts sans PIN).
