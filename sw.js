@@ -21,7 +21,7 @@
 // =====================================================================
 
 // ⚠️ À changer quand tu modifies CE fichier ou veux vider le cache de tous les clients.
-const CACHE_NAME = 'cashboost-v11';
+const CACHE_NAME = 'cashboost-v12';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -32,6 +32,8 @@ const CORE_ASSETS = [
   './design.css',
   './styles.css',
   './wallet-blue.css',
+  './retouches.css',
+  './typographie.css',
   './supabase.min.js',
   './base.js',
   './ui.js',
@@ -42,6 +44,7 @@ const CORE_ASSETS = [
   './portefeuille.js',
   './admin.js',
   './animations.js',
+  './compteur.js',
   './freefire.js',
   './notifications.js',
   './usdt.js'
