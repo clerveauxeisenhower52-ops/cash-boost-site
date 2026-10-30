@@ -9,7 +9,9 @@
 html,body,button,input,select,textarea{font-family:var(--cb-font-body)}
 body{font-size:15px;line-height:1.58;font-weight:400;color:var(--text)}
 
+/* Sélecteurs plus précis pour dépasser les anciennes règles .hero h1 et .service-title h2 */
 h1,h2,h3,h4,
+.hero h1,.hero h2,.service-title h2,
 .svc-title,.hero-title,.cbh-title,
 .section-head h2,.account-section-title{
   font-family:var(--cb-font-display);
@@ -19,9 +21,10 @@ h1,h2,h3,h4,
   text-wrap:balance;
 }
 
-h1{font-size:clamp(30px,6vw,38px);font-weight:700}
+h1,.hero h1{font-size:clamp(30px,6vw,38px);font-weight:700}
 h2{font-weight:600;line-height:1.18}
 h3,h4{font-weight:600;line-height:1.22}
+.service-title h2{font-size:20px;font-weight:600;line-height:1.12}
 .svc-title{font-size:clamp(27px,5vw,34px);line-height:1.08;font-weight:600}
 .hero-title,.cbh-title{font-size:clamp(32px,6vw,42px);line-height:1.05;font-weight:700}
 .section-head h2{letter-spacing:-.02em}
