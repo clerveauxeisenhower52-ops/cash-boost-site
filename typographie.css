@@ -51,7 +51,7 @@ input::placeholder,textarea::placeholder{font-weight:400;opacity:.72}
   font-size:.78em;
   font-weight:500;
   line-height:1;
-  vertical-align:.08em;
+  vertical-align:-.02em;
 }
 /* Tiret droit et régulier dans Nord-Amérique, indépendant de la police serif */
 .svc-no-break{white-space:nowrap;display:inline-block}
