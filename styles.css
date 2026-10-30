@@ -531,3 +531,7 @@ a.wa-btn:hover,a.wa-notify:hover{background:rgba(37,211,102,0.18);}
 .promo-art-binance{gap:0;}
 .binance-logo{position:relative;z-index:1;display:block;width:104px;height:104px;object-fit:contain;filter:drop-shadow(0 5px 12px rgba(240,185,11,.22));}
 @media(max-width:540px){.binance-logo{width:82px;height:82px;}}
+
+/* User-provided Plasma One emblem */
+.plasma-logo{position:relative;z-index:1;display:block;width:116px;height:116px;object-fit:contain;filter:drop-shadow(0 7px 15px rgba(0,0,0,.24));}
+@media(max-width:540px){.plasma-logo{width:88px;height:88px;}}
