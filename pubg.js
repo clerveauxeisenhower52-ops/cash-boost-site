@@ -67,7 +67,7 @@
 <div id="pgbBar" class="ob"><div class="ob-total"><small>Total à payer</small><strong id="pgbBarTotal">—</strong></div><button id="pgbBarBtn" type="button" class="primary-btn">Confirmer</button></div>
 <div id="pgbCard" class="card card-pad">
   <div class="section" id="pgbSecPack">
-    <div class="section-head"><span class="step">1</span><div><h2>Choisir le pack</h2><p id="pgbRange">Choisis la valeur de ton pack</p></div></div>
+    <div class="section-head"><span class="step">1</span><div><h2>Sélectionner un pack UC</h2><p id="pgbRange">Choisis la valeur de ton pack</p></div></div>
     <div id="pgbPacks" class="pgb-packs"></div>
     <div class="summary">
       <div class="sumrow"><span>Pack</span><strong id="pgbSumPack">—</strong></div>
@@ -75,24 +75,24 @@
     </div>
   </div>
   <div class="section" id="pgbSecAcc">
-    <div class="section-head"><span class="step">2</span><div><h2>Compte PUBG Mobile</h2><p>Entre ton ID joueur PUBG Mobile</p></div></div>
+    <div class="section-head"><span class="step">2</span><div><h2>Compte PUBG Mobile</h2><p>Saisis ton identifiant de joueur PUBG Mobile.</p></div></div>
     <div class="field">
-      <label for="pgbPid">ID joueur (Player ID)</label>
+      <label for="pgbPid">Identifiant joueur (Player ID)</label>
       <div class="pgbin"><input id="pgbPid" inputmode="numeric" maxlength="15" autocomplete="off" placeholder="ex. 123456789"><span id="pgbDot" class="pgbdot"></span></div>
-      <p class="field-help">Le compte est vérifié auprès du fournisseur avant le paiement.</p>
+      <p class="field-help">Ton identifiant sera vérifié auprès du fournisseur avant tout paiement.</p>
       <div id="pgbV"></div>
     </div>
     <div class="field">
-      <label for="pgbPhone">Numéro WhatsApp</label>
+      <label for="pgbPhone">Ton numéro WhatsApp</label>
       <input id="pgbPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="ex. 37 12 34 56">
-      <p class="field-help">Obligatoire · pour te prévenir dès que c'est prêt</p>
+      <p class="field-help">Obligatoire · pour recevoir le suivi de ta recharge</p>
     </div>
   </div>
   <div class="section" id="pgbSecPay">
-    <div class="section-head"><span class="step">3</span><div><h2>Paiement par portefeuille</h2><p>Le montant est débité de ton solde</p></div></div>
+    <div class="section-head"><span class="step">3</span><div><h2>Paiement avec ton portefeuille</h2><p>Le montant sera déduit de ton solde après confirmation.</p></div></div>
     <div class="pay-wallet-card selected">
       <span class="pay-wallet-ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H5a2 2 0 0 1 0-4h13v4"/><path d="M3 5v14a2 2 0 0 0 2 2h15V7"/><circle cx="16.5" cy="14" r="1.2"/></svg></span>
-      <span class="pay-wallet-info"><span class="pay-wallet-name">Paiement par portefeuille</span><span class="pay-wallet-desc" id="pgbBal">Solde : …</span></span>
+      <span class="pay-wallet-info"><span class="pay-wallet-name">Paiement avec ton portefeuille</span><span class="pay-wallet-desc" id="pgbBal">Solde : …</span></span>
       <button type="button" class="pay-wallet-add" id="pgbAddFunds">+ Fonds</button>
     </div>
     <div id="pgbPayHint" class="pay-wallet-hint hidden" role="status"></div>
@@ -102,7 +102,7 @@
     </div>
     <button id="pgbPay" class="primary-btn" type="button">Payer avec mon solde</button>
     <div id="pgbMsg" class="msg"></div>
-    <p class="note">Vérifie ton ID joueur avant de confirmer.</p>
+    <p class="note">Vérifie soigneusement ton identifiant avant de confirmer.</p>
   </div>
 </div>`;
     $('pgbBack').onclick=()=>showPage('services');
@@ -214,7 +214,7 @@
     $('pgbProgress').style.display='none';
     if(io)io.disconnect();
     $('pgbBar').classList.add('ob-hidden');
-    $('pgbCard').innerHTML='<div class="pgb-done"><div class="sv-check">✓</div><h2>Commande reçue</h2><p>Tes UC seront livrées automatiquement après confirmation du fournisseur. Si la recharge échoue, ton solde est remboursé automatiquement.</p><button type="button" id="pgbOrders" class="primary-btn">Voir mes commandes</button><button type="button" id="pgbAgain" class="secondary-btn" style="margin-top:10px">Commander à nouveau</button></div>';
+    $('pgbCard').innerHTML='<div class="pgb-done"><div class="sv-check">✓</div><h2>Commande enregistrée</h2><p>Ta recharge UC sera traitée automatiquement après confirmation du fournisseur. Si elle échoue, le remboursement de ton solde sera effectué automatiquement.</p><button type="button" id="pgbOrders" class="primary-btn">Voir mes commandes</button><button type="button" id="pgbAgain" class="secondary-btn" style="margin-top:10px">Commander à nouveau</button></div>';
     $('pgbOrders').onclick=()=>{showPage('orders');try{loadMyOrders();}catch(_){}};
     $('pgbAgain').onclick=()=>open();
     window.scrollTo({top:0,behavior:'smooth'});
