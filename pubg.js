@@ -1,4 +1,4 @@
-/* PUBG Mobile (Auto) : page de commande. L'ID joueur est vérifié chez le fournisseur avant le paiement (fonction pubg-validate). */
+/* Recharger Pubg Mobile : page de commande. L'ID joueur est vérifié chez le fournisseur avant le paiement (fonction pubg-validate). */
 (function(){
   const st=document.createElement('style');
   st.textContent=`
@@ -41,7 +41,7 @@
   const msg=(t,c)=>{const m=$('pgbMsg');if(m){m.className='msg '+(c||'');m.textContent=t;}};
   const goTo=id=>{const e=$(id);if(e)e.scrollIntoView({behavior:'smooth',block:'center'});};
 
-  // Page « PUBG Mobile (Auto) » : s'affiche comme la page de commande des autres services
+  // Page « Recharger Pubg Mobile » : s'affiche comme la page de commande des autres services
   const baseShow=window.showPage;
   window.showPage=function(p){
     if(p==='pubg'){
@@ -58,7 +58,7 @@
   function build(){
     pg.innerHTML=`
 <div class="page-title"><button id="pgbBack" class="back" type="button">← Retour aux services</button></div>
-<h1 class="svc-title">PUBG Mobile (Auto)<span class="svc-badge svc-badge-auto">Auto</span></h1>
+<h1 class="svc-title">Recharger Pubg Mobile<span class="svc-badge svc-badge-auto">Auto</span></h1>
 <div id="pgbProgress" class="op" aria-label="Progression de la commande">
   <button type="button" class="op-step" data-go="pgbSecPack"><i>1</i><span>Pack</span></button>
   <button type="button" class="op-step" data-go="pgbSecAcc"><i>2</i><span>Compte</span></button>
@@ -264,5 +264,5 @@
     }
   }
   const prev=window.openService;
-  window.openService=function(id){return id==='PUBG Mobile (Auto)'?open():prev.apply(this,arguments);};
+  window.openService=function(id){return id==='Recharger Pubg Mobile'?open():prev.apply(this,arguments);};
 })();
