@@ -4,8 +4,8 @@ import { ethers } from 'https://esm.sh/ethers@6.13.2';
 // ─── Configuration (surchargeable via Supabase Secrets) ───
 // REFILL_MODE : DRY_RUN (défaut) = on calcule et on journalise, aucun envoi ; LIVE = envoi réel d'USDT
 const MODE = (Deno.env.get('REFILL_MODE') || 'DRY_RUN').toUpperCase();
-const MAX_REFILL_USD = Number(Deno.env.get('REFILL_MAX_USD') || '35'); // plafond par recharge
-const MAX_DAILY_USD = Number(Deno.env.get('REFILL_DAILY_MAX_USD') || '100'); // plafond sur 24 h
+const MAX_REFILL_USD = Number(Deno.env.get('REFILL_MAX_USD') || '90'); // plafond par recharge
+const MAX_DAILY_USD = Number(Deno.env.get('REFILL_DAILY_MAX_USD') || '200'); // plafond sur 24 h
 const BSC_RPC = Deno.env.get('BSC_RPC_URL') || 'https://bsc-dataseed.binance.org';
 const WALLET_KEY = Deno.env.get('FAZERCARDS_WALLET_KEY') || '';
 const USDT_BSC = '0x55d398326f99059fF775485246999027B3197955';
@@ -26,6 +26,34 @@ const json = (b: unknown, status = 200) =>
   new Response(JSON.stringify(b), { status, headers: { 'Content-Type': 'application/json' } });
 const nowIso = () => new Date().toISOString();
 const ceil2 = (n: number) => Math.ceil(n * 100 - 1e-9) / 100;
+
+// ─── Masquage des secrets dans tout texte journalisé, enregistré, envoyé par e-mail ou par ntfy ───
+// L'URL du RPC privé (BSC_RPC_URL) contient souvent une clé : elle ne doit jamais sortir de la fonction.
+function secretFragments(): string[] {
+  const frags = new Set<string>();
+  const add = (v: string | undefined | null) => { const s = (v || '').trim(); if (s.length >= 8) frags.add(s); };
+  add(BSC_RPC);
+  add(WALLET_KEY);
+  add(WALLET_KEY.replace(/^0x/i, ''));
+  add(Deno.env.get('FAZERCARDS_API_KEY'));
+  add(INTERNAL_SECRET);
+  try {
+    const u = new URL(BSC_RPC);
+    add(u.hostname);
+    add(u.username);
+    add(u.password);
+    for (const seg of u.pathname.split('/')) add(seg);
+    for (const [, v] of u.searchParams) add(v);
+  } catch (_) { /* URL non analysable : l'URL complète est déjà masquée ci-dessus */ }
+  return [...frags].sort((a, b) => b.length - a.length);
+}
+function redact(input: unknown): string {
+  let s = String(input ?? '');
+  for (const f of secretFragments()) s = s.split(f).join('[masqué]');
+  // Filet de sécurité : toute autre URL est masquée aussi
+  return s.replace(/https?:\/\/[^\s"'<>)\]]+/gi, '[url masquée]');
+}
+const errMsg = (e: unknown) => redact((e as any)?.message || e);
 
 // ─── Authentification (même secret que les autres fonctions déclenchées par la base) ───
 function safeEqual(a: string, b: string): boolean {
@@ -54,7 +82,7 @@ async function emailAdmin(titre: string, texte: string): Promise<boolean> {
       headers: { 'x-internal-secret': INTERNAL_SECRET },
     });
     return true;
-  } catch (e) { console.error('Email admin:', e); return false; }
+  } catch (e) { console.error('Email admin:', errMsg(e)); return false; }
 }
 function ntfyTopic(): string {
   let topic = (Deno.env.get('NTFY_TOPIC') ?? '').trim();
@@ -73,10 +101,13 @@ async function notifyPhone(title: string, message: string): Promise<boolean> {
       body: message,
     });
     return res.ok;
-  } catch (e) { console.error('notifyPhone:', (e as any)?.message || e); return false; }
+  } catch (e) { console.error('notifyPhone:', errMsg(e)); return false; }
 }
+// Point de passage unique de toutes les alertes : le texte est masqué avant e-mail et ntfy
 async function alertAdmin(titre: string, texte: string) {
-  await Promise.all([emailAdmin(titre, texte), notifyPhone('Cash Boost - ' + titre, texte)]);
+  const t = redact(titre);
+  const x = redact(texte);
+  await Promise.all([emailAdmin(t, x), notifyPhone('Cash Boost - ' + t, x)]);
 }
 
 // Une seule alerte par cause et par heure (la fonction tourne chaque minute : pas de spam)
@@ -126,11 +157,14 @@ const ERC20_ABI = [
 ];
 
 async function setRow(id: string, patch: Record<string, unknown>) {
-  await sb.from('fazercards_refills').update({ ...patch, updated_at: nowIso() }).eq('id', id);
+  const p: Record<string, unknown> = { ...patch };
+  if (typeof p.error === 'string') p.error = redact(p.error); // jamais de secret dans la base
+  await sb.from('fazercards_refills').update({ ...p, updated_at: nowIso() }).eq('id', id);
 }
 async function failRow(row: any, status: 'failed' | 'expired', msg: string, alertTitle?: string) {
-  await setRow(row.id, { status, error: msg.slice(0, 500) });
-  if (alertTitle) await alertAdmin(alertTitle, msg);
+  const clean = redact(msg); // on masque AVANT de couper, pour ne pas laisser un morceau d'URL
+  await setRow(row.id, { status, error: clean.slice(0, 500) });
+  if (alertTitle) await alertAdmin(alertTitle, clean);
 }
 async function alertOnce(row: any, titre: string, texte: string) {
   if (row.alerted_at) return;
@@ -196,7 +230,7 @@ async function sendUsdt(row: any) {
     return { ok: true, tx: tx.hash };
   } catch (e) {
     // Statut laissé en « sending » : on ne sait pas si l'envoi est parti, vérification manuelle (évite un double paiement)
-    const msg = String((e as any)?.message || e).slice(0, 300);
+    const msg = errMsg(e).slice(0, 300); // masqué avant d'être coupé
     await setRow(claimed.id, { error: 'Erreur pendant l\'envoi : ' + msg });
     await alertOnce(claimed, 'FAZERCARDS : ENVOI USDT A VERIFIER',
       `Erreur pendant l'envoi de ${claimed.send_amount} USDT vers ${claimed.address}. Vérifie sur BscScan avant tout nouvel essai. ${msg}`);
@@ -247,7 +281,7 @@ async function advance(row: any): Promise<any> {
         return { id: row.id, status: 'failed' };
       }
     } catch (e) {
-      console.error('suivi paiement:', (e as any)?.message || e);
+      console.error('suivi paiement:', errMsg(e));
     }
     // Transaction annulée sur la blockchain ?
     try {
@@ -325,7 +359,7 @@ async function createRefill(shortfall: number, ordersCount: number) {
       return { ok: false, error: 'bnb_insuffisant' };
     }
   } catch (e) {
-    await throttledAlert('refill_wallet_error', 'FAZERCARDS : wallet BSC illisible', String((e as any)?.message || e));
+    await throttledAlert('refill_wallet_error', 'FAZERCARDS : wallet BSC illisible', errMsg(e));
     return { ok: false, error: 'wallet_illisible' };
   }
 
@@ -340,7 +374,7 @@ async function createRefill(shortfall: number, ordersCount: number) {
     const r = await fz('POST', '/payments/create', { method: 'bep20', amount });
     payment = r.payment;
   } catch (e) {
-    await failRow(row, 'failed', 'Création de la recharge refusée : ' + String((e as any)?.message || e), 'FAZERCARDS : création de recharge refusée');
+    await failRow(row, 'failed', 'Création de la recharge refusée : ' + errMsg(e), 'FAZERCARDS : création de recharge refusée');
     return { ok: false, error: 'creation_refusee' };
   }
 
@@ -371,7 +405,7 @@ async function createRefill(shortfall: number, ordersCount: number) {
   return { ok: true, refill: row.id, amount, send: sent };
 }
 
-// ─── Action « auto » : calcule le manque pour les commandes Free Fire en attente ───
+// ─── Action « auto » : calcule le manque pour les commandes Free Fire ET PUBG en attente ───
 async function auto() {
   const active = await getActive();
   if (active) return { active: await advance(active) };
@@ -392,31 +426,43 @@ async function auto() {
   }
 
   const since = new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString();
-  const { data: orders } = await sb.from('orders').select('id, pack_id')
-    .in('service', ['Free Fire', 'PUBG Mobile (Auto)']).eq('status', 'en attente').eq('payout_status', 'pending')
+  const pendingOrders = (service: string) => sb.from('orders').select('id, pack_id')
+    .eq('service', service).eq('status', 'en attente').eq('payout_status', 'pending')
     .is('tx_hash', null).gt('created_at', since).limit(50);
-  if (!orders || orders.length === 0) return { idle: true };
+  const [{ data: ffData }, { data: pubgData }] = await Promise.all([
+    pendingOrders('Free Fire'),
+    pendingOrders('PUBG Mobile (Auto)'),
+  ]);
+  const ffOrders = ffData || [];
+  const pubgOrders = pubgData || [];
+  if (ffOrders.length + pubgOrders.length === 0) return { idle: true };
 
-  const [{ data: costs }, { data: pubgCosts }] = await Promise.all([
+  const [{ data: ffCosts }, { data: pubgCosts }] = await Promise.all([
     sb.from('freefire_pack_costs').select('pack_id, cost_usd'),
     sb.from('pubg_pack_costs').select('pack_id, cost_usd'),
   ]);
-  const costOf = new Map([...(costs || []), ...(pubgCosts || [])].map((c: any) => [c.pack_id, Number(c.cost_usd)]));
+  const ffCostOf = new Map((ffCosts || []).map((c: any) => [c.pack_id, Number(c.cost_usd)]));
+  const pubgCostOf = new Map((pubgCosts || []).map((c: any) => [c.pack_id, Number(c.cost_usd)]));
   let needed = 0;
-  for (const o of orders) needed += costOf.get(o.pack_id) || 0;
+  for (const o of ffOrders) needed += ffCostOf.get(o.pack_id) || 0;
+  for (const o of pubgOrders) needed += pubgCostOf.get(o.pack_id) || 0;
   if (needed <= 0) return { idle: true };
 
   const balance = Number((await fz('GET', '/balance')).balance);
   if (!Number.isFinite(balance)) return { ok: false, error: 'solde_illisible' };
   const shortfall = needed - balance;
   if (shortfall <= 0.0001) return { enough: true, balance, needed };
-  return { balance, needed, ...(await createRefill(shortfall, orders.length)) };
+  return {
+    balance, needed,
+    orders: { free_fire: ffOrders.length, pubg: pubgOrders.length },
+    ...(await createRefill(shortfall, ffOrders.length + pubgOrders.length)),
+  };
 }
 
 // ─── Action « status » : état du système (lecture seule) ───
 async function status() {
   const out: any = { mode: MODE, max_refill_usd: MAX_REFILL_USD, max_daily_usd: MAX_DAILY_USD };
-  try { out.fazercards_balance = (await fz('GET', '/balance')).balance; } catch (e) { out.fazercards_error = String((e as any)?.message || e); }
+  try { out.fazercards_balance = (await fz('GET', '/balance')).balance; } catch (e) { out.fazercards_error = errMsg(e); }
   try {
     const { provider, wallet } = bscWallet();
     const usdt = new ethers.Contract(USDT_BSC, ERC20_ABI, provider);
@@ -424,7 +470,7 @@ async function status() {
     out.wallet = wallet.address;
     out.wallet_usdt_bsc = ethers.formatUnits(await usdt.balanceOf(wallet.address), dec);
     out.wallet_bnb = ethers.formatEther(await provider.getBalance(wallet.address));
-  } catch (e) { out.wallet_error = String((e as any)?.message || e); }
+  } catch (e) { out.wallet_error = errMsg(e); }
   const { data } = await sb.from('fazercards_refills')
     .select('id, status, amount_usd, send_amount, tx_hash, error, created_at')
     .order('created_at', { ascending: false }).limit(5);
@@ -443,7 +489,7 @@ Deno.serve(async (req) => {
     if (body.action === 'status') return json(await status());
     return json({ error: 'action inconnue (auto | status)' }, 400);
   } catch (e) {
-    console.error('fazercards-refill error:', e);
-    return json({ error: String((e as any)?.message || e) }, 500);
+    console.error('fazercards-refill error:', errMsg(e));
+    return json({ error: errMsg(e) }, 500);
   }
 });
