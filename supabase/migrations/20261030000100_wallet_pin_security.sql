@@ -89,13 +89,13 @@ end $$;
 create or replace function public.wallet_transfer(p_to_id text,p_amount numeric,p_request_id uuid,p_pin_authorization uuid)
 returns jsonb language plpgsql security definer set search_path = public
 as $$
-declare v_uid uuid:=auth.uid(); v_ok boolean; v_result jsonb;
+declare v_uid uuid:=auth.uid(); v_count integer:=0; v_result jsonb;
 begin
  if v_uid is null then return jsonb_build_object('ok',false,'status','unauthenticated'); end if;
  update public.wallet_pin_authorizations set used_at=now()
   where id=p_pin_authorization and user_id=v_uid and action='transfer' and used_at is null and expires_at>now();
- get diagnostics v_ok = row_count;
- if not coalesce(v_ok,false) then return jsonb_build_object('ok',false,'status','pin_required'); end if;
+ get diagnostics v_count = row_count;
+ if v_count <> 1 then return jsonb_build_object('ok',false,'status','pin_required'); end if;
  select public.wallet_transfer(p_to_id,p_amount,p_request_id) into v_result;
  return v_result;
 end $$;
