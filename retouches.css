@@ -80,3 +80,11 @@ body:has(#page-service:not(.hidden)){
   scroll-padding-bottom:calc(var(--nav-h,64px) + 24px + env(safe-area-inset-bottom,0px));
 }
 @media(max-width:540px){#page-home{padding-bottom:20px !important;}}
+
+
+/* Bandeau PUBG Mobile du carrousel d'accueil : fond sombre doré, titre et nom du jeu en texte */
+.promo-slide.promo-pubg{background:linear-gradient(135deg,#0d1117 0%,#26301d 48%,#7a5a14 100%)}
+.promo-slide.promo-pubg em{color:#f5b942;-webkit-text-fill-color:#f5b942;background:none}
+.promo-art-pubg{display:flex;align-items:center;justify-content:center}
+.promo-art-pubg .pubg-mark{display:block;text-align:center;font:900 italic 44px/1 'Space Grotesk',sans-serif;letter-spacing:-1px;color:#f5b942;text-shadow:0 4px 18px rgba(245,185,66,.35)}
+.promo-art-pubg .pubg-mark small{display:block;margin-top:8px;font:700 13px/1 'Manrope',sans-serif;font-style:normal;letter-spacing:.32em;color:#fff;opacity:.85}
