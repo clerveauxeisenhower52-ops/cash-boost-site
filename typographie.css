@@ -53,6 +53,6 @@ input::placeholder,textarea::placeholder{font-weight:400;opacity:.72}
   line-height:1;
   vertical-align:.08em;
 }
-
-/* Garde Nord-Amérique sur une seule ligne dans les cartes de services */
-.service-title h2 .svc-no-break{white-space:nowrap;display:inline-block}
+/* Tiret droit et régulier dans Nord-Amérique, indépendant de la police serif */
+.svc-no-break{white-space:nowrap;display:inline-block}
+.svc-no-break .svc-hyphen{font-family:var(--cb-font-body);font-style:normal;font-weight:500;display:inline-block;transform:none;margin:0 .045em;vertical-align:.04em}
