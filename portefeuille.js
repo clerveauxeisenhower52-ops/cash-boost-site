@@ -371,7 +371,7 @@ async function walletTrSend(){
   walletTrBusy=true; walletTrRefreshBtn(); setMsg('walletTrMsg','Envoi en cours…');
   let res=null,err=null;
   const rk=walletTrTarget.id+':'+a;
-  if(!walletTrReq||walletTrReq.k!==rk) walletTrReq={k:rk,id:(window.crypto&&crypto.randomUUID)?crypto.randomUUID():null};
+  if(!walletTrReq||walletTrReq.k!==rk) walletTrReq={k:rk,id:walletNewId()};
   try{
     let r=await sb.rpc('wallet_transfer',{p_to_id:walletTrTarget.id,p_amount:a,p_request_id:walletTrReq.id,p_pin_authorization:pinAuthorization});
     res=r.data; err=r.error;
