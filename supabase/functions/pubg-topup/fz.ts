@@ -45,6 +45,8 @@ export async function validatePubgPlayer(pid:string,_purchaseCategoryId?:string)
   const items:any[]=(list.items||[]);
   const item=items.find((i:any)=>norm(i.name)==='pubgmobile')
     ||items.find((i:any)=>/pubg/i.test(String(i.name||''))&&/mobile/i.test(String(i.name||'')));
+  // Diagnostic (sans donnée sensible) : catégories PUBG proposées pour la validation et celle retenue.
+  console.log('pubg-validate-diag: items',JSON.stringify(items.filter((i:any)=>/pubg/i.test(String(i.name||''))).map((i:any)=>({category_id:i.category_id,name:i.name,fields:(i.fields||[]).map((f:any)=>f.key)}))),'chosen',item?.category_id??null);
   if(!item?.category_id)return {supported:false,valid:null};
   const fields:any[]=Array.isArray(item.fields)?item.fields:[];
   const field=fields.find((f:any)=>String(f.key||'').toLowerCase()==='player_id')
@@ -52,5 +54,7 @@ export async function validatePubgPlayer(pid:string,_purchaseCategoryId?:string)
   if(!field?.key)return {supported:false,valid:null};
   const r=await fz('POST','/topups/validate-id',{category_id:item.category_id,fields:{[field.key]:pid}});
   const playerName=r.player_name||r.player?.name||r.account?.name||r.nickname||r.name||null;
+  // Diagnostic : forme de la réponse (clés, valid, région, présence d'un pseudo) — le pseudo lui-même n'est pas enregistré.
+  console.log('pubg-validate-diag: response',JSON.stringify({keys:Object.keys(r||{}),valid:r?.valid,region:r?.region??r?.player?.region??null,hasName:typeof playerName==='string'&&playerName.length>0,fieldKey:field.key}));
   return {supported:true,valid:r.valid===true,region:r.region||r.player?.region,player_name:typeof playerName==='string'?playerName:null,fieldKey:field.key};
 }

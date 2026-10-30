@@ -163,12 +163,17 @@ Deno.serve(async(req)=>{
       if(userError||!userData?.user)return new Response('unauthorized',{status:401,headers:corsHeaders});
       const pid=String(body.playerId||'').replace(/\s/g,'');
       if(!/^[0-9]{5,20}$/.test(pid))return json({ok:false,valid:false,error:'invalid_player_id'},400);
+      // Limite par client (10 demandes / 10 min, 60 / jour) : protège la clé FazerCards contre les abus
+      const {data:allowed,error:rlError}=await sb.rpc('pubg_validate_allow_request',{p_user_id:userData.user.id});
+      if(rlError){console.error('pubg-validate-diag: rate_limit_error');return json({ok:false,valid:false,error:'validation_unavailable'});}
+      if(allowed!==true){console.log('pubg-validate-diag: rate_limited');return json({ok:false,valid:false,error:'rate_limited'});}
       const category=await getPubgCategory();
-      if(!category)return json({ok:false,valid:false,error:'pubg_validation_unavailable'});
+      if(!category){console.log('pubg-validate-diag: no_category');return json({ok:false,valid:false,error:'pubg_validation_unavailable'});}
       const result=await validatePubgPlayer(pid,String(category.category_id));
-      if(!result.supported)return json({ok:false,valid:false,error:'provider_validation_unsupported'});
-      if(result.valid!==true)return json({ok:false,valid:false,error:'player_not_verified'});
-      if(!result.player_name)return json({ok:false,valid:false,error:'player_name_unavailable'});
+      if(!result.supported){console.log('pubg-validate-diag: unsupported');return json({ok:false,valid:false,error:'provider_validation_unsupported'});}
+      if(result.valid!==true){console.log('pubg-validate-diag: not_valid');return json({ok:false,valid:false,error:'player_not_verified'});}
+      if(!result.player_name){console.log('pubg-validate-diag: valid_but_no_name');return json({ok:false,valid:false,error:'player_name_unavailable'});}
+      console.log('pubg-validate-diag: ok');
       return json({ok:true,valid:true,player_name:result.player_name,region:result.region||null});
     }
     if(!(await authorized(req)))return new Response('forbidden',{status:403,headers:corsHeaders});
