@@ -1,5 +1,5 @@
 // =====================================================================
-// CASH BOOST — Service Worker v10
+// CASH BOOST — Service Worker v12
 // v10 : commandes payées avec le solde uniquement — plus de preuve de paiement (captures, Transcode, QR de commande) ; cache vidé chez tous les clients.
 // v9 : pages Karta et Pocket Option — bouton Coller, vérification de l'adresse BNB et avertissement de réseau.
 // v8 : panneau admin — suivi des dépôts crypto et avertissement de gaz bas.
@@ -20,6 +20,7 @@
 //  - Images : cache d'abord, mise à jour en arrière-plan.
 // =====================================================================
 
+// v12 : corrige l'espace de navigation mobile et pré-cache les feuilles CSS/scripts concernés.
 // ⚠️ À changer quand tu modifies CE fichier ou veux vider le cache de tous les clients.
 const CACHE_NAME = 'cashboost-v12';
 const CORE_ASSETS = [
