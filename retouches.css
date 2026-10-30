@@ -66,3 +66,17 @@ body:not(.landing-active){
 @media(max-width:540px){
   #page-home{padding-bottom:calc(var(--nav-h,64px) + 132px + env(safe-area-inset-bottom,0px)) !important;}
 }
+
+
+/* Réglage final : espace normal sur les pages courantes, réserve élargie uniquement sur Services avec sa barre de commande fixe. */
+body:not(.landing-active){
+  padding-bottom:calc(var(--nav-h,64px) + 24px + env(safe-area-inset-bottom,0px)) !important;
+}
+body:has(#page-service:not(.hidden)){
+  padding-bottom:calc(var(--nav-h,64px) + var(--cb-fixed-total-clearance,238px) + env(safe-area-inset-bottom,0px)) !important;
+}
+#page-home{
+  padding-bottom:24px !important;
+  scroll-padding-bottom:calc(var(--nav-h,64px) + 24px + env(safe-area-inset-bottom,0px));
+}
+@media(max-width:540px){#page-home{padding-bottom:20px !important;}}
