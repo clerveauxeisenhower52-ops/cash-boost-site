@@ -5,7 +5,7 @@ window.cbWalletPinAuthorize = async function(action){
   if(!status.data?.configured) throw new Error('Configure d’abord ton code PIN dans Mon compte.');
   const pin=window.prompt('Entre ton code PIN à 4 chiffres pour confirmer :');
   if(pin===null) return null;
-  if(!/^\\d{4}$/.test(pin)){ showToast('Le PIN doit contenir 4 chiffres.'); return null; }
+  if(!/^\d{4}$/.test(pin)){ showToast('Le PIN doit contenir 4 chiffres.'); return null; }
   const r=await sb.rpc('wallet_pin_verify',{p_pin:pin,p_action:action});
   if(r.error) throw new Error('Vérification PIN indisponible.');
   if(!r.data?.ok){
@@ -21,7 +21,7 @@ window.cbWalletPinSetup = async function(){
   if(status.data?.configured){showToast('Un PIN existe déjà. Utilise « Modifier mon PIN ».');return;}
   const pin=window.prompt('Choisis un PIN à 4 chiffres :');
   if(pin===null)return;
-  if(!/^\\d{4}$/.test(pin)){showToast('Le PIN doit contenir exactement 4 chiffres.');return;}
+  if(!/^\d{4}$/.test(pin)){showToast('Le PIN doit contenir exactement 4 chiffres.');return;}
   const confirmPin=window.prompt('Confirme ton PIN :');
   if(confirmPin!==pin){showToast('Les deux codes ne correspondent pas.');return;}
   const r=await sb.rpc('wallet_pin_set',{p_pin:pin});
@@ -32,7 +32,7 @@ window.cbWalletPinSetup = async function(){
 window.cbWalletPinChange = async function(){
   const oldPin=window.prompt('Entre ton PIN actuel :'); if(oldPin===null)return;
   const newPin=window.prompt('Choisis ton nouveau PIN à 4 chiffres :'); if(newPin===null)return;
-  if(!/^\\d{4}$/.test(oldPin)||!/^\\d{4}$/.test(newPin)){showToast('Chaque PIN doit contenir 4 chiffres.');return;}
+  if(!/^\d{4}$/.test(oldPin)||!/^\d{4}$/.test(newPin)){showToast('Chaque PIN doit contenir 4 chiffres.');return;}
   const confirmPin=window.prompt('Confirme le nouveau PIN :'); if(confirmPin!==newPin){showToast('Les deux codes ne correspondent pas.');return;}
   const r=await sb.rpc('wallet_pin_change',{p_old_pin:oldPin,p_new_pin:newPin});
   if(r.error||!r.data?.ok){showToast(r.data?.status==='locked'?'PIN bloqué 15 minutes.':'Modification du PIN refusée. Vérifie ton ancien code.');return;}
@@ -46,12 +46,12 @@ window.cbWalletPinRecover = async function(){
   if(sent.error){showToast('Envoi du code e-mail impossible. Réessaie plus tard.');return;}
   const otp=window.prompt('Un code a été envoyé à '+user.email+'. Entre le code reçu :');
   if(otp===null)return;
-  if(!/^\\d{6}$/.test(otp)){showToast('Le code e-mail doit contenir 6 chiffres.');return;}
+  if(!/^\d{6}$/.test(otp)){showToast('Le code e-mail doit contenir 6 chiffres.');return;}
   const verified=await isolated.auth.verifyOtp({email:user.email,token:otp,type:'email'});
   if(verified.error||verified.data?.user?.id!==user.id){showToast('Code invalide ou compte différent. Recommence.');return;}
   const newPin=window.prompt('Choisis ton nouveau PIN à 4 chiffres :');
   if(newPin===null)return;
-  if(!/^\\d{4}$/.test(newPin)){showToast('Le PIN doit contenir 4 chiffres.');return;}
+  if(!/^\d{4}$/.test(newPin)){showToast('Le PIN doit contenir 4 chiffres.');return;}
   const confirmPin=window.prompt('Confirme ton nouveau PIN :');
   if(confirmPin!==newPin){showToast('Les deux codes ne correspondent pas.');return;}
   const reset=await isolated.rpc('wallet_pin_recover',{p_new_pin:newPin});
