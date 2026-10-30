@@ -365,14 +365,15 @@ function walletTrShowSuccess(a,who,bal){
 async function walletTrSend(){
   const a=walletTrAmount(); if(!walletTrTarget||a<1||walletTrBusy)return;
   if(a>walletBal){ setMsg('walletTrMsg','Solde insuffisant ('+fmt(walletBal)+' HTG).','err'); return; }
+  let pinAuthorization=null;
+  try{ pinAuthorization=await window.cbWalletPinAuthorize('transfer'); }catch(e){ setMsg('walletTrMsg',e.message||'Vérification PIN impossible.','err'); return; }
+  if(!pinAuthorization)return;
   walletTrBusy=true; walletTrRefreshBtn(); setMsg('walletTrMsg','Envoi en cours…');
   let res=null,err=null;
   const rk=walletTrTarget.id+':'+a;
   if(!walletTrReq||walletTrReq.k!==rk) walletTrReq={k:rk,id:(window.crypto&&crypto.randomUUID)?crypto.randomUUID():null};
   try{
-    let r=await sb.rpc('wallet_transfer',{p_to_id:walletTrTarget.id,p_amount:a,p_request_id:walletTrReq.id});
-    // Si le correctif SQL n'est pas encore installé, on retombe sur l'ancienne version
-    if(r.error&&/p_request_id|PGRST202|schema cache|Could not find/i.test(String(r.error.message||r.error.code||''))) r=await sb.rpc('wallet_transfer',{p_to_id:walletTrTarget.id,p_amount:a});
+    let r=await sb.rpc('wallet_transfer',{p_to_id:walletTrTarget.id,p_amount:a,p_request_id:walletTrReq.id,p_pin_authorization:pinAuthorization});
     res=r.data; err=r.error;
   }catch(e){ err=e; }
   walletTrBusy=false;
@@ -392,6 +393,7 @@ async function walletTrSend(){
     case 'self': setMsg('walletTrMsg','Tu ne peux pas t\u2019envoyer de l\u2019argent à toi-même.','err'); break;
     case 'invalid_amount': setMsg('walletTrMsg','Montant invalide.','err'); break;
     case 'too_many_attempts': setMsg('walletTrMsg','Trop d\u2019essais. Réessaie dans 15 minutes.','err'); break;
+    case 'pin_required': setMsg('walletTrMsg','Validation PIN expirée. Réessaie.','err'); break;
     default: setMsg('walletTrMsg','Transfert impossible.','err');
   }
   walletTrRefreshBtn();
@@ -460,7 +462,11 @@ function walletReqFor(o){
 async function walletBuy(o){
   let r=null,err=null;
   const rid=walletReqFor(o);
-  try{ const x=await sb.rpc('wallet_purchase_idem',{p_request_id:rid,p_service:o.service,p_amount_usd:o.qty,p_merutag:o.merutag,p_phone:o.phone||null}); r=x.data; err=x.error; }catch(e){ err=e; }
+  let pinAuthorization=null;
+  try{ pinAuthorization=await window.cbWalletPinAuthorize('purchase'); }
+  catch(e){ return {data:null,error:{userMessage:e.message||'Vérification PIN impossible.'}}; }
+  if(!pinAuthorization)return {data:null,error:{userMessage:'Paiement annulé.'}};
+  try{ const x=await sb.rpc('wallet_purchase_idem',{p_request_id:rid,p_service:o.service,p_amount_usd:o.qty,p_merutag:o.merutag,p_phone:o.phone||null,p_pin_authorization:pinAuthorization}); r=x.data; err=x.error; }catch(e){ err=e; }
   if(err||!r)return {data:null,error:{userMessage:'⚠️ Paiement momentanément indisponible. Réessaie dans un instant.'}};
   walletReqId='';   // réponse définitive : la prochaine commande aura un nouvel identifiant
   if(r.status==='paid'){ walletBal=Number(r.balance||0); walletRenderBalance(); return {data:{id:r.order_id},error:null}; }
