@@ -1,5 +1,36 @@
 document.addEventListener('DOMContentLoaded',()=>{
   initTheme();
+  // Carrousel publicitaire : défilement doux, navigation tactile et pause hors écran.
+  (() => {
+    const root=document.getElementById('promoCarousel');
+    if(!root)return;
+    const track=document.getElementById('promoTrack');
+    const slides=[...track.querySelectorAll('.promo-slide')];
+    const dots=[...root.querySelectorAll('[data-promo-dot]')];
+    const prev=document.getElementById('promoPrev'),next=document.getElementById('promoNext');
+    if(slides.length<2)return;
+    let current=0,timer=null,startX=0,deltaX=0;
+    const show=(index)=>{
+      current=(index+slides.length)%slides.length;
+      track.style.transform=`translateX(-${current*100}%)`;
+      dots.forEach((dot,i)=>{const active=i===current;dot.classList.toggle('is-active',active);if(active)dot.setAttribute('aria-current','true');else dot.removeAttribute('aria-current');});
+    };
+    const stop=()=>{if(timer){clearInterval(timer);timer=null;}};
+    const start=()=>{stop();if(!document.hidden&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches)timer=setInterval(()=>show(current+1),5000);};
+    dots.forEach((dot)=>dot.addEventListener('click',()=>{show(Number(dot.dataset.promoDot));start();}));
+    prev?.addEventListener('click',()=>{show(current-1);start();});
+    next?.addEventListener('click',()=>{show(current+1);start();});
+    root.addEventListener('mouseenter',stop);
+    root.addEventListener('mouseleave',start);
+    root.addEventListener('focusin',stop);
+    root.addEventListener('focusout',start);
+    root.addEventListener('touchstart',e=>{startX=e.changedTouches[0].clientX;deltaX=0;stop();},{passive:true});
+    root.addEventListener('touchmove',e=>{deltaX=e.changedTouches[0].clientX-startX;},{passive:true});
+    root.addEventListener('touchend',()=>{if(Math.abs(deltaX)>45)show(current+(deltaX<0?1:-1));start();},{passive:true});
+    document.addEventListener('visibilitychange',()=>document.hidden?stop():start());
+    root.querySelectorAll('[data-promo-services]').forEach(button=>button.addEventListener('click',()=>document.getElementById('servicesList')?.scrollIntoView({behavior:'smooth',block:'start'})));
+    show(0);start();
+  })();
   $('themeToggle').addEventListener('click',toggleTheme);
   $('hdrWallet').addEventListener('click',()=>showPage('wallet'));
   {const hr=$('homeRecharge'); if(hr) hr.addEventListener('click',()=>showPage('wallet'));}
