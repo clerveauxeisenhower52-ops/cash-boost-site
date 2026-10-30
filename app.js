@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       dots.forEach((dot,i)=>{const active=i===current;dot.classList.toggle('is-active',active);if(active)dot.setAttribute('aria-current','true');else dot.removeAttribute('aria-current');});
     };
     const stop=()=>{if(timer){clearInterval(timer);timer=null;}};
-    const start=()=>{stop();if(!document.hidden&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches)timer=setInterval(()=>show(current+1),5000);};
+    const start=()=>{stop();if(!document.hidden)timer=setInterval(()=>show(current+1),5000);};
     dots.forEach((dot)=>dot.addEventListener('click',()=>{show(Number(dot.dataset.promoDot));start();}));
     prev?.addEventListener('click',()=>{show(current-1);start();});
     next?.addEventListener('click',()=>{show(current+1);start();});
