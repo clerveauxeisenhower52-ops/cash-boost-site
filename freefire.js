@@ -67,7 +67,7 @@
 <div id="ffBar" class="ob"><div class="ob-total"><small>Total à payer</small><strong id="ffBarTotal">—</strong></div><button id="ffBarBtn" type="button" class="primary-btn">Confirmer</button></div>
 <div id="ffCard" class="card card-pad">
   <div class="section" id="ffSecPack">
-    <div class="section-head"><span class="step">1</span><div><h2>Choisir le pack</h2><p id="ffRange">Choisis la valeur de ton pack</p></div></div>
+    <div class="section-head"><span class="step">1</span><div><h2>Sélectionner un pack</h2><p id="ffRange">Choisis la valeur de ton pack</p></div></div>
     <div id="ffPacks" class="ff-packs"></div>
     <div class="summary">
       <div class="sumrow"><span>Pack</span><strong id="ffSumPack">—</strong></div>
@@ -77,22 +77,22 @@
   <div class="section" id="ffSecAcc">
     <div class="section-head"><span class="step">2</span><div><h2>Compte Free Fire</h2><p>Entre ton ID joueur, on vérifie ton compte</p></div></div>
     <div class="field">
-      <label for="ffPid">ID joueur (Player ID)</label>
+      <label for="ffPid">Identifiant joueur (Player ID)</label>
       <div class="ffin"><input id="ffPid" inputmode="numeric" maxlength="15" autocomplete="off" placeholder="ex. 123456789"><span id="ffDot" class="ffdot"></span></div>
       <p class="field-help">Réservé aux comptes du serveur Nord-Amérique (NA).</p>
       <div id="ffV"></div>
     </div>
     <div class="field">
-      <label for="ffPhone">Numéro WhatsApp</label>
+      <label for="ffPhone">Ton numéro WhatsApp</label>
       <input id="ffPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="ex. 37 12 34 56">
       <p class="field-help">Obligatoire · pour te prévenir dès que c'est prêt</p>
     </div>
   </div>
   <div class="section" id="ffSecPay">
-    <div class="section-head"><span class="step">3</span><div><h2>Paiement par portefeuille</h2><p>Le montant est débité de ton solde</p></div></div>
+    <div class="section-head"><span class="step">3</span><div><h2>Paiement avec ton portefeuille</h2><p>Le montant sera déduit de ton solde après confirmation.</p></div></div>
     <div class="pay-wallet-card selected">
       <span class="pay-wallet-ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H5a2 2 0 0 1 0-4h13v4"/><path d="M3 5v14a2 2 0 0 0 2 2h15V7"/><circle cx="16.5" cy="14" r="1.2"/></svg></span>
-      <span class="pay-wallet-info"><span class="pay-wallet-name">Paiement par portefeuille</span><span class="pay-wallet-desc" id="ffBal">Solde : …</span></span>
+      <span class="pay-wallet-info"><span class="pay-wallet-name">Paiement avec ton portefeuille</span><span class="pay-wallet-desc" id="ffBal">Solde : …</span></span>
       <button type="button" class="pay-wallet-add" id="ffAddFunds">+ Fonds</button>
     </div>
     <div id="ffPayHint" class="pay-wallet-hint hidden" role="status"></div>
