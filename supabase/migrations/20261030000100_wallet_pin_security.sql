@@ -105,11 +105,11 @@ begin
  if v_uid is null then return jsonb_build_object('ok',false,'status','unauthenticated'); end if;
  if p_new_pin is null or p_new_pin !~ '^[0-9]{4}$' then return jsonb_build_object('ok',false,'status','invalid_pin'); end if;
  v_amr:=coalesce(auth.jwt()->'amr','[]'::jsonb);
- select exists(
-   select 1 from jsonb_array_elements(v_amr) as amr_entry(value)
-   where value->>'method'='otp'
-     and (value->>'timestamp') ~ '^[0-9]+([.][0-9]+)? > extract(epoch from now()-interval '5 minutes')
- ) into v_recent_otp;
+ select case
+   when v_amr->0->>'method'='otp' and jsonb_typeof(v_amr->0->'timestamp')='number'
+   then (v_amr->0->>'timestamp')::numeric > extract(epoch from now()-interval '5 minutes')
+   else false
+ end into v_recent_otp;
  if not v_recent_otp then return jsonb_build_object('ok',false,'status','email_otp_required'); end if;
  update public.wallet_pin_credentials set pin_hash=extensions.crypt(p_new_pin,extensions.gen_salt('bf',12)),
    failed_attempts=0,locked_until=null,updated_at=now() where user_id=v_uid;
