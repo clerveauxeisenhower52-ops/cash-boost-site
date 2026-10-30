@@ -26,9 +26,11 @@ declare v_uid uuid := auth.uid();
 begin
   if v_uid is null then return jsonb_build_object('ok',false,'status','unauthenticated'); end if;
   if p_pin is null or p_pin !~ '^[0-9]{4}$' then return jsonb_build_object('ok',false,'status','invalid_pin'); end if;
+  if exists(select 1 from public.wallet_pin_credentials where user_id=v_uid) then
+    return jsonb_build_object('ok',false,'status','pin_already_set');
+  end if;
   insert into public.wallet_pin_credentials(user_id,pin_hash,failed_attempts,locked_until,updated_at)
-  values(v_uid,extensions.crypt(p_pin,extensions.gen_salt('bf',12)),0,null,now())
-  on conflict(user_id) do update set pin_hash=excluded.pin_hash,failed_attempts=0,locked_until=null,updated_at=now();
+  values(v_uid,extensions.crypt(p_pin,extensions.gen_salt('bf',12)),0,null,now());
   delete from public.wallet_pin_authorizations where user_id=v_uid;
   return jsonb_build_object('ok',true,'status','pin_set');
 end $$;
@@ -73,13 +75,13 @@ create or replace function public.wallet_purchase_idem(
  p_request_id uuid,p_service text,p_amount_usd numeric,p_merutag text,p_phone text,p_pin_authorization uuid
 ) returns jsonb language plpgsql security definer set search_path = public
 as $$
-declare v_uid uuid:=auth.uid(); v_ok boolean; v_result jsonb;
+declare v_uid uuid:=auth.uid(); v_count integer:=0; v_result jsonb;
 begin
  if v_uid is null then return jsonb_build_object('ok',false,'status','unauthenticated'); end if;
  update public.wallet_pin_authorizations set used_at=now()
   where id=p_pin_authorization and user_id=v_uid and action='purchase' and used_at is null and expires_at>now();
- get diagnostics v_ok = row_count;
- if not coalesce(v_ok,false) then return jsonb_build_object('ok',false,'status','pin_required'); end if;
+ get diagnostics v_count = row_count;
+ if v_count <> 1 then return jsonb_build_object('ok',false,'status','pin_required'); end if;
  select public.wallet_purchase_idem(p_request_id,p_service,p_amount_usd,p_merutag,p_phone) into v_result;
  return v_result;
 end $$;
