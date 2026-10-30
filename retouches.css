@@ -40,3 +40,17 @@
     padding-bottom: calc(var(--nav-h) + var(--cb-fixed-total-clearance, 224px) + 22px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
+
+
+/* Correctifs d'espacement mobile : la navigation fixe ne doit masquer aucun contenu. */
+:root{--cb-fixed-total-clearance:176px;}
+body,
+body.landing-active,
+body:not(.landing-active){
+  padding-bottom:calc(var(--nav-h,64px) + 32px + env(safe-area-inset-bottom,0px)) !important;
+}
+#page-service{
+  padding-bottom:calc(var(--cb-fixed-total-clearance) + env(safe-area-inset-bottom,0px)) !important;
+}
+@media(max-width:540px){:root{--cb-fixed-total-clearance:184px;}}
+@media(max-width:360px){:root{--cb-fixed-total-clearance:192px;}}
