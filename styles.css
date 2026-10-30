@@ -480,3 +480,43 @@ a.wa-btn:hover,a.wa-notify:hover{background:rgba(37,211,102,0.18);}
 @media (max-width:540px){.hero-landing{padding:48px 18px 40px;}.hero-title{font-size:32px;}.hero-sub{font-size:15px;}.trust-row{gap:14px;font-size:12px;}.landing-actions .btn-ghost{display:none;}.brand-text{display:none;}.theme-toggle{top:calc(12px + env(safe-area-inset-top,0px));right:12px;width:40px;height:40px;}.landing-header-inner{padding:14px 18px;}.landing-section{padding:60px 18px;}.final-cta{padding:56px 24px;}.hero-cta .btn-primary-lg,.hero-cta .btn-ghost-lg{width:100%;}}
 @media (max-width:380px){main{padding-left:14px;padding-right:14px;}.quick{grid-template-columns:repeat(2,1fr);}.service-visual{height:110px;}.service-title h2{font-size:13px;}.pay-methods{grid-template-columns:1fr;}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms !important;transition-duration:0.01ms !important;}.reveal{opacity:1;transform:none;}}
+
+/* Cash Boost — bandeaux promotionnels */
+.promo-carousel{position:relative;margin:0 0 22px;overflow:hidden;border-radius:22px;background:#101827;box-shadow:0 12px 30px rgba(8,18,38,.16);isolation:isolate;}
+.promo-track{display:flex;width:100%;transition:transform .65s cubic-bezier(.22,.75,.25,1);will-change:transform;touch-action:pan-y;}
+.promo-slide{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:space-between;gap:12px;flex:0 0 100%;min-width:0;min-height:190px;padding:22px 24px;overflow:hidden;color:#fff;}
+.promo-slide:before,.promo-slide:after{content:"";position:absolute;z-index:-1;border-radius:50%;pointer-events:none;}
+.promo-slide:before{width:260px;height:260px;right:7%;top:-155px;border:1px solid rgba(255,255,255,.18);box-shadow:0 0 0 22px rgba(255,255,255,.035),0 0 0 48px rgba(255,255,255,.025);}
+.promo-slide:after{width:210px;height:210px;right:15%;bottom:-170px;background:rgba(255,255,255,.08);filter:blur(5px);}
+.promo-plasma{background:radial-gradient(circle at 78% 48%,rgba(36,191,255,.38),transparent 30%),linear-gradient(112deg,#071d36 0%,#073e68 54%,#087caa 100%);}
+.promo-binance{background:radial-gradient(circle at 82% 48%,rgba(240,185,11,.27),transparent 30%),linear-gradient(112deg,#101114 0%,#202126 62%,#3b2d0c 100%);}
+.promo-freefire{background:radial-gradient(circle at 82% 48%,rgba(255,113,31,.42),transparent 30%),linear-gradient(112deg,#26101b 0%,#6a211e 55%,#c04b16 100%);}
+.promo-copy{position:relative;z-index:2;max-width:68%;}
+.promo-kicker{display:inline-block;margin-bottom:9px;font-size:9px;font-weight:800;letter-spacing:.17em;color:#9ee8ff;}
+.promo-binance .promo-kicker{color:#f0c84b}.promo-freefire .promo-kicker{color:#ffd19b}
+.promo-copy h2{margin:0;color:#fff;font:700 clamp(20px,4.2vw,29px)/1.08 'Space Grotesk',sans-serif;letter-spacing:-.04em;}
+.promo-copy h2 em{font-style:normal;color:#78ddff}
+.promo-binance .promo-copy h2 em{color:#f0c84b}.promo-freefire .promo-copy h2 em{color:#ffbd70}
+.promo-copy p{max-width:330px;margin:8px 0 13px;color:rgba(255,255,255,.78);font-size:12px;line-height:1.45;}
+.promo-cta{display:inline-flex;align-items:center;gap:14px;padding:9px 14px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(255,255,255,.13);color:#fff;font-size:11px;font-weight:750;backdrop-filter:blur(8px);}
+.promo-cta span{font-size:16px;line-height:10px}
+.promo-art{position:relative;z-index:1;flex:0 0 31%;height:145px;display:grid;place-items:center;}
+.promo-orbit{position:absolute;width:124px;height:124px;border:1px solid rgba(125,224,255,.58);border-radius:50%;box-shadow:0 0 24px rgba(47,190,255,.24),inset 0 0 24px rgba(47,190,255,.12);}
+.promo-orb{display:grid;place-items:center;width:76px;height:76px;border-radius:24px;transform:rotate(-12deg);background:linear-gradient(145deg,#8cecff,#1489e9 60%,#0751a9);color:#06284d;font:800 44px 'Space Grotesk',sans-serif;box-shadow:0 12px 30px rgba(0,0,0,.3),inset 0 2px 5px rgba(255,255,255,.65);}
+.promo-spark{position:absolute;right:7px;top:14px;color:#fff;font-size:28px;text-shadow:0 0 18px #8cecff}.promo-bolt{position:absolute;left:0;bottom:14px;color:#9deaff;font-size:36px;text-shadow:0 0 18px #19b9ff;transform:rotate(-10deg);}
+.binance-mark{position:relative;width:100px;height:100px;transform:rotate(45deg);display:block;}
+.binance-mark i,.binance-mark b{position:absolute;width:25px;height:25px;background:#f0b90b;display:block;}
+.binance-mark b{width:28px;height:28px;left:36px;top:36px;}
+.binance-mark i:nth-child(1){left:36px;top:0}.binance-mark i:nth-child(3){left:0;top:36px}.binance-mark i:nth-child(4){left:72px;top:36px}.binance-mark i:nth-child(5){left:36px;top:72px}
+.promo-coin-glow{position:absolute;width:132px;height:132px;border:1px solid rgba(240,185,11,.5);border-radius:50%;box-shadow:0 0 35px rgba(240,185,11,.2),inset 0 0 25px rgba(240,185,11,.12);}
+.fire-ring{position:absolute;width:130px;height:130px;border:2px solid rgba(255,190,112,.5);border-radius:50%;box-shadow:0 0 30px rgba(255,105,30,.35),inset 0 0 30px rgba(255,105,30,.2);}
+.fire-diamond{display:grid;place-items:center;width:78px;height:92px;clip-path:polygon(50% 0,100% 22%,88% 100%,12% 100%,0 22%);background:linear-gradient(145deg,#ffe1a5,#ff8a32 58%,#d82b17);color:#571b13;font:900 48px 'Space Grotesk',sans-serif;text-shadow:0 2px 0 rgba(255,255,255,.25);filter:drop-shadow(0 10px 18px rgba(0,0,0,.35));}
+.fire-flame{position:absolute;right:0;top:12px;color:#ffcf91;font-size:32px;text-shadow:0 0 18px #ff5b21}.fire-streak{position:absolute;left:-5px;bottom:20px;width:95px;height:5px;border-radius:9px;background:linear-gradient(90deg,transparent,#ffb45c,transparent);transform:rotate(-28deg);box-shadow:0 0 14px #ff6a26;}
+.promo-controls{display:flex;align-items:center;justify-content:center;position:relative;min-height:30px;padding:0 12px 9px;background:rgba(7,14,26,.12);}
+.promo-dots{display:flex;align-items:center;justify-content:center;gap:8px;}
+.promo-dot{width:7px;height:7px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.38);transition:width .2s,background .2s;}
+.promo-dot.is-active{width:20px;border-radius:9px;background:#fff;}
+.promo-arrows{position:absolute;right:12px;display:flex;gap:5px;}
+.promo-arrows button{width:23px;height:23px;border:1px solid rgba(255,255,255,.28);border-radius:50%;background:rgba(255,255,255,.1);color:#fff;font-size:17px;line-height:15px;}
+@media(max-width:540px){.promo-carousel{margin-bottom:19px;border-radius:18px}.promo-slide{min-height:164px;padding:17px 16px;gap:4px}.promo-copy{max-width:70%}.promo-kicker{font-size:8px;letter-spacing:.13em;margin-bottom:7px}.promo-copy h2{font-size:clamp(18px,5.2vw,24px)}.promo-copy p{font-size:10px;margin:7px 0 10px;max-width:210px}.promo-cta{padding:8px 12px;font-size:10px}.promo-art{flex-basis:29%;height:120px}.promo-orbit,.fire-ring{width:94px;height:94px}.promo-orb{width:58px;height:58px;border-radius:18px;font-size:34px}.promo-spark{right:0;top:12px;font-size:21px}.promo-bolt{left:0;bottom:10px;font-size:27px}.binance-mark{transform:scale(.76) rotate(45deg)}.promo-coin-glow{width:102px;height:102px}.fire-diamond{width:62px;height:74px;font-size:38px}.fire-flame{right:-4px;top:10px;font-size:25px}.fire-streak{width:70px;bottom:15px}.promo-arrows{right:9px}.promo-controls{padding-bottom:8px;min-height:27px}}
+@media(prefers-reduced-motion:reduce){.promo-track,.promo-dot{transition:none}}
