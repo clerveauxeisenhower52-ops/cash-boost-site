@@ -45,7 +45,11 @@ input::placeholder,textarea::placeholder{font-weight:400;opacity:.72}
 /* Tiret d'union du titre Services : plus court et mieux équilibré */
 .hero h1 .title-hyphen{
   display:inline-block;
-  transform:scaleX(.72);
-  transform-origin:center;
-  margin-inline:-.035em;
+  transform:none;
+  margin-inline:.06em;
+  font-family:var(--cb-font-body);
+  font-size:.78em;
+  font-weight:500;
+  line-height:1;
+  vertical-align:.08em;
 }
