@@ -526,3 +526,8 @@ a.wa-btn:hover,a.wa-notify:hover{background:rgba(37,211,102,0.18);}
 .freefire-logo{display:block;width:min(100%,205px);height:auto;object-fit:contain;filter:drop-shadow(0 5px 12px rgba(0,0,0,.35));}
 .freefire-credit{position:relative;z-index:2;color:rgba(255,255,255,.68);font-size:7px;line-height:1.2;text-align:center;text-decoration:underline;text-underline-offset:2px;}
 @media(max-width:540px){.promo-art-fire{flex-basis:34%;gap:7px}.freefire-logo{width:min(100%,145px)}.freefire-credit{font-size:6px;}}
+
+/* Official Binance emblem in the promotional carousel */
+.promo-art-binance{gap:0;}
+.binance-logo{position:relative;z-index:1;display:block;width:104px;height:104px;object-fit:contain;filter:drop-shadow(0 5px 12px rgba(240,185,11,.22));}
+@media(max-width:540px){.binance-logo{width:82px;height:82px;}}
