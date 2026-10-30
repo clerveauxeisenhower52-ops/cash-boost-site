@@ -54,3 +54,15 @@ body:not(.landing-active){
 }
 @media(max-width:540px){:root{--cb-fixed-total-clearance:184px;}}
 @media(max-width:360px){:root{--cb-fixed-total-clearance:192px;}}
+
+
+/* Accueil connecté : laisser un vrai espace de fin avant la navigation flottante. */
+#page-home{
+  box-sizing:border-box;
+  padding-bottom:calc(var(--nav-h,64px) + 112px + env(safe-area-inset-bottom,0px)) !important;
+  scroll-padding-bottom:calc(var(--nav-h,64px) + 112px + env(safe-area-inset-bottom,0px));
+}
+#page-home > :last-child{margin-bottom:0;}
+@media(max-width:540px){
+  #page-home{padding-bottom:calc(var(--nav-h,64px) + 132px + env(safe-area-inset-bottom,0px)) !important;}
+}
