@@ -520,3 +520,9 @@ a.wa-btn:hover,a.wa-notify:hover{background:rgba(37,211,102,0.18);}
 .promo-arrows button{width:23px;height:23px;border:1px solid rgba(255,255,255,.28);border-radius:50%;background:rgba(255,255,255,.1);color:#fff;font-size:17px;line-height:15px;}
 @media(max-width:540px){.promo-carousel{margin-bottom:19px;border-radius:18px}.promo-slide{min-height:164px;padding:17px 16px;gap:4px}.promo-copy{max-width:70%}.promo-kicker{font-size:8px;letter-spacing:.13em;margin-bottom:7px}.promo-copy h2{font-size:clamp(18px,5.2vw,24px)}.promo-copy p{font-size:10px;margin:7px 0 10px;max-width:210px}.promo-cta{padding:8px 12px;font-size:10px}.promo-art{flex-basis:29%;height:120px}.promo-orbit,.fire-ring{width:94px;height:94px}.promo-orb{width:58px;height:58px;border-radius:18px;font-size:34px}.promo-spark{right:0;top:12px;font-size:21px}.promo-bolt{left:0;bottom:10px;font-size:27px}.binance-mark{transform:scale(.76) rotate(45deg)}.promo-coin-glow{width:102px;height:102px}.fire-diamond{width:62px;height:74px;font-size:38px}.fire-flame{right:-4px;top:10px;font-size:25px}.fire-streak{width:70px;bottom:15px}.promo-arrows{right:9px}.promo-controls{padding-bottom:8px;min-height:27px}}
 @media(prefers-reduced-motion:reduce){.promo-track,.promo-dot{transition:none}}
+
+/* Official Free Fire wordmark in the promotional carousel */
+.promo-art-fire{flex-direction:column;justify-content:center;gap:9px;}
+.freefire-logo{display:block;width:min(100%,205px);height:auto;object-fit:contain;filter:drop-shadow(0 5px 12px rgba(0,0,0,.35));}
+.freefire-credit{position:relative;z-index:2;color:rgba(255,255,255,.68);font-size:7px;line-height:1.2;text-align:center;text-decoration:underline;text-underline-offset:2px;}
+@media(max-width:540px){.promo-art-fire{flex-basis:34%;gap:7px}.freefire-logo{width:min(100%,145px)}.freefire-credit{font-size:6px;}}
