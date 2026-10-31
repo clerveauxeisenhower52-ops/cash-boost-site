@@ -4,6 +4,8 @@ import { fz, FzError, getPubgCategory, getOffers, norm, validatePubgPlayer } fro
 const sb=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 const INTERNAL_SECRET=Deno.env.get('INTERNAL_SECRET')||'';
 const MAX_DRIFT=1.15;
+// Safety: dry-run is ON by default. Only an explicit secret value "false" enables real PUBG purchases.
+const PUBG_DRY_RUN=false; // LIVE explicitly enabled by owner
 const FAIL_STATUSES=new Set(['failed','failure','canceled','cancelled','rejected','refunded','error','declined','expired']);
 const corsHeaders={
   'Access-Control-Allow-Origin':'*',
@@ -105,6 +107,14 @@ async function fulfil(orderId:string){
   try{fzBalance=Number((await fz('GET','/balance')).balance);}catch(e){return wait(o,'Solde FazerCards illisible : '+String((e as any)?.message||e));}
   if(!Number.isFinite(fzBalance)||fzBalance<price)return wait(o,'Solde FazerCards insuffisant ('+(Number.isFinite(fzBalance)?fzBalance.toFixed(2):'?')+' USD pour '+price+' USD) : recharge automatique en cours');
   const fieldKey=catalog.fields?.find((f:any)=>/player|game|account|uid|id/i.test(String(f.key||'')))?.key||validation.fieldKey||'player_id';
+  if(PUBG_DRY_RUN){
+    await sb.from('orders').update({
+      payout_status:'pending',
+      payout_locked_at:null,
+      auto_validation_reason:'DRY_RUN : vérifications réussies, aucune commande FazerCards envoyée'
+    }).eq('id',o.id);
+    return {ok:true,done:false,dry_run:true,status:'not_submitted'};
+  }
   try{
     const r=await fz('POST','/topups/order',{category_id:cat.category_id,offer_id:offer.offer_id,fields:{[fieldKey]:pid}},o.id);
     const fzId=String(r.order?.id||'');
@@ -136,6 +146,46 @@ async function sweep(){
   }
   return {ok:true,processed:out.length,out};
 }
+
+async function simulate(input:any){
+  if(!PUBG_DRY_RUN)return json({ok:false,error:'dry_run_disabled'},409);
+  const pid=String(input.playerId||'').replace(/\\s/g,'');
+  const packId=String(input.packId||'');
+  if(!/^[0-9]{5,20}$/.test(pid))return json({ok:false,error:'invalid_player_id'},400);
+  if(!packId)return json({ok:false,error:'pack_id_missing'},400);
+  const [{data:pack},{data:cost}]=await Promise.all([
+    sb.from('pubg_packs').select('id,label,uc,active').eq('id',packId).maybeSingle(),
+    sb.from('pubg_pack_costs').select('fazer_product,fazer_offer_id,cost_usd').eq('pack_id',packId).maybeSingle()
+  ]);
+  if(!pack||!pack.active||!cost||!Number(cost.cost_usd))return json({ok:false,error:'pack_or_cost_not_configured'},409);
+  const cat=await getPubgCategory();
+  if(!cat)return json({ok:false,error:'pubg_category_unavailable'},502);
+  const validation=await validatePubgPlayer(pid,String(cat.category_id));
+  if(!validation.supported||validation.valid!==true)return json({ok:false,error:'player_not_confirmed'},422);
+  if(validation.region&&!/global|global version|international/i.test(String(validation.region)))return json({ok:false,error:'unsupported_region'},422);
+  const catalog=await getOffers(String(cat.category_id));
+  const offers:any[]=catalog.offers||[];
+  let offer=cost.fazer_offer_id?offers.find(x=>String(x.offer_id)===String(cost.fazer_offer_id)):null;
+  if(!offer&&cost.fazer_product)offer=offers.find(x=>norm(x.name)===norm(cost.fazer_product));
+  if(!offer){
+    const byUc=offers.filter(x=>offerUcCount(String(x.name))===Number(pack.uc));
+    if(byUc.length===1)offer=byUc[0];
+  }
+  if(!offer)return json({ok:false,error:'offer_not_found'},409);
+  const price=Number(offer.price_usd);
+  if(!Number.isFinite(price)||price<=0||price>Number(cost.cost_usd)*MAX_DRIFT)return json({ok:false,error:'supplier_price_out_of_range'},409);
+  const balance=Number((await fz('GET','/balance')).balance);
+  return json({
+    ok:true,dry_run:true,
+    checks:{player_valid:true,pack_active:true,offer_matched:true,price_within_limit:true},
+    player:{name:validation.player_name||null,region:validation.region||null},
+    pack:{id:pack.id,label:pack.label,uc:pack.uc},
+    supplier:{offer_id:offer.offer_id,name:offer.name,price_usd:price,cost_limit_usd:Number(cost.cost_usd)*MAX_DRIFT},
+    supplier_balance:{readable:Number.isFinite(balance),sufficient:Number.isFinite(balance)&&balance>=price},
+    order_created:false,wallet_debited:false,provider_order_sent:false
+  });
+}
+
 async function catalogDiag(){
   const cat=await getPubgCategory();
   if(!cat)return {category:null,warning:'No explicit PUBG Mobile category found'};
@@ -144,11 +194,20 @@ async function catalogDiag(){
     fz('GET','/topups/validate-id')
   ]);
   return {
+    dry_run:PUBG_DRY_RUN,
     category:{category_id:cat.category_id,name:cat.name},
     fields:offers.fields||[],
     offers:(offers.offers||[]).map((x:any)=>({offer_id:x.offer_id,name:x.name,price_usd:x.price_usd})),
     validationItems:(validations.items||[]).filter((x:any)=>/pubg/i.test(x.name||'')).map((x:any)=>({category_id:x.category_id,name:x.name,fields:x.fields}))
   };
+}
+// Trace serveur d'une vérification d'ID PUBG (exigée par la fonction SQL pubg_purchase avant tout débit).
+async function trace(userId:string,playerId:string,status:string,region:string|null,playerName:string|null){
+  try{
+    const {error}=await sb.from('pubg_player_checks').insert({user_id:userId,player_id:playerId,status,region,player_name:playerName});
+    if(error)console.error('pubg-validate-trace',error.message);
+    await sb.from('pubg_player_checks').delete().eq('user_id',userId).lt('created_at',new Date(Date.now()-2*24*3600*1000).toISOString());
+  }catch(e){console.error('pubg-validate-trace',String((e as any)?.message||e));}
 }
 Deno.serve(async(req)=>{
   if(req.method==='OPTIONS')return new Response('ok',{headers:corsHeaders});
@@ -171,12 +230,18 @@ Deno.serve(async(req)=>{
       if(!category){console.log('pubg-validate-diag: no_category');return json({ok:false,valid:false,error:'pubg_validation_unavailable'});}
       const result=await validatePubgPlayer(pid,String(category.category_id));
       if(!result.supported){console.log('pubg-validate-diag: unsupported');return json({ok:false,valid:false,error:'provider_validation_unsupported'});}
-      if(result.valid!==true){console.log('pubg-validate-diag: not_valid');return json({ok:false,valid:false,error:'player_not_verified'});}
-      if(!result.player_name){console.log('pubg-validate-diag: valid_but_no_name');return json({ok:false,valid:false,error:'player_name_unavailable'});}
+      const uid=userData.user.id;
+      const rg=result.region?String(result.region).slice(0,40):null;
+      if(result.valid!==true){console.log('pubg-validate-diag: not_valid');await trace(uid,pid,'invalid',rg,null);return json({ok:false,valid:false,error:'player_not_verified'});}
+      if(!result.player_name){console.log('pubg-validate-diag: valid_but_no_name');await trace(uid,pid,'unavailable',rg,null);return json({ok:false,valid:false,error:'player_name_unavailable'});}
+      const pname=String(result.player_name).replace(/[\r\n]+/g,' ').trim().slice(0,40);
+      // Même règle de région que fulfil() : seuls les comptes Global / International sont acceptés.
+      await trace(uid,pid,(rg&&!/global|global version|international/i.test(rg))?'wrong_region':'valid',rg,pname);
       console.log('pubg-validate-diag: ok');
       return json({ok:true,valid:true,player_name:result.player_name,region:result.region||null});
     }
     if(!(await authorized(req)))return new Response('forbidden',{status:403,headers:corsHeaders});
+    if(body.action==='simulate')return await simulate(body);
     if(body.action==='catalog')return json(await catalogDiag());
     if(body.action==='sweep')return json(await sweep());
     const id=String(body.orderId||body.record?.id||'');
