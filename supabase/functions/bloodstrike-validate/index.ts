@@ -4,9 +4,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // Vérification d'un ID joueur Blood Strike avant paiement (lecture seule, aucune commande, aucun débit).
 // Passe par l'API revendeur shop2topup (POST /player/validate). La livraison reste faite par FazerCards.
 // Réservée aux clients connectés, avec une limite de demandes par client.
-// Secrets à définir dans Supabase : SHOP2TOPUP_API_KEY (format keyId.secret).
+// Secret à définir dans Supabase : SHOP2TOPUP_API_KEY (format keyId.secret).
 // Variables optionnelles : SHOP2TOPUP_API_BASE, SHOP2TOPUP_BS_SUB_CATEGORY_ID.
-const API = (Deno.env.get("SHOP2TOPUP_API_BASE") || "https://portal.shop2topup.com/api/endpoints/v1").replace(/\/+$/, "");
+const API = (Deno.env.get("SHOP2TOPUP_API_BASE") || "https://shop2topup.com/api/endpoints/v1").replace(/\/+$/, "");
 const SUB_CATEGORY_ID = Number(Deno.env.get("SHOP2TOPUP_BS_SUB_CATEGORY_ID") || "1638");
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -49,23 +49,21 @@ Deno.serve(async (req: Request) => {
     let data: any = null;
     try { data = await res.json(); } catch (_) { /* corps vide */ }
 
-    // Quota du fournisseur atteint, clé refusée, panne : on ne bloque pas le client, le site bascule sur la double saisie.
-    if (res.status === 429 || res.status === 401 || res.status === 403 || res.status >= 500) {
-      console.error("bloodstrike-validate_provider_status", res.status);
-      return reply({ status: "unavailable" });
+    if (res.ok && data?.success === true) {
+      // La doc publique renvoie « player », le panneau de test renvoie « data » : on accepte les deux.
+      const p = data?.player ?? data?.data;
+      const name = typeof p?.player_name === "string" ? p.player_name.replace(/[\r\n]+/g, " ").trim().slice(0, 40) : "";
+      if (!name) return reply({ status: "unavailable" });
+      return reply({ status: "valid", player_name: name });
     }
-    // ID introuvable chez le fournisseur.
-    if (res.status === 404 || res.status === 422 || (res.ok && data?.success === false)) {
-      console.log("bloodstrike-validate_not_found", res.status);
-      return reply({ status: "invalid" });
-    }
-    if (!res.ok || data?.success !== true) {
-      console.error("bloodstrike-validate_unexpected", res.status);
-      return reply({ status: "unavailable" });
-    }
-    const name = typeof data?.data?.player_name === "string" ? data.data.player_name.replace(/[\r\n]+/g, " ").trim().slice(0, 40) : "";
-    if (!name) return reply({ status: "unavailable" });
-    return reply({ status: "valid", player_name: name });
+
+    // Codes d'erreur stables de l'API : on se branche sur error.code, jamais sur le message.
+    const code = String(data?.error?.code || "");
+    if (code === "PLAYER_NOT_FOUND") return reply({ status: "invalid" });
+    // Tout le reste (quota atteint, clé ou IP refusée, panne, produit désactivé, validation temporairement indisponible) :
+    // on ne bloque pas le client, le site bascule sur la double saisie.
+    console.error("bloodstrike-validate_provider", res.status, code || "no_code");
+    return reply({ status: "unavailable" });
   } catch (e) {
     console.error("bloodstrike-validate_error", e instanceof Error ? e.message : "unknown");
     return reply({ status: "unavailable" });
