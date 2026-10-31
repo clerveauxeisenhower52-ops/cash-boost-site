@@ -60,11 +60,11 @@
   const fallback=()=>vstate==='unavail'&&pid2Ok();
   const ready=()=>conf&&(verified()||fallback());
 
-  // Image de lingots d'or (PNG transparent 56 px, intégré en base64) affichée à la place du texte « BC ».
+  // Image de lingots d'or (PNG transparent 56 px, intégré en base64) affichée à gauche du nombre, à la place du texte « BC ».
   // Si l'image ne se charge pas, le texte « BC » est remis à sa place.
   const GOLD_IMG='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADgAAAA4CAMAAACfWMssAAAAflBMVEUAAADimSLOaxD22W2vWxCYMQLeokv76JhsJAWzbSbMLgD//wASCALUnVHypFb+ySXOllEOBAB7cAe4omYEAQCeXxzSlDL///9XMQu4uCq1ayT/AADyfQb/f390RhJvQxEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACJso3cAAAAIHRSTlMC/f7++f74/foQ/wFWoAv+X+wIC6KfpgGZA14BCQKd/mD/puQAAAK/SURBVHja7ZbZeuIwDIUtW3bsLAQIW4GW93/LkWQlmK2kncsZXfCx+OccHylOjPnXqjGp+T2dUlqffqbXpGMa8vtzWvzE6A4QcXs8pvw5zbR4SgFsLtjtlrMFF6ZzI8cVuuXCzMhq3RSCAPwSOvPxHvwgwXtwadKMSI1zAFeQzQ4zrH6YZRVAycnpjJ7sTagkE8ggCy4Ww4xITeVcUFIEeYvnWYLOZVQFIRD5Lh0WZMWgqIKhW7zdZieCXBopgyJ6+nxNnc25egYy2X1vt5tAAsZYJSZguy/a2exTIeiC1ZaM0/By3gdq/gS6CnI70E5kNzwd2tPeuIJzVsfHoooiBP73p9NWXTlZ7X2dR92ilZi+a75wLAi99VB73abKDg/havNHLti+h9oGy5r2WtTR/efL5hNIehkkDrnGiB462iRXcA6hH21mEMdLlDc6nG6OmlLQZpAkbUBPJahMkivtnk0KBVghZ+m9hBJ8LtQRpMjJ7ufYi10ouMBgnVcrGJWDUHEZPU6aBCUoo1ZnIQHjxAH/TledaVSzdOrysCDpCRij11OWvg9yfMJOj1OxPk14bp3k4WsYbeIFp+Ovh2z2qA4yKIJ1zYNWU7S5FXG1ivJfWbrX09bJlrMoSKY1zQwpE59BXK0uGP241X4nx0koQZQmkku9HDHrkCJOHJV4pcHPrAr2tiYxhbgrtPBCVguuP7LXjrKCzLp89lOiNaD2PgN3oOTasaTOhfxITcQJ1PWxNNpzrqpYlPWRAAGvrb/4YgV+tQwub0FrKYkYAan1E0ef9C1uTTsdVLecJ9BT2yKW22IQ8dC2txfytgDjZrMhk+hLDuLh6x7Se8N2nMgVgQeamQIkpRd3//wqurjZtG27Dag7xEelJ2wylrZBC9vAirg9tDOeVtY39zPU0NeznnTWf/MIeD381uZ//bL+ACx4Hni6h8b3AAAAAElFTkSuQmCC';
-  const GOLD='<img class="bs-gold" src="'+GOLD_IMG+'" width="28" height="28" alt="" draggable="false" onerror="this.replaceWith(document.createTextNode(\'BC\'))">';
-  const packLabel=l=>{const m=/^\s*(\d+)\s*BC\s*$/i.exec(l||'');return m?esc(m[1])+GOLD:esc(l);};
+  const GOLD='<img class="bs-gold" src="'+GOLD_IMG+'" width="28" height="28" alt="" draggable="false" onerror="this.replaceWith(document.createTextNode(\'BC \'))">';
+  const packLabel=l=>{const m=/^\s*(\d+)\s*BC\s*$/i.exec(l||'');return m?GOLD+esc(m[1]):esc(l);};
 
   const baseShow=window.showPage;
   window.showPage=function(p){
