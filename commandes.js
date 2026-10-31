@@ -27,7 +27,8 @@ function askConfirm(o){
     $('cvAmt').textContent=o.qty+' USD · '+fmt(o.total)+' HTG';
     $('cvTagLabel').textContent=currentService.field_label||'Compte';
     $('cvTag').textContent=o.merutag;
-    $('cvPhone').textContent='+'+o.phone;
+    // Le numéro WhatsApp n'est plus demandé : on masque sa ligne de la fenêtre de confirmation
+    {const cp=$('cvPhone');cp.textContent=o.phone?'+'+o.phone:'—';const row=cp.parentElement;if(row&&row!==v&&row.querySelector('[id]')===cp)row.style.display=o.phone?'':'none';}
     $('cvPay').textContent='Mon solde';
     const needNet = !!addrSvc();
     const cvNetSpan = netBoxEl().querySelector('span'); if(cvNetSpan && addrSvc()) cvNetSpan.innerHTML = 'Je confirme que cette adresse est sur le réseau <b>'+addrSvc().net+'</b>. Sur un autre réseau, mes USDT seraient perdus.';
@@ -50,12 +51,14 @@ function setFieldErr(key,msg){
   if(!el){el=document.createElement('div');el.id='err_'+key;el.className='field-err';el.setAttribute('role','alert');anchor.after(el);}
   el.textContent=msg||'';el.classList.toggle('show',!!msg);anchor.classList.toggle('invalid',!!msg);
 }
-function showFieldErrs(errs){['qty','merutag','custPhone'].forEach(k=>setFieldErr(k,errs[k]||''));}
+// Le numéro WhatsApp n'est plus obligatoire : on retire toute erreur « custPhone » avant de les afficher
+// (app.js teste ensuite le même objet, la commande n'est donc plus bloquée par le numéro).
+function showFieldErrs(errs){delete errs.custPhone;['qty','merutag','custPhone'].forEach(k=>setFieldErr(k,errs[k]||''));}
 function scrollToErr(){const el=document.querySelector('.field-err.show');if(el)el.scrollIntoView({behavior:'smooth',block:'center'});}
 // Prochaine étape à compléter (le paiement se fait toujours avec le solde : aucune preuve à fournir)
 function obNextStep(){
   const q=Number($('qty').value),qtyOk=Number.isFinite(q)&&q>=MIN_QTY;
-  const infoOk=!!$('merutag').value.trim()&&normPhone($('custPhone').value).length>=11;
+  const infoOk=!!$('merutag').value.trim();
   if(!qtyOk)return {label:'Choisis un montant',target:'secAmount',wait:true};
   if(!infoOk)return {label:'Compléter mes infos',target:'secInfo',wait:true};
   return {label:'Confirmer',target:null,wait:false};
@@ -67,7 +70,7 @@ function updateOrderBar(){
 function updateProgress(){
   if(!$('orderProgress'))return;
   const q=Number($('qty').value),qtyOk=Number.isFinite(q)&&q>=MIN_QTY;
-  const infoOk=!!$('merutag').value.trim()&&normPhone($('custPhone').value).length>=11;
+  const infoOk=!!$('merutag').value.trim();
 
   const raw=[qtyOk,infoOk,true],st=raw.map((v,i)=>raw.slice(0,i+1).every(Boolean)),active=st.indexOf(false); // une étape n'est validée que si les précédentes le sont
   $$('#orderProgress .op-step').forEach((b,i)=>{b.classList.toggle('done',st[i]);b.classList.toggle('active',i===active);});
@@ -77,7 +80,6 @@ function updateProgress(){
   updateOrderBar();
   if(qtyOk&&$('err_qty'))setFieldErr('qty','');
   if($('merutag').value.trim()&&$('err_merutag'))setFieldErr('merutag','');
-  if(normPhone($('custPhone').value).length>=11&&$('err_custPhone'))setFieldErr('custPhone','');
 }
 function updateWalletStatus(){
   const box=$('walletTools'),st=$('walletStatus'),inp=$('merutag');if(!box||!st||!inp)return;
