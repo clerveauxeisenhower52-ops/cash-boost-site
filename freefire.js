@@ -224,7 +224,7 @@
       return;
     }
     reqId=null;
-    const M={insufficient_funds:'Solde insuffisant. Ajoute des fonds dans ton portefeuille.',service_unavailable:'Ce service est indisponible pour le moment.',invalid_input:'Informations invalides. Vérifie ton Player ID et ton numéro.',unauthenticated:'Session expirée. Reconnecte-toi.',confirmation_required:'Coche la case pour confirmer que ce compte est le tien.'};
+    const M={insufficient_funds:'Solde insuffisant. Ajoute des fonds dans ton portefeuille.',service_unavailable:'Ce service est indisponible pour le moment.',invalid_input:'Informations invalides. Vérifie ton Player ID et ton numéro.',unauthenticated:'Session expirée. Reconnecte-toi.',confirmation_required:'Coche la case pour confirmer que ce compte est le tien.',id_not_verified:'Vérifie ton Player ID avant de payer.',player_not_found:'Aucun compte Free Fire reconnu avec cet ID.',verification_unavailable:'Vérification indisponible ou expirée. Vérifie à nouveau ton ID.'};
     msg(M[r.status]||'Paiement impossible.','err');
   }
 
