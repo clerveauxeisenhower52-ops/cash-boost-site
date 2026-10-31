@@ -51,7 +51,6 @@
   const curPid=()=>clean('bsPid');
   const curPid2=()=>clean('bsPid2');
   const curPack=()=>packs&&packs.find(x=>String(x.id)===String(sel));
-  const phoneNorm=()=>{const v=($('bsPhone')&&$('bsPhone').value)||'';return typeof normPhone==='function'?normPhone(v):v.replace(/\D/g,'');};
   const msg=(t,c)=>{const m=$('bsMsg');if(m){m.className='msg '+(c||'');m.textContent=t;}};
   const fmtOk=()=>/^[0-9]{5,20}$/.test(curPid());
   const pid2Ok=()=>fmtOk()&&curPid()===curPid2();
@@ -107,11 +106,6 @@
     </div>
     <label class="terms"><input type="checkbox" id="bsConf2"><span>J’ai vérifié mon ID</span></label>
   </div>
-  <div class="field">
-    <label for="bsPhone">Ton numéro WhatsApp</label>
-    <input id="bsPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="ex. 37 12 34 56">
-    <p class="field-help">Obligatoire · pour recevoir le suivi de ta recharge</p>
-  </div>
   <div class="pay-wallet-card selected">
     <span class="pay-wallet-ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H5a2 2 0 0 1 0-4h13v4"/><path d="M3 5v14a2 2 0 0 0 2 2h15V7"/><circle cx="16.5" cy="14" r="1.2"/></svg></span>
     <span class="pay-wallet-info"><span class="pay-wallet-name">Paiement avec ton portefeuille</span><span class="pay-wallet-desc" id="bsBal">Solde : …</span></span>
@@ -136,10 +130,6 @@
     });
     $('bsPid2').addEventListener('input',()=>{conf=false;$('bsConf2').checked=false;paint();});
     $('bsConf2').onchange=()=>{conf=$('bsConf2').checked&&pid2Ok();if(!conf)$('bsConf2').checked=false;paint();};
-    $('bsPhone').addEventListener('input',()=>{
-      try{const c=$('custPhone');if(c)c.value=$('bsPhone').value;if(typeof phoneKey==='function'){const k=phoneKey();if(k)localStorage.setItem(k,$('bsPhone').value);}}catch(_){}
-      paint();
-    });
     $('bsPay').onclick=pay;
     $('bsAddFunds').onclick=()=>{showPage('wallet');setTimeout(()=>{const b=$('walletAddBtn');if(b)b.click();},60);};
   }
@@ -228,18 +218,17 @@
 
   async function pay(){
     if(busy)return;
-    const pid=curPid(),ph=phoneNorm(),p=curPack();
+    const pid=curPid(),p=curPack();
     if(!p)return msg('Choisis un pack.','err');
     if(vstate==='err')return msg('ID joueur introuvable. Corrige-le pour continuer.','err');
     if(vstate==='load')return msg('Vérification du compte en cours. Patiente un instant.','err');
     if(vstate==='unavail'&&!pid2Ok())return msg('Saisis ton ID joueur deux fois, de la même façon.','err');
     if(!verified()&&!fallback())return msg('Le compte Blood Strike doit être vérifié avant le paiement.','err');
     if(!conf)return msg('Coche la case pour confirmer ton compte.','err');
-    if(ph.length<11)return msg('Numéro invalide. Exemple : 37 12 34 56.','err');
     busy=true;paint();msg('');
     if(!reqId)reqId=uuid();
     let r=null,err=null;
-    try{const x=await sb.rpc('blood_strike_purchase',{p_request_id:reqId,p_pack_id:sel,p_player_id:pid,p_phone:ph,p_confirmed:true});r=x.data;err=x.error;}catch(e){err=e;}
+    try{const x=await sb.rpc('blood_strike_purchase',{p_request_id:reqId,p_pack_id:sel,p_player_id:pid,p_phone:'',p_confirmed:true});r=x.data;err=x.error;}catch(e){err=e;}
     busy=false;paint();
     if(err||!r)return msg('Paiement momentanément indisponible. Réessaie dans un instant.','err');
     if(r.status==='paid'){
@@ -250,7 +239,7 @@
       return;
     }
     reqId=null;
-    const M={insufficient_funds:'Solde insuffisant. Ajoute des fonds dans ton portefeuille.',service_unavailable:'Ce service est indisponible pour le moment.',invalid_input:'Informations invalides. Vérifie ton ID joueur et ton numéro.',unauthenticated:'Session expirée. Reconnecte-toi.',confirmation_required:'Coche la case pour confirmer ton compte.',id_not_verified:'Vérification de l’ID impossible pour le moment. Modifie puis ressaisis ton ID, ou réessaie dans un instant.',player_not_found:'ID joueur introuvable. Vérifie les chiffres saisis.'};
+    const M={insufficient_funds:'Solde insuffisant. Ajoute des fonds dans ton portefeuille.',service_unavailable:'Ce service est indisponible pour le moment.',invalid_input:'Informations invalides. Vérifie ton ID joueur.',unauthenticated:'Session expirée. Reconnecte-toi.',confirmation_required:'Coche la case pour confirmer ton compte.',id_not_verified:'Vérification de l’ID impossible pour le moment. Modifie puis ressaisis ton ID, ou réessaie dans un instant.',player_not_found:'ID joueur introuvable. Vérifie les chiffres saisis.'};
     msg(M[r.status]||'Paiement impossible.','err');
   }
 
@@ -264,8 +253,6 @@
       if(!packs){const x=await sb.from('blood_strike_packs').select('id,label,kind,price_htg').eq('active',true).order('sort');if(x.error)throw x.error;packs=x.data||[];}
       const w=await sb.from('wallets').select('balance_htg').eq('user_id',currentUserId).maybeSingle();bal=Number(w&&w.data&&w.data.balance_htg||0);
       renderPacks();
-      try{if(typeof restorePhone==='function')restorePhone();}catch(_){}
-      $('bsPhone').value=($('custPhone')&&$('custPhone').value)||'';
       paint();
     }catch(_){
       $('bsPacks').innerHTML='<p class="field-help">Impossible de charger les packs. Réessaie.</p><button type="button" class="secondary-btn" id="bsReload">Réessayer</button>';
