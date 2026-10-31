@@ -1,4 +1,5 @@
-/* Recharger Pubg Mobile : page de commande. L'ID joueur est vérifié chez le fournisseur avant le paiement (fonction pubg-validate). */
+/* Recharger Pubg Mobile : page de commande. L'ID joueur est vérifié chez le fournisseur avant le paiement (fonction pubg-topup, action validate).
+   La vérification est aussi imposée côté serveur : la fonction SQL pubg_purchase exige une vérification réussie de moins de 30 minutes pour ce client et cet ID. */
 (function(){
   const st=document.createElement('style');
   st.textContent=`
@@ -175,8 +176,8 @@
     $('pgbPay').textContent=busy?'Paiement en cours…':'Payer avec mon solde';
   }
 
-  // Vérifie l'ID chez le fournisseur (lecture seule, aucun débit). Si la vérification est indisponible,
-  // on garde le contrôle de format : le fournisseur revérifie après le paiement et le client est remboursé si l'ID est introuvable.
+  // Vérifie l'ID chez le fournisseur (lecture seule, aucun débit). Le résultat est enregistré côté serveur :
+  // pubg_purchase refuse tout débit sans vérification réussie de moins de 30 minutes pour cet ID.
   async function check(){
     const pid=curPid(),my=++seq;
     if(!/^[0-9]{5,20}$/.test(pid)){vstate='err';vmsg='Player ID invalide : vérifie les chiffres saisis.';canRetry=false;return paint();}
@@ -189,8 +190,13 @@
         vmsg=reason==='player_name_unavailable'?'Le fournisseur n’a pas renvoyé le nom du joueur. Paiement bloqué.':
           reason==='provider_validation_unsupported'?'La vérification PUBG n’est pas prise en charge par le fournisseur.':
           reason==='player_not_verified'?'ID joueur non reconnu par le fournisseur.':
+          reason==='rate_limited'?'Trop de vérifications. Réessaie dans quelques minutes.':
           'Impossible de vérifier le compte auprès du fournisseur. Réessaie plus tard.';
         vstate='err';canRetry=true;okPid=null;info=null;return paint();
+      }
+      if(data.region&&!/global|international/i.test(String(data.region))){
+        vmsg='Ce service est réservé aux comptes PUBG Mobile Global.';
+        vstate='err';canRetry=false;okPid=null;info=null;return paint();
       }
       okPid=pid;info={player_name:data.player_name,region:data.region||'',verified:true};
       vstate='ok';paint();
@@ -241,7 +247,14 @@
       return;
     }
     reqId=null;
-    const M={insufficient_funds:'Solde insuffisant. Ajoute des fonds dans ton portefeuille.',service_unavailable:'Ce service est indisponible pour le moment.',invalid_input:'Informations invalides. Vérifie ton Player ID et ton numéro.',unauthenticated:'Session expirée. Reconnecte-toi.',confirmation_required:'Coche la case pour confirmer que ce compte est le tien.'};
+    // Vérification expirée ou absente côté serveur : on efface le « compte vérifié » et on relance la vérification
+    if(r.status==='id_not_verified'||r.status==='verification_unavailable'){
+      okPid=null;info=null;vstate='';vmsg='';conf=false;paint();
+      msg('Vérification expirée : on revérifie ton ID. Coche la confirmation puis reclique sur Payer.','err');
+      check();
+      return;
+    }
+    const M={insufficient_funds:'Solde insuffisant. Ajoute des fonds dans ton portefeuille.',service_unavailable:'Ce service est indisponible pour le moment.',invalid_input:'Informations invalides. Vérifie ton Player ID et ton numéro.',unauthenticated:'Session expirée. Reconnecte-toi.',confirmation_required:'Coche la case pour confirmer que ce compte est le tien.',player_not_found:'Aucun compte PUBG reconnu avec cet ID.',wrong_region:'Ce service est réservé aux comptes PUBG Mobile Global.'};
     msg(M[r.status]||'Paiement impossible.','err');
   }
 
