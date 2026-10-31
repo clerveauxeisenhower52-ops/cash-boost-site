@@ -177,13 +177,24 @@
     strip();
     new MutationObserver(strip).observe(list,{childList:true,subtree:true});
   }
-  // Les boutons « Retour aux services », « Explorer les services », « Faire une recharge »,
-  // « Acheter avec mon solde » (Portefeuille) et les boutons des bandeaux du carrousel d'accueil
-  // ramènent à l'onglet Services
+  // Les boutons « Retour aux services », « Explorer les services », « Faire une recharge » et
+  // « Acheter avec mon solde » (Portefeuille) ramènent à l'onglet Services
   // (ce gestionnaire passe après ceux de app.js et portefeuille.js, donc il a le dernier mot).
+  // Les boutons des bandeaux du carrousel d'accueil ouvrent directement le service du bandeau
+  // (si l'ouverture échoue, ils retombent sur l'onglet Services).
+  const PROMO_SERVICE={'promo-plasma':'Plasma One Auto','promo-binance':'Binance','promo-freefire':'Free Fire','promo-pubg':'PUBG Mobile (Auto)'};
   function routeToServices(){
     document.addEventListener('click',e=>{
-      if(e.target.closest('#backHome,#svClose,#emptyGo,#cbhExplore,#walletBuyBtn,[data-promo-services]'))window.showPage('services');
+      if(e.target.closest('#backHome,#svClose,#emptyGo,#cbhExplore,#walletBuyBtn')){window.showPage('services');return;}
+      const promo=e.target.closest('[data-promo-services]');
+      if(!promo)return;
+      const slide=promo.closest('.promo-slide');
+      let id=null;
+      if(slide)for(const k in PROMO_SERVICE){if(slide.classList.contains(k)){id=PROMO_SERVICE[k];break;}}
+      try{
+        if(id&&typeof window.openService==='function')window.openService(id);
+        else window.showPage('services');
+      }catch(_){window.showPage('services');}
     });
   }
   function addSearchAndFilters(){
