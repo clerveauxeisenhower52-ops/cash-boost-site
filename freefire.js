@@ -6,10 +6,10 @@
   st.textContent=`
 #page-freefire .ff-price{margin:6px 0 4px;font:700 28px 'Space Grotesk','Inter',system-ui,sans-serif;color:var(--text-strong)}
 #page-freefire .ff-packs{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
-#page-freefire .ff-pack{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface-2);color:var(--text-strong);font:inherit;font-weight:600;font-size:14px;cursor:pointer}
+#page-freefire .ff-pack{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface-2);color:var(--text-strong);font:inherit;font-weight:700;font-size:16px;cursor:pointer}
 #page-freefire .ff-pack:active{transform:scale(.97)}
 #page-freefire .ff-pack.sel{border-color:var(--primary);background:var(--primary-soft);color:var(--primary)}
-#page-freefire .ff-gem{flex:none;display:block;font-size:15px;line-height:1;pointer-events:none}
+#page-freefire .ff-gem{flex:none;display:block;font-size:13px;line-height:1;pointer-events:none}
 #page-freefire .ff-clear{display:block;margin:6px 0 0;padding:6px 0;border:0;background:none;color:var(--muted);font:inherit;font-size:13px;letter-spacing:.06em;cursor:pointer}
 #page-freefire .ff-sep{border:0;border-top:1px solid var(--line-strong);margin:16px 0}
 #page-freefire .ff-badge{display:block;padding:10px 14px;border-radius:999px;margin:0 0 12px;font-size:14px;font-weight:700;background:rgba(245,190,60,.16);border:1px solid rgba(245,190,60,.5);color:var(--text-strong)}
