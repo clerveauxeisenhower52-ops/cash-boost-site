@@ -264,7 +264,7 @@
       return;
     }
     reqId=null;
-    const M={insufficient_funds:'Solde insuffisant. Ajoute des fonds dans ton portefeuille.',service_unavailable:'Ce service est indisponible pour le moment.',invalid_input:'Informations invalides. Vérifie ton ID joueur et ton numéro.',unauthenticated:'Session expirée. Reconnecte-toi.',confirmation_required:'Coche la case pour confirmer ton compte.'};
+    const M={insufficient_funds:'Solde insuffisant. Ajoute des fonds dans ton portefeuille.',service_unavailable:'Ce service est indisponible pour le moment.',invalid_input:'Informations invalides. Vérifie ton ID joueur et ton numéro.',unauthenticated:'Session expirée. Reconnecte-toi.',confirmation_required:'Coche la case pour confirmer ton compte.',id_not_verified:'Vérification de l’ID impossible pour le moment. Modifie puis ressaisis ton ID, ou réessaie dans un instant.',player_not_found:'ID joueur introuvable. Vérifie les chiffres saisis.'};
     msg(M[r.status]||'Paiement impossible.','err');
   }
 
