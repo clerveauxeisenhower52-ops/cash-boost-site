@@ -91,12 +91,14 @@
     }catch(_){}
   }
   document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') checkVersion(); });
+  // Minuteries : rien ne tourne quand l'onglet est en arrière-plan (la vérification de version et le statut
+  // se relancent au retour sur la page). Les champs étant dans le HTML, l'écouteur d'adresse n'est posé qu'une fois.
+  function whenVisible(fn){ return function(){ if(document.visibilityState==='visible') fn(); }; }
   window.addEventListener('load',function(){
     bindAddr(); watchOrders(); refreshStatus(); checkVersion();
-    setInterval(checkVersion,300000);
-    setInterval(refreshStatus,120000);
-    setInterval(bindAddr,3000);
-    setInterval(watchOrders,3000);
+    setInterval(whenVisible(checkVersion),300000);
+    setInterval(whenVisible(refreshStatus),120000);
+    setInterval(whenVisible(watchOrders),15000);
   });
 })();
 
