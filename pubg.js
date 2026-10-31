@@ -45,7 +45,6 @@
   const uuid=()=>crypto.randomUUID?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&3|8)).toString(16);});
   const curPid=()=>(($('pgbPid')&&$('pgbPid').value)||'').replace(/\s/g,'');
   const curPack=()=>packs&&packs.find(x=>String(x.id)===String(sel));
-  const phoneNorm=()=>{const v=($('pgbPhone')&&$('pgbPhone').value)||'';return typeof normPhone==='function'?normPhone(v):v.replace(/\D/g,'');};
   const msg=(t,c)=>{const m=$('pgbMsg');if(m){m.className='msg '+(c||'');m.textContent=t;}};
   // Compte vérifié par le fournisseur (Global) pour l'ID actuellement saisi
   const verified=()=>vstate==='ok'&&okPid===curPid()&&!!(info&&info.verified&&info.player_name);
@@ -85,11 +84,6 @@
     <p class="field-help">Réservé aux comptes PUBG Mobile Global.</p>
     <div id="pgbV"></div>
   </div>
-  <div class="field">
-    <label for="pgbPhone">Ton numéro WhatsApp</label>
-    <input id="pgbPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="ex. 37 12 34 56">
-    <p class="field-help">Obligatoire · pour te prévenir dès que c'est prêt</p>
-  </div>
   <div class="pay-wallet-card selected">
     <span class="pay-wallet-ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H5a2 2 0 0 1 0-4h13v4"/><path d="M3 5v14a2 2 0 0 0 2 2h15V7"/><circle cx="16.5" cy="14" r="1.2"/></svg></span>
     <span class="pay-wallet-info"><span class="pay-wallet-name">Paiement avec ton portefeuille</span><span class="pay-wallet-desc" id="pgbBal">Solde : …</span></span>
@@ -109,10 +103,6 @@
     $('pgbPid').addEventListener('input',()=>{
       clearTimeout(timer);seq++;okPid=null;info=null;vstate='';vmsg='';conf=false;
       if(curPid().length>=8)timer=setTimeout(check,600);
-      paint();
-    });
-    $('pgbPhone').addEventListener('input',()=>{
-      try{const c=$('custPhone');if(c)c.value=$('pgbPhone').value;if(typeof phoneKey==='function'){const k=phoneKey();if(k)localStorage.setItem(k,$('pgbPhone').value);}}catch(_){}
       paint();
     });
     $('pgbPay').onclick=pay;
@@ -207,16 +197,15 @@
 
   async function pay(){
     if(busy)return;
-    const pid=curPid(),ph=phoneNorm(),p=curPack();
+    const pid=curPid(),p=curPack();
     if(!p)return msg('Choisis un pack.','err');
     if(vstate==='load')return msg('Vérification du compte en cours. Patiente un instant.','err');
     if(!verified())return msg('Vérifie d’abord ton ID joueur PUBG.','err');
     if(!conf)return msg('Coche la case pour confirmer que ce compte est le tien.','err');
-    if(ph.length<11)return msg('Numéro invalide. Exemple : 37 12 34 56.','err');
     busy=true;paint();msg('');
     if(!reqId)reqId=uuid();
     let r=null,err=null;
-    try{const x=await sb.rpc('pubg_purchase',{p_request_id:reqId,p_pack_id:sel,p_player_id:pid,p_phone:ph,p_confirmed:true});r=x.data;err=x.error;}catch(e){err=e;}
+    try{const x=await sb.rpc('pubg_purchase',{p_request_id:reqId,p_pack_id:sel,p_player_id:pid,p_phone:'',p_confirmed:true});r=x.data;err=x.error;}catch(e){err=e;}
     busy=false;paint();
     if(err||!r)return msg('Paiement momentanément indisponible. Réessaie dans un instant.','err');
     if(r.status==='paid'){
@@ -234,7 +223,7 @@
       check();
       return;
     }
-    const M={insufficient_funds:'Solde insuffisant. Ajoute des fonds dans ton portefeuille.',service_unavailable:'Ce service est indisponible pour le moment.',invalid_input:'Informations invalides. Vérifie ton ID joueur et ton numéro.',unauthenticated:'Session expirée. Reconnecte-toi.',confirmation_required:'Coche la case pour confirmer que ce compte est le tien.',player_not_found:'Aucun compte PUBG Mobile reconnu avec cet ID.',wrong_region:'Ce service est réservé aux comptes PUBG Mobile Global.'};
+    const M={insufficient_funds:'Solde insuffisant. Ajoute des fonds dans ton portefeuille.',service_unavailable:'Ce service est indisponible pour le moment.',invalid_input:'Informations invalides. Vérifie ton ID joueur.',unauthenticated:'Session expirée. Reconnecte-toi.',confirmation_required:'Coche la case pour confirmer que ce compte est le tien.',player_not_found:'Aucun compte PUBG Mobile reconnu avec cet ID.',wrong_region:'Ce service est réservé aux comptes PUBG Mobile Global.'};
     msg(M[r.status]||'Paiement impossible.','err');
   }
 
@@ -248,8 +237,6 @@
       if(!packs){const x=await sb.from('pubg_packs').select('id,label,price_htg').eq('active',true).order('sort');if(x.error)throw x.error;packs=x.data||[];}
       const w=await sb.from('wallets').select('balance_htg').eq('user_id',currentUserId).maybeSingle();bal=Number(w&&w.data&&w.data.balance_htg||0);
       renderPacks();
-      try{if(typeof restorePhone==='function')restorePhone();}catch(_){}
-      $('pgbPhone').value=($('custPhone')&&$('custPhone').value)||'';
       paint();
     }catch(_){
       $('pgbPacks').innerHTML='<p class="field-help">Impossible de charger les packs. Réessaie.</p><button type="button" class="secondary-btn" id="pgbReload">Réessayer</button>';
