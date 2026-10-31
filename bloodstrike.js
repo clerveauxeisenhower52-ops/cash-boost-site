@@ -1,5 +1,5 @@
 /* Recharger Blood Strike : page de commande. L'ID joueur est vérifié automatiquement avant le paiement (fonction bloodstrike-validate, via shop2topup).
-   Si la vérification est indisponible (quota, panne), repli sur la double saisie avec case de confirmation. Aucun remboursement si l'ID est incorrect dans ce cas. */
+   Si la vérification est indisponible (quota, panne) ou ne reconnaît pas l'ID, repli sur la double saisie avec case de confirmation. Aucun remboursement si l'ID est incorrect dans ce cas. */
 (function(){
   const st=document.createElement('style');
   st.textContent=`
@@ -49,7 +49,7 @@
   const goTo=id=>{const e=$(id);if(e)e.scrollIntoView({behavior:'smooth',block:'center'});};
   const fmtOk=()=>/^[0-9]{5,20}$/.test(curPid());
   const pid2Ok=()=>fmtOk()&&curPid()===curPid2();
-  // Compte vérifié par le fournisseur (cas normal) ou, si la vérification est indisponible, ID saisi deux fois.
+  // Compte vérifié par le fournisseur (cas normal) ou, si la vérification est indisponible ou ne reconnaît pas l'ID, ID saisi deux fois.
   const verified=()=>vstate==='ok'&&okPid===curPid()&&!!(info&&info.player_name);
   const fallback=()=>vstate==='unavail'&&pid2Ok();
   const ready=()=>conf&&(verified()||fallback());
@@ -95,7 +95,7 @@
       <div id="bsV"></div>
     </div>
     <div id="bsFb" class="hidden">
-      <div class="bs-warn">Vérification automatique indisponible. Saisis ton ID une deuxième fois et confirme-le. Aucun remboursement si l’ID est incorrect.</div>
+      <div class="bs-warn">Compte non vérifié automatiquement. Saisis ton ID une deuxième fois et confirme-le. Aucun remboursement si l’ID est incorrect.</div>
       <div class="field">
         <label for="bsPid2">Confirme ton ID joueur</label>
         <input id="bsPid2" inputmode="numeric" maxlength="20" autocomplete="off" placeholder="Saisis-le une deuxième fois">
@@ -197,12 +197,12 @@
   }
 
   // Vérifie l'ID chez le fournisseur (lecture seule, aucun débit).
-  // ID introuvable : paiement bloqué. Vérification indisponible (quota, panne) : repli sur la double saisie.
+  // ID introuvable (PLAYER_NOT_FOUND) : paiement bloqué. ID non reconnu ou vérification indisponible (quota, panne) : repli sur la double saisie.
   async function check(){
     const pid=curPid(),my=++seq;
     if(!fmtOk()){vstate='err';vmsg='ID joueur invalide : vérifie les chiffres saisis.';canRetry=false;return paint();}
     vstate='load';paint();
-    const unavail=()=>{vstate='unavail';vmsg='La vérification automatique est indisponible pour le moment.';canRetry=true;okPid=null;info=null;paint();};
+    const unavail=m=>{vstate='unavail';vmsg=m||'La vérification automatique est indisponible pour le moment.';canRetry=true;okPid=null;info=null;paint();};
     try{
       const {data,error}=await sb.functions.invoke('bloodstrike-validate',{body:{player_id:pid}});
       if(my!==seq||curPid()!==pid)return;
@@ -213,6 +213,7 @@
       if(data.status==='invalid'||data.status==='invalid_format'){
         vstate='err';vmsg='ID joueur introuvable. Vérifie les chiffres saisis.';canRetry=false;okPid=null;info=null;return paint();
       }
+      if(data.status==='not_recognized')return unavail('ID non reconnu par le fournisseur. Vérifie-le. Si tu es sûr de ton ID, saisis-le une deuxième fois pour continuer.');
       unavail();
     }catch(_){
       if(my!==seq)return;

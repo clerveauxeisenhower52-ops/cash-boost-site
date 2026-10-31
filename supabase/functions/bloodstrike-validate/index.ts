@@ -13,7 +13,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
-// Les résultats métier (valid, invalid, unavailable...) sont renvoyés en HTTP 200 : le client lit simplement « status ».
+// Les résultats métier (valid, invalid, not_recognized, unavailable...) sont renvoyés en HTTP 200 : le client lit simplement « status ».
 const reply = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
 Deno.serve(async (req: Request) => {
@@ -60,6 +60,12 @@ Deno.serve(async (req: Request) => {
     // Codes d'erreur stables de l'API : on se branche sur error.code, jamais sur le message.
     const code = String(data?.error?.code || "");
     if (code === "PLAYER_NOT_FOUND") return reply({ status: "invalid" });
+    // PLAYER_CHECK_UNAVAILABLE (non documenté par shop2topup) : observé avec un faux ID. Peut signifier ID inexistant ou jeu injoignable :
+    // on ne bloque pas, le site signale « ID non reconnu » et propose la double saisie.
+    if (code === "PLAYER_CHECK_UNAVAILABLE") {
+      console.error("bloodstrike-validate_provider", res.status, code);
+      return reply({ status: "not_recognized" });
+    }
     // Tout le reste (quota atteint, clé ou IP refusée, panne, produit désactivé, validation temporairement indisponible) :
     // on ne bloque pas le client, le site bascule sur la double saisie.
     console.error("bloodstrike-validate_provider", res.status, code || "no_code");
