@@ -174,6 +174,14 @@ async function loadSettings(){
   loadDeliveryStats();
 }
 
+// Groupes de la page Services : l'ordre des groupes est celui de ce tableau.
+// Un nouveau service absent d'ici s'affiche sous « Autres » : pense à l'ajouter dans le bon groupe.
+const SERVICE_GROUPS=[
+  ['Finance & crypto',['Plasma One Auto','Plasma One Manuel','Binance','karta','pocket-option']],
+  ['Jeux',['Free Fire','PUBG Mobile (Auto)','Blood Strike']]
+];
+const SERVICE_GROUP_STYLE='grid-column:1/-1;margin:14px 0 2px;font:700 13px \'Space Grotesk\',\'Inter\',system-ui,sans-serif;color:var(--muted);text-transform:uppercase;letter-spacing:.04em';
+
 function renderServices(){
   const el=$('servicesList');
   if(!SERVICES.length){
@@ -184,7 +192,7 @@ function renderServices(){
   const list=SERVICES.filter(s=>s.visible!==false).slice().sort((a,b)=>Number(serviceReady(b))-Number(serviceReady(a)));
   const nbReady=list.filter(serviceReady).length,nbSoon=list.length-nbReady;
   if(!list.length){el.innerHTML='<div class="card" style="padding:18px;text-align:center;color:var(--muted);grid-column:1/-1">Aucun service disponible.</div>';return;}
-  el.innerHTML=list.map((s,i)=>{
+  const cards=list.map((s,i)=>{
     const ready=serviceReady(s),logo=s.logo||SERVICE_LOGOS[s.id];
     const visual=logo?`<div class="service-visual meru-logo-visual"><img class="meru-brand-logo${s.id==='meru'?'':' svc-logo-sq'}" src="${logo}" alt="Logo ${esc(s.name)}"></div>`:`<div class="service-visual"><span class="svc-initials">${esc(initials(s.name))}</span></div>`;
     // "Plasma One — Traitement Automatisé" -> titre court + badge Auto / Manuel
@@ -201,7 +209,18 @@ function renderServices(){
     // Pas de « Dès X USD » ni de « ⚡ Rapide » sous le nom du service
     const meta='';
     return `<div class="service-card${ready?'':' soon'}${wide}">${visual}<div class="service-info"><div class="service-title"><h2>${title}</h2>${meta}</div><button class="primary-btn" data-open="${esc(s.id)}" ${ready?'':'disabled'}>${ready?'Commander':'Bientôt'}</button></div></div>`;
-  }).join('');
+  });
+  // Regroupement : un titre par groupe, les cartes gardent l'ordre de la liste (disponibles d'abord, « Bientôt » ensuite)
+  const placed=new Set();let out='';
+  SERVICE_GROUPS.forEach(([title,ids])=>{
+    const idx=list.map((_,i)=>i).filter(i=>ids.includes(list[i].id));
+    if(!idx.length)return;
+    idx.forEach(i=>placed.add(i));
+    out+=`<h3 class="svc-group" style="${SERVICE_GROUP_STYLE}">${esc(title)}</h3>`+idx.map(i=>cards[i]).join('');
+  });
+  const rest=list.map((_,i)=>i).filter(i=>!placed.has(i));
+  if(rest.length)out+=`<h3 class="svc-group" style="${SERVICE_GROUP_STYLE}">Autres</h3>`+rest.map(i=>cards[i]).join('');
+  el.innerHTML=out;
   el.querySelectorAll('[data-open]').forEach(b=>{b.onclick=()=>openService(b.dataset.open);});
 }
 
