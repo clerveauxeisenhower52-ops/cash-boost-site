@@ -9,8 +9,9 @@
 #page-bloodstrike .bs-pack{padding:9px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface-2);color:var(--text-strong);font:inherit;font-weight:600;font-size:14px;cursor:pointer}
 #page-bloodstrike .bs-pack:active{transform:scale(.97)}
 #page-bloodstrike .bs-pack.sel{border-color:var(--primary);background:var(--primary-soft);color:var(--primary)}
+#page-bloodstrike .bs-clear{display:block;margin:6px 0 0;padding:6px 0;border:0;background:none;color:var(--muted);font:inherit;font-size:13px;letter-spacing:.06em;cursor:pointer}
 #page-bloodstrike .bs-sep{border:0;border-top:1px solid var(--line-strong);margin:16px 0}
-#page-bloodstrike .bs-badge{display:block;padding:10px 14px;border-radius:999px;margin:0 0 12px;font-size:14px;font-weight:700;background:rgba(245,190,60,.16);border:1px solid rgba(245,190,60,.5);color:#8a5a00}
+#page-bloodstrike .bs-badge{display:block;padding:10px 14px;border-radius:999px;margin:0 0 12px;font-size:14px;font-weight:700;background:rgba(245,190,60,.16);border:1px solid rgba(245,190,60,.5);color:var(--text-strong)}
 #page-bloodstrike .bs-badge.ok{background:var(--success-soft);border-color:rgba(52,211,153,.28);color:var(--success)}
 #page-bloodstrike .bs-badge.load{background:var(--primary-soft);border-color:var(--primary-line);color:var(--primary)}
 #page-bloodstrike .bs-warn{padding:12px 14px;border-radius:14px;margin:0 0 12px;font-size:14px;line-height:1.5;background:var(--danger-soft);color:var(--danger);font-weight:600}
@@ -76,10 +77,12 @@
 <div class="page-title"><button id="bsBack" class="back" type="button">← Retour aux services</button></div>
 <div id="bsTop">
   <h1 class="svc-title">Blood Strike Automatique<span class="svc-badge svc-badge-auto">Auto</span></h1>
-  <div id="bsPrice" class="bs-price">—</div>
+  <div id="bsRange" class="bs-price">—</div>
   <div id="bsPacks"></div>
+  <button type="button" id="bsClear" class="bs-clear hidden">EFFACER</button>
 </div>
 <hr class="bs-sep">
+<div id="bsPrice" class="bs-price hidden">—</div>
 <div id="bsCard" class="card card-pad">
   <div id="bsBadge" class="bs-badge">Vérification requise</div>
   <div class="field">
@@ -117,6 +120,7 @@
       const b=e.target.closest('[data-pack]');if(!b)return;
       sel=b.dataset.pack;renderPacks();msg('');paint();
     };
+    $('bsClear').onclick=()=>{sel=null;renderPacks();msg('');paint();};
     $('bsPid').addEventListener('input',()=>{
       clearTimeout(timer);seq++;okPid=null;info=null;vstate='';vmsg='';conf=false;
       const c2=$('bsConf2');if(c2)c2.checked=false;
@@ -165,10 +169,12 @@
     if(vstate==='unavail'&&b&&a!==b)e.textContent='Les deux ID ne sont pas identiques.';
     else e.textContent='';
     if(conf&&!ready()){conf=false;const c2=$('bsConf2');if(c2)c2.checked=false;}
-    // Prix : celui du pack choisi, sinon la fourchette de tous les packs.
+    // En haut : fourchette de prix toujours visible. Sous les packs : prix du pack choisi (comme Izy Store), avec EFFACER.
+    if(packs&&packs.length){const pr=packs.map(x=>Number(x.price_htg));$('bsRange').textContent=fmt(Math.min(...pr))+' – '+fmt(Math.max(...pr))+' HTG';}
+    else $('bsRange').textContent='—';
+    $('bsPrice').classList.toggle('hidden',!p);
+    $('bsClear').classList.toggle('hidden',!p);
     if(p)$('bsPrice').textContent=fmt(p.price_htg)+' HTG';
-    else if(packs&&packs.length){const pr=packs.map(x=>Number(x.price_htg));$('bsPrice').textContent=fmt(Math.min(...pr))+' – '+fmt(Math.max(...pr))+' HTG';}
-    else $('bsPrice').textContent='—';
     $('bsBal').textContent='Solde : '+fmt(bal)+' HTG';
     const h=$('bsPayHint');
     if(p&&bal<Number(p.price_htg)){h.textContent='Solde insuffisant : il te manque '+fmt(Number(p.price_htg)-bal)+' HTG. Ajoute des fonds pour continuer.';h.classList.remove('hidden');}
@@ -205,6 +211,7 @@
 
   function done(){
     $('bsTop').style.display='none';
+    $('bsPrice').style.display='none';
     document.querySelectorAll('#page-bloodstrike .bs-sep').forEach(e=>e.style.display='none');
     $('bsCard').innerHTML='<div class="bs-done"><div class="sv-check">✓</div><h2>Commande enregistrée</h2><p>Ta recharge Blood Strike sera traitée automatiquement. Si le fournisseur refuse la commande, ton solde est remboursé automatiquement. Aucun remboursement si l’ID joueur est incorrect.</p><button type="button" id="bsOrders" class="primary-btn">Voir mes commandes</button><button type="button" id="bsAgain" class="secondary-btn" style="margin-top:10px">Commander à nouveau</button></div>';
     $('bsOrders').onclick=()=>{showPage('orders');try{loadMyOrders();}catch(_){}};
