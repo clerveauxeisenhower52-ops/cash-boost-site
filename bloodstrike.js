@@ -60,11 +60,14 @@
   const fallback=()=>vstate==='unavail'&&pid2Ok();
   const ready=()=>conf&&(verified()||fallback());
 
-  // Lingots d'or affichés à la place du texte « BC » (ex. « 51 BC » devient « 51 » + lingots).
-  const GOLD='<svg class="bs-gold" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">'
-    +'<path d="M8.5 11 10 6.5h4L15.5 11z" fill="#fbd75b" stroke="#b7791f" stroke-width="1.2" stroke-linejoin="round"/>'
-    +'<path d="M2.5 18 5 11.5h14L21.5 18z" fill="#f5c542" stroke="#b7791f" stroke-width="1.2" stroke-linejoin="round"/>'
-    +'<path d="M6.2 14h11.6" stroke="#fff3b0" stroke-width="1.2" stroke-linecap="round"/></svg>';
+  // Lingots d'or (pile de 3 barres en relief : dessus clair, face dorée, reflet) affichés à la place du texte « BC ».
+  const bar=(x,y)=>'<g transform="translate('+x+' '+y+')" stroke="#9a5f0b" stroke-width=".6" stroke-linejoin="round">'
+    +'<path d="M3 0H11L14 4H0Z" fill="#ffe27a"/>'
+    +'<path d="M4.3 1H9.7L11.3 3H2.7Z" fill="#fff3b8" stroke="none"/>'
+    +'<path d="M0 4H14V9H0Z" fill="#f2b01e"/>'
+    +'<path d="M1.2 5.2H12.8" stroke="#ffd45a" stroke-width="1" stroke-linecap="round" fill="none"/>'
+    +'<path d="M0 8H14V9H0Z" fill="#c98310" stroke="none"/></g>';
+  const GOLD='<svg class="bs-gold" viewBox="0 0 32 25" width="26" height="20" aria-hidden="true">'+bar(1,15.5)+bar(17,15.5)+bar(9,6.5)+'</svg>';
   const packLabel=l=>{const m=/^\s*(\d+)\s*BC\s*$/i.exec(l||'');return m?esc(m[1])+GOLD:esc(l);};
 
   const baseShow=window.showPage;
