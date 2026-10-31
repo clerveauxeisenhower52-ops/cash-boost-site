@@ -1,4 +1,5 @@
-/* Recharger Blood Strike : page de commande. FazerCards ne peut pas vérifier l'ID joueur : le client le saisit deux fois et confirme. Aucun remboursement si l'ID est incorrect. */
+/* Recharger Blood Strike : page de commande. L'ID joueur est vérifié automatiquement avant le paiement (fonction bloodstrike-validate, via shop2topup).
+   Si la vérification est indisponible (quota, panne), repli sur la double saisie avec case de confirmation. Aucun remboursement si l'ID est incorrect dans ce cas. */
 (function(){
   const st=document.createElement('style');
   st.textContent=`
@@ -11,6 +12,20 @@
 #page-bloodstrike .bs-pack.sel .bs-pack-p{color:var(--primary)}
 #page-bloodstrike .bs-warn{padding:12px 14px;border-radius:14px;margin:0 0 12px;font-size:14px;line-height:1.5;background:var(--danger-soft);color:var(--danger);font-weight:600}
 #page-bloodstrike .bs-err{margin-top:8px;font-size:13px;font-weight:600;color:var(--danger)}
+#page-bloodstrike .bsin{position:relative}
+#page-bloodstrike .bsin input{padding-right:46px}
+#page-bloodstrike .bsdot{position:absolute;right:14px;top:50%;width:20px;height:20px;margin-top:-10px;border-radius:50%;border:2px solid var(--line-strong);box-sizing:border-box}
+#page-bloodstrike .bsdot.load{border-color:var(--primary);border-top-color:transparent;animation:bss .8s linear infinite}
+#page-bloodstrike .bsdot.ok{background:var(--success);border-color:var(--success)}
+#page-bloodstrike .bsdot.err{background:var(--danger);border-color:var(--danger)}
+@keyframes bss{to{transform:rotate(360deg)}}
+#page-bloodstrike #bsV{margin-top:12px}
+#page-bloodstrike .bscard{padding:12px 14px;border-radius:14px;margin:0 0 10px;font-size:15px;line-height:1.5;color:var(--text-strong)}
+#page-bloodstrike .bscard small{display:block;color:var(--muted);margin-top:6px;font-size:12px}
+#page-bloodstrike .bscard.load{background:var(--primary-soft);border:1px solid var(--primary-line)}
+#page-bloodstrike .bscard.ok{background:var(--success-soft);border:1px solid rgba(52,211,153,.28)}
+#page-bloodstrike .bscard.err{background:var(--danger-soft);color:var(--danger);font-weight:600}
+#page-bloodstrike .bs-retry{margin-top:8px;padding:8px 16px;border-radius:999px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--text-strong);font:inherit;font-weight:600;font-size:13px}
 #page-bloodstrike .bs-done{text-align:center;padding:10px 0 4px}
 #page-bloodstrike .bs-done h2{margin:0 0 8px}
 #page-bloodstrike .bs-done p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.5}
@@ -23,6 +38,7 @@
   if(host&&host.parentNode)host.after(pg);else (document.querySelector('#appView main')||document.body).appendChild(pg);
 
   let packs=null,sel=null,reqId=null,busy=false,bal=0,conf=false,io=null;
+  let okPid=null,info=null,vstate='',vmsg='',canRetry=false,timer=null,seq=0;
   const uuid=()=>crypto.randomUUID?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&3|8)).toString(16);});
   const clean=id=>(($(id)&&$(id).value)||'').replace(/\s/g,'');
   const curPid=()=>clean('bsPid');
@@ -31,7 +47,12 @@
   const phoneNorm=()=>{const v=($('bsPhone')&&$('bsPhone').value)||'';return typeof normPhone==='function'?normPhone(v):v.replace(/\D/g,'');};
   const msg=(t,c)=>{const m=$('bsMsg');if(m){m.className='msg '+(c||'');m.textContent=t;}};
   const goTo=id=>{const e=$(id);if(e)e.scrollIntoView({behavior:'smooth',block:'center'});};
-  const pidOk=()=>/^[0-9]{5,20}$/.test(curPid())&&curPid()===curPid2();
+  const fmtOk=()=>/^[0-9]{5,20}$/.test(curPid());
+  const pid2Ok=()=>fmtOk()&&curPid()===curPid2();
+  // Compte vérifié par le fournisseur (cas normal) ou, si la vérification est indisponible, ID saisi deux fois.
+  const verified=()=>vstate==='ok'&&okPid===curPid()&&!!(info&&info.player_name);
+  const fallback=()=>vstate==='unavail'&&pid2Ok();
+  const ready=()=>conf&&(verified()||fallback());
 
   const baseShow=window.showPage;
   window.showPage=function(p){
@@ -66,18 +87,22 @@
     </div>
   </div>
   <div class="section" id="bsSecAcc">
-    <div class="section-head"><span class="step">2</span><div><h2>Compte Blood Strike</h2><p>Saisis ton ID joueur deux fois.</p></div></div>
-    <div class="bs-warn">Ton ID ne peut pas être vérifié avant le paiement. Aucun remboursement si l’ID est incorrect.</div>
+    <div class="section-head"><span class="step">2</span><div><h2>Compte Blood Strike</h2><p>Saisis ton identifiant de joueur Blood Strike.</p></div></div>
     <div class="field">
       <label for="bsPid">ID joueur Blood Strike</label>
-      <input id="bsPid" inputmode="numeric" maxlength="20" autocomplete="off" placeholder="Entre ton ID joueur">
+      <div class="bsin"><input id="bsPid" inputmode="numeric" maxlength="20" autocomplete="off" placeholder="Entre ton ID joueur"><span id="bsDot" class="bsdot"></span></div>
+      <p class="field-help">Ton identifiant sera vérifié automatiquement avant tout paiement.</p>
+      <div id="bsV"></div>
     </div>
-    <div class="field">
-      <label for="bsPid2">Confirme ton ID joueur</label>
-      <input id="bsPid2" inputmode="numeric" maxlength="20" autocomplete="off" placeholder="Saisis-le une deuxième fois">
-      <div id="bsPidErr" class="bs-err"></div>
+    <div id="bsFb" class="hidden">
+      <div class="bs-warn">Vérification automatique indisponible. Saisis ton ID une deuxième fois et confirme-le. Aucun remboursement si l’ID est incorrect.</div>
+      <div class="field">
+        <label for="bsPid2">Confirme ton ID joueur</label>
+        <input id="bsPid2" inputmode="numeric" maxlength="20" autocomplete="off" placeholder="Saisis-le une deuxième fois">
+        <div id="bsPidErr" class="bs-err"></div>
+      </div>
+      <label class="terms"><input type="checkbox" id="bsConf2"><span>J’ai vérifié mon ID</span></label>
     </div>
-    <label class="terms"><input type="checkbox" id="bsConf"><span>J’ai vérifié mon ID</span></label>
     <div class="field">
       <label for="bsPhone">Ton numéro WhatsApp</label>
       <input id="bsPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="ex. 37 12 34 56">
@@ -94,7 +119,7 @@
     <div id="bsPayHint" class="pay-wallet-hint hidden" role="status"></div>
     <button id="bsPay" class="primary-btn" type="button">Payer avec mon solde</button>
     <div id="bsMsg" class="msg"></div>
-    <p class="note">Aucun remboursement si l’ID est incorrect. Remboursement automatique uniquement si le fournisseur refuse la commande.</p>
+    <p class="note">Vérifie soigneusement ton identifiant avant de confirmer. Remboursement automatique uniquement si le fournisseur refuse la commande.</p>
   </div>
 </div>`;
     $('bsBack').onclick=()=>showPage('services');
@@ -102,9 +127,14 @@
       const b=e.target.closest('[data-pack]');if(!b)return;
       sel=b.dataset.pack;renderPacks();msg('');paint();
     };
-    $('bsPid').addEventListener('input',()=>{conf=false;$('bsConf').checked=false;paint();});
-    $('bsPid2').addEventListener('input',()=>{conf=false;$('bsConf').checked=false;paint();});
-    $('bsConf').onchange=()=>{conf=$('bsConf').checked&&pidOk();if(!conf)$('bsConf').checked=false;paint();};
+    $('bsPid').addEventListener('input',()=>{
+      clearTimeout(timer);seq++;okPid=null;info=null;vstate='';vmsg='';conf=false;
+      const c2=$('bsConf2');if(c2)c2.checked=false;
+      if(curPid().length>=8)timer=setTimeout(check,600);
+      paint();
+    });
+    $('bsPid2').addEventListener('input',()=>{conf=false;$('bsConf2').checked=false;paint();});
+    $('bsConf2').onchange=()=>{conf=$('bsConf2').checked&&pid2Ok();if(!conf)$('bsConf2').checked=false;paint();};
     $('bsPhone').addEventListener('input',()=>{
       try{const c=$('custPhone');if(c)c.value=$('bsPhone').value;if(typeof phoneKey==='function'){const k=phoneKey();if(k)localStorage.setItem(k,$('bsPhone').value);}}catch(_){}
       paint();
@@ -132,12 +162,26 @@
   function paint(){
     if(!$('bsPacks'))return;
     const p=curPack();
-    const a=curPid(),b=curPid2();
-    const e=$('bsPidErr');
-    if(a&&!/^[0-9]{5,20}$/.test(a))e.textContent='L’ID joueur ne contient que des chiffres (5 à 20).';
-    else if(a&&b&&a!==b)e.textContent='Les deux ID ne sont pas identiques.';
+    $('bsDot').className='bsdot '+(vstate==='unavail'?'':vstate);
+    const v=$('bsV');
+    if(vstate==='load')v.innerHTML='<div class="bscard load">Vérification du compte en cours…</div>';
+    else if(vstate==='ok'&&info&&info.player_name){
+      v.innerHTML='<div class="bscard ok"><b>✓ Compte Blood Strike confirmé</b><small>Nom du joueur</small><b id="bsName"></b>'
+        +'<small>ID joueur</small>'+esc(okPid)+'</div>'
+        +'<label class="terms"><input type="checkbox" id="bsConf"'+(conf?' checked':'')+'><span>Je confirme que ce compte est le mien</span></label>';
+      $('bsName').textContent=info.player_name;
+      $('bsConf').onchange=()=>{conf=$('bsConf').checked;paint();};
+    }
+    else if(vstate==='err'||vstate==='unavail'){
+      v.innerHTML='<div class="bscard err">'+esc(vmsg)+(canRetry?'<br><button type="button" id="bsRetry" class="bs-retry">Réessayer</button>':'')+'</div>';
+      if(canRetry)$('bsRetry').onclick=check;
+    }
+    else v.innerHTML='';
+    $('bsFb').classList.toggle('hidden',vstate!=='unavail');
+    const a=curPid(),b=curPid2(),e=$('bsPidErr');
+    if(vstate==='unavail'&&b&&a!==b)e.textContent='Les deux ID ne sont pas identiques.';
     else e.textContent='';
-    if(conf&&!pidOk()){conf=false;$('bsConf').checked=false;}
+    if(conf&&!ready()){conf=false;const c2=$('bsConf2');if(c2)c2.checked=false;}
     $('bsSumPack').textContent=p?p.label:'—';
     const tot=p?fmt(p.price_htg)+' HTG':'—';
     $('bsSumTotal').textContent=tot;$('bsBarTotal').textContent=tot;
@@ -145,17 +189,42 @@
     const h=$('bsPayHint');
     if(p&&bal<Number(p.price_htg)){h.textContent='Solde insuffisant : il te manque '+fmt(Number(p.price_htg)-bal)+' HTG. Ajoute des fonds pour continuer.';h.classList.remove('hidden');}
     else h.classList.add('hidden');
-    const d1=!!p,d2=pidOk()&&conf&&phoneNorm().length>=11,dn=[d1,d2,false],act=dn.findIndex(x=>!x);
+    const d1=!!p,d2=ready()&&phoneNorm().length>=11,dn=[d1,d2,false],act=dn.findIndex(x=>!x);
     pg.querySelectorAll('#bsProgress .op-step').forEach((bt,i)=>{bt.classList.toggle('done',dn[i]);bt.classList.toggle('active',i===act);});
     $('bsProgress').style.setProperty('--op',String((d1?1:0)+(d2?1:0)));
     $('bsPay').disabled=busy;
     $('bsPay').textContent=busy?'Paiement en cours…':'Payer avec mon solde';
   }
 
+  // Vérifie l'ID chez le fournisseur (lecture seule, aucun débit).
+  // ID introuvable : paiement bloqué. Vérification indisponible (quota, panne) : repli sur la double saisie.
+  async function check(){
+    const pid=curPid(),my=++seq;
+    if(!fmtOk()){vstate='err';vmsg='ID joueur invalide : vérifie les chiffres saisis.';canRetry=false;return paint();}
+    vstate='load';paint();
+    const unavail=()=>{vstate='unavail';vmsg='La vérification automatique est indisponible pour le moment.';canRetry=true;okPid=null;info=null;paint();};
+    try{
+      const {data,error}=await sb.functions.invoke('bloodstrike-validate',{body:{player_id:pid}});
+      if(my!==seq||curPid()!==pid)return;
+      if(error||!data)return unavail();
+      if(data.status==='valid'&&data.player_name){
+        okPid=pid;info={player_name:data.player_name};vstate='ok';return paint();
+      }
+      if(data.status==='invalid'||data.status==='invalid_format'){
+        vstate='err';vmsg='ID joueur introuvable. Vérifie les chiffres saisis.';canRetry=false;okPid=null;info=null;return paint();
+      }
+      unavail();
+    }catch(_){
+      if(my!==seq)return;
+      unavail();
+    }
+  }
+
   function next(){
     if(!curPack())return goTo('bsSecPack');
-    if(!pidOk())return goTo('bsPid');
-    if(!conf)return goTo('bsConf');
+    if(vstate==='err'||vstate==='load'||(vstate!=='ok'&&vstate!=='unavail'))return goTo('bsPid');
+    if(vstate==='unavail'&&!pid2Ok())return goTo('bsPid2');
+    if(!conf)return goTo(vstate==='ok'?'bsV':'bsConf2');
     if(phoneNorm().length<11)return goTo('bsPhone');
     pay();
   }
@@ -174,8 +243,11 @@
     if(busy)return;
     const pid=curPid(),ph=phoneNorm(),p=curPack();
     if(!p)return msg('Choisis un pack.','err');
-    if(!pidOk())return msg('Saisis ton ID joueur deux fois, de la même façon.','err');
-    if(!conf)return msg('Coche la case pour confirmer que tu as vérifié ton ID.','err');
+    if(vstate==='err')return msg('ID joueur introuvable. Corrige-le pour continuer.','err');
+    if(vstate==='load')return msg('Vérification du compte en cours. Patiente un instant.','err');
+    if(vstate==='unavail'&&!pid2Ok())return msg('Saisis ton ID joueur deux fois, de la même façon.','err');
+    if(!verified()&&!fallback())return msg('Le compte Blood Strike doit être vérifié avant le paiement.','err');
+    if(!conf)return msg('Coche la case pour confirmer ton compte.','err');
     if(ph.length<11)return msg('Numéro invalide. Exemple : 37 12 34 56.','err');
     busy=true;paint();msg('');
     if(!reqId)reqId=uuid();
@@ -191,12 +263,13 @@
       return;
     }
     reqId=null;
-    const M={insufficient_funds:'Solde insuffisant. Ajoute des fonds dans ton portefeuille.',service_unavailable:'Ce service est indisponible pour le moment.',invalid_input:'Informations invalides. Vérifie ton ID joueur et ton numéro.',unauthenticated:'Session expirée. Reconnecte-toi.',confirmation_required:'Coche la case pour confirmer que tu as vérifié ton ID.'};
+    const M={insufficient_funds:'Solde insuffisant. Ajoute des fonds dans ton portefeuille.',service_unavailable:'Ce service est indisponible pour le moment.',invalid_input:'Informations invalides. Vérifie ton ID joueur et ton numéro.',unauthenticated:'Session expirée. Reconnecte-toi.',confirmation_required:'Coche la case pour confirmer ton compte.'};
     msg(M[r.status]||'Paiement impossible.','err');
   }
 
   async function open(){
-    sel=null;reqId=null;conf=false;busy=false;
+    clearTimeout(timer);
+    sel=null;reqId=null;okPid=null;info=null;vstate='';vmsg='';canRetry=false;conf=false;busy=false;seq++;
     build();
     showPage('bloodstrike');
     $('bsPacks').innerHTML='<p class="field-help">Chargement…</p>';
