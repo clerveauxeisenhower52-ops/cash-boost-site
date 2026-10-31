@@ -6,9 +6,10 @@
   st.textContent=`
 #page-bloodstrike .bs-price{margin:6px 0 4px;font:700 28px 'Space Grotesk','Inter',system-ui,sans-serif;color:var(--text-strong)}
 #page-bloodstrike .bs-packs{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
-#page-bloodstrike .bs-pack{padding:9px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface-2);color:var(--text-strong);font:inherit;font-weight:600;font-size:14px;cursor:pointer}
+#page-bloodstrike .bs-pack{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface-2);color:var(--text-strong);font:inherit;font-weight:600;font-size:14px;cursor:pointer}
 #page-bloodstrike .bs-pack:active{transform:scale(.97)}
 #page-bloodstrike .bs-pack.sel{border-color:var(--primary);background:var(--primary-soft);color:var(--primary)}
+#page-bloodstrike .bs-gold{flex:none;display:block}
 #page-bloodstrike .bs-clear{display:block;margin:6px 0 0;padding:6px 0;border:0;background:none;color:var(--muted);font:inherit;font-size:13px;letter-spacing:.06em;cursor:pointer}
 #page-bloodstrike .bs-sep{border:0;border-top:1px solid var(--line-strong);margin:16px 0}
 #page-bloodstrike .bs-badge{display:block;padding:10px 14px;border-radius:999px;margin:0 0 12px;font-size:14px;font-weight:700;background:rgba(245,190,60,.16);border:1px solid rgba(245,190,60,.5);color:var(--text-strong)}
@@ -58,6 +59,13 @@
   const verified=()=>vstate==='ok'&&okPid===curPid()&&!!(info&&info.player_name);
   const fallback=()=>vstate==='unavail'&&pid2Ok();
   const ready=()=>conf&&(verified()||fallback());
+
+  // Lingots d'or affichés à la place du texte « BC » (ex. « 51 BC » devient « 51 » + lingots).
+  const GOLD='<svg class="bs-gold" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">'
+    +'<path d="M8.5 11 10 6.5h4L15.5 11z" fill="#fbd75b" stroke="#b7791f" stroke-width="1.2" stroke-linejoin="round"/>'
+    +'<path d="M2.5 18 5 11.5h14L21.5 18z" fill="#f5c542" stroke="#b7791f" stroke-width="1.2" stroke-linejoin="round"/>'
+    +'<path d="M6.2 14h11.6" stroke="#fff3b0" stroke-width="1.2" stroke-linecap="round"/></svg>';
+  const packLabel=l=>{const m=/^\s*(\d+)\s*BC\s*$/i.exec(l||'');return m?esc(m[1])+GOLD:esc(l);};
 
   const baseShow=window.showPage;
   window.showPage=function(p){
@@ -138,7 +146,7 @@
   }
 
   function renderPacks(){
-    const chip=x=>'<button type="button" class="bs-pack'+(String(x.id)===String(sel)?' sel':'')+'" data-pack="'+esc(x.id)+'">'+esc(x.label)+'</button>';
+    const chip=x=>'<button type="button" class="bs-pack'+(String(x.id)===String(sel)?' sel':'')+'" data-pack="'+esc(x.id)+'" aria-label="'+esc(x.label)+'">'+packLabel(x.label)+'</button>';
     $('bsPacks').innerHTML=packs.length?'<div class="bs-packs">'+packs.map(chip).join('')+'</div>':'<p class="field-help">Aucun pack disponible</p>';
   }
 
