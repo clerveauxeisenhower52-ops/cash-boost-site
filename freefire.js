@@ -132,6 +132,8 @@
     const p=curPack();
     $('ffDot').className='ffdot '+vstate;
     const bd=$('ffBadge');
+    // Compte vérifié : la carte « Compte Free Fire confirmé » ci-dessous suffit, on masque le badge pour éviter le doublon.
+    bd.style.display=verified()?'none':'';
     if(verified()){bd.className='ff-badge ok';bd.textContent='✓ Compte vérifié';}
     else if(vstate==='load'){bd.className='ff-badge load';bd.textContent='Vérification en cours…';}
     else{bd.className='ff-badge';bd.textContent='Vérification requise';}
