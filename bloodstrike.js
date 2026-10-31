@@ -1,15 +1,18 @@
-/* Recharger Blood Strike : page de commande. L'ID joueur est vérifié automatiquement avant le paiement (fonction bloodstrike-validate, via shop2topup).
+/* Recharger Blood Strike : page de commande (style Izy Store : packs compacts, une seule page, bouton Acheter maintenant).
+   L'ID joueur est vérifié automatiquement avant le paiement (fonction bloodstrike-validate, via shop2topup).
    Si la vérification est indisponible (quota, panne) ou ne reconnaît pas l'ID, repli sur la double saisie avec case de confirmation. Aucun remboursement si l'ID est incorrect dans ce cas. */
 (function(){
   const st=document.createElement('style');
   st.textContent=`
-#page-bloodstrike .bs-sub{margin:14px 0 8px;font:700 13px 'Space Grotesk','Inter',system-ui,sans-serif;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-#page-bloodstrike .bs-packs{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:0 0 8px}
-#page-bloodstrike .bs-pack{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;min-height:64px;padding:12px 14px;border:1px solid var(--line-strong);border-radius:14px;background:var(--surface-2);color:var(--text-strong);font:inherit;font-weight:600;font-size:15px;text-align:left;cursor:pointer}
+#page-bloodstrike .bs-price{margin:6px 0 4px;font:700 28px 'Space Grotesk','Inter',system-ui,sans-serif;color:var(--text-strong)}
+#page-bloodstrike .bs-packs{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
+#page-bloodstrike .bs-pack{padding:9px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface-2);color:var(--text-strong);font:inherit;font-weight:600;font-size:14px;cursor:pointer}
 #page-bloodstrike .bs-pack:active{transform:scale(.97)}
-#page-bloodstrike .bs-pack-p{font:700 13px 'Space Grotesk','Inter',system-ui,sans-serif;color:var(--muted)}
-#page-bloodstrike .bs-pack.sel{border-color:var(--primary);background:var(--primary-soft)}
-#page-bloodstrike .bs-pack.sel .bs-pack-p{color:var(--primary)}
+#page-bloodstrike .bs-pack.sel{border-color:var(--primary);background:var(--primary-soft);color:var(--primary)}
+#page-bloodstrike .bs-sep{border:0;border-top:1px solid var(--line-strong);margin:16px 0}
+#page-bloodstrike .bs-badge{display:block;padding:10px 14px;border-radius:999px;margin:0 0 12px;font-size:14px;font-weight:700;background:rgba(245,190,60,.16);border:1px solid rgba(245,190,60,.5);color:#8a5a00}
+#page-bloodstrike .bs-badge.ok{background:var(--success-soft);border-color:rgba(52,211,153,.28);color:var(--success)}
+#page-bloodstrike .bs-badge.load{background:var(--primary-soft);border-color:var(--primary-line);color:var(--primary)}
 #page-bloodstrike .bs-warn{padding:12px 14px;border-radius:14px;margin:0 0 12px;font-size:14px;line-height:1.5;background:var(--danger-soft);color:var(--danger);font-weight:600}
 #page-bloodstrike .bs-err{margin-top:8px;font-size:13px;font-weight:600;color:var(--danger)}
 #page-bloodstrike .bsin{position:relative}
@@ -26,6 +29,8 @@
 #page-bloodstrike .bscard.ok{background:var(--success-soft);border:1px solid rgba(52,211,153,.28)}
 #page-bloodstrike .bscard.err{background:var(--danger-soft);color:var(--danger);font-weight:600}
 #page-bloodstrike .bs-retry{margin-top:8px;padding:8px 16px;border-radius:999px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--text-strong);font:inherit;font-weight:600;font-size:13px}
+#page-bloodstrike #bsPay{margin-top:14px;text-transform:uppercase;letter-spacing:.02em}
+#page-bloodstrike #bsPay:disabled{opacity:.45}
 #page-bloodstrike .bs-done{text-align:center;padding:10px 0 4px}
 #page-bloodstrike .bs-done h2{margin:0 0 8px}
 #page-bloodstrike .bs-done p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.5}
@@ -37,7 +42,7 @@
   const host=document.getElementById('page-service');
   if(host&&host.parentNode)host.after(pg);else (document.querySelector('#appView main')||document.body).appendChild(pg);
 
-  let packs=null,sel=null,reqId=null,busy=false,bal=0,conf=false,io=null;
+  let packs=null,sel=null,reqId=null,busy=false,bal=0,conf=false;
   let okPid=null,info=null,vstate='',vmsg='',canRetry=false,timer=null,seq=0;
   const uuid=()=>crypto.randomUUID?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&3|8)).toString(16);});
   const clean=id=>(($(id)&&$(id).value)||'').replace(/\s/g,'');
@@ -46,7 +51,6 @@
   const curPack=()=>packs&&packs.find(x=>String(x.id)===String(sel));
   const phoneNorm=()=>{const v=($('bsPhone')&&$('bsPhone').value)||'';return typeof normPhone==='function'?normPhone(v):v.replace(/\D/g,'');};
   const msg=(t,c)=>{const m=$('bsMsg');if(m){m.className='msg '+(c||'');m.textContent=t;}};
-  const goTo=id=>{const e=$(id);if(e)e.scrollIntoView({behavior:'smooth',block:'center'});};
   const fmtOk=()=>/^[0-9]{5,20}$/.test(curPid());
   const pid2Ok=()=>fmtOk()&&curPid()===curPid2();
   // Compte vérifié par le fournisseur (cas normal) ou, si la vérification est indisponible ou ne reconnaît pas l'ID, ID saisi deux fois.
@@ -70,57 +74,43 @@
   function build(){
     pg.innerHTML=`
 <div class="page-title"><button id="bsBack" class="back" type="button">← Retour aux services</button></div>
-<h1 class="svc-title">Recharger Blood Strike<span class="svc-badge svc-badge-auto">Auto</span></h1>
-<div id="bsProgress" class="op" aria-label="Progression de la commande">
-  <button type="button" class="op-step" data-go="bsSecPack"><i>1</i><span>Pack</span></button>
-  <button type="button" class="op-step" data-go="bsSecAcc"><i>2</i><span>Compte</span></button>
-  <button type="button" class="op-step" data-go="bsSecPay"><i>3</i><span>Paiement</span></button>
+<div id="bsTop">
+  <h1 class="svc-title">Blood Strike Automatique<span class="svc-badge svc-badge-auto">Auto</span></h1>
+  <div id="bsPrice" class="bs-price">—</div>
+  <div id="bsPacks"></div>
 </div>
-<div id="bsBar" class="ob"><div class="ob-total"><small>Total à payer</small><strong id="bsBarTotal">—</strong></div><button id="bsBarBtn" type="button" class="primary-btn">Confirmer</button></div>
+<hr class="bs-sep">
 <div id="bsCard" class="card card-pad">
-  <div class="section" id="bsSecPack">
-    <div class="section-head"><span class="step">1</span><div><h2>Sélectionner un pack</h2><p id="bsRange">Choisis la valeur de ton pack</p></div></div>
-    <div id="bsPacks"></div>
-    <div class="summary">
-      <div class="sumrow"><span>Pack</span><strong id="bsSumPack">—</strong></div>
-      <div class="sumrow total"><span>Total à payer</span><strong id="bsSumTotal">—</strong></div>
-    </div>
+  <div id="bsBadge" class="bs-badge">Vérification requise</div>
+  <div class="field">
+    <label for="bsPid">ID joueur Blood Strike</label>
+    <div class="bsin"><input id="bsPid" inputmode="numeric" maxlength="20" autocomplete="off" placeholder="ID"><span id="bsDot" class="bsdot"></span></div>
+    <p class="field-help">Vérification ID requise pour Blood Strike Automatique.</p>
+    <div id="bsV"></div>
   </div>
-  <div class="section" id="bsSecAcc">
-    <div class="section-head"><span class="step">2</span><div><h2>Compte Blood Strike</h2><p>Saisis ton identifiant de joueur Blood Strike.</p></div></div>
+  <div id="bsFb" class="hidden">
+    <div class="bs-warn">Compte non vérifié automatiquement. Saisis ton ID une deuxième fois et confirme-le. Aucun remboursement si l’ID est incorrect.</div>
     <div class="field">
-      <label for="bsPid">ID joueur Blood Strike</label>
-      <div class="bsin"><input id="bsPid" inputmode="numeric" maxlength="20" autocomplete="off" placeholder="Entre ton ID joueur"><span id="bsDot" class="bsdot"></span></div>
-      <p class="field-help">Ton identifiant sera vérifié automatiquement avant tout paiement.</p>
-      <div id="bsV"></div>
+      <label for="bsPid2">Confirme ton ID joueur</label>
+      <input id="bsPid2" inputmode="numeric" maxlength="20" autocomplete="off" placeholder="Saisis-le une deuxième fois">
+      <div id="bsPidErr" class="bs-err"></div>
     </div>
-    <div id="bsFb" class="hidden">
-      <div class="bs-warn">Compte non vérifié automatiquement. Saisis ton ID une deuxième fois et confirme-le. Aucun remboursement si l’ID est incorrect.</div>
-      <div class="field">
-        <label for="bsPid2">Confirme ton ID joueur</label>
-        <input id="bsPid2" inputmode="numeric" maxlength="20" autocomplete="off" placeholder="Saisis-le une deuxième fois">
-        <div id="bsPidErr" class="bs-err"></div>
-      </div>
-      <label class="terms"><input type="checkbox" id="bsConf2"><span>J’ai vérifié mon ID</span></label>
-    </div>
-    <div class="field">
-      <label for="bsPhone">Ton numéro WhatsApp</label>
-      <input id="bsPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="ex. 37 12 34 56">
-      <p class="field-help">Obligatoire · pour recevoir le suivi de ta recharge</p>
-    </div>
+    <label class="terms"><input type="checkbox" id="bsConf2"><span>J’ai vérifié mon ID</span></label>
   </div>
-  <div class="section" id="bsSecPay">
-    <div class="section-head"><span class="step">3</span><div><h2>Paiement avec ton portefeuille</h2><p>Le montant sera déduit de ton solde après confirmation.</p></div></div>
-    <div class="pay-wallet-card selected">
-      <span class="pay-wallet-ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H5a2 2 0 0 1 0-4h13v4"/><path d="M3 5v14a2 2 0 0 0 2 2h15V7"/><circle cx="16.5" cy="14" r="1.2"/></svg></span>
-      <span class="pay-wallet-info"><span class="pay-wallet-name">Paiement avec ton portefeuille</span><span class="pay-wallet-desc" id="bsBal">Solde : …</span></span>
-      <button type="button" class="pay-wallet-add" id="bsAddFunds">+ Fonds</button>
-    </div>
-    <div id="bsPayHint" class="pay-wallet-hint hidden" role="status"></div>
-    <button id="bsPay" class="primary-btn" type="button">Payer avec mon solde</button>
-    <div id="bsMsg" class="msg"></div>
-    <p class="note">Vérifie soigneusement ton identifiant avant de confirmer. Remboursement automatique uniquement si le fournisseur refuse la commande.</p>
+  <div class="field">
+    <label for="bsPhone">Ton numéro WhatsApp</label>
+    <input id="bsPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="ex. 37 12 34 56">
+    <p class="field-help">Obligatoire · pour recevoir le suivi de ta recharge</p>
   </div>
+  <div class="pay-wallet-card selected">
+    <span class="pay-wallet-ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H5a2 2 0 0 1 0-4h13v4"/><path d="M3 5v14a2 2 0 0 0 2 2h15V7"/><circle cx="16.5" cy="14" r="1.2"/></svg></span>
+    <span class="pay-wallet-info"><span class="pay-wallet-name">Paiement avec ton portefeuille</span><span class="pay-wallet-desc" id="bsBal">Solde : …</span></span>
+    <button type="button" class="pay-wallet-add" id="bsAddFunds">+ Fonds</button>
+  </div>
+  <div id="bsPayHint" class="pay-wallet-hint hidden" role="status"></div>
+  <button id="bsPay" class="primary-btn" type="button">Acheter maintenant</button>
+  <div id="bsMsg" class="msg"></div>
+  <p class="note">Vérifie soigneusement ton identifiant avant de confirmer. Remboursement automatique uniquement si le fournisseur refuse la commande.</p>
 </div>`;
     $('bsBack').onclick=()=>showPage('services');
     $('bsPacks').onclick=e=>{
@@ -140,29 +130,22 @@
       paint();
     });
     $('bsPay').onclick=pay;
-    $('bsBarBtn').onclick=next;
     $('bsAddFunds').onclick=()=>{showPage('wallet');setTimeout(()=>{const b=$('walletAddBtn');if(b)b.click();},60);};
-    pg.querySelectorAll('#bsProgress .op-step').forEach(b=>b.addEventListener('click',()=>{const e=$(b.dataset.go);if(e)e.scrollIntoView({behavior:'smooth',block:'start'});}));
-    if(io)io.disconnect();
-    if('IntersectionObserver' in window){
-      io=new IntersectionObserver(es=>es.forEach(e=>{const bar=$('bsBar');if(bar)bar.classList.toggle('ob-hidden',e.isIntersecting);}),{threshold:0.6});
-      io.observe($('bsPay'));
-    }
   }
 
   function renderPacks(){
-    const pr=packs.map(x=>x.price_htg);
-    $('bsRange').textContent=packs.length?fmt(Math.min(...pr))+' – '+fmt(Math.max(...pr))+' HTG':'Aucun pack disponible';
-    const card=x=>'<button type="button" class="bs-pack'+(String(x.id)===String(sel)?' sel':'')+'" data-pack="'+esc(x.id)+'"><span>'+esc(x.label)+'</span><span class="bs-pack-p">'+fmt(x.price_htg)+' HTG</span></button>';
-    const bc=packs.filter(x=>x.kind==='bc'),ps=packs.filter(x=>x.kind!=='bc');
-    $('bsPacks').innerHTML=(bc.length?'<div class="bs-sub">Gold</div><div class="bs-packs">'+bc.map(card).join('')+'</div>':'')
-      +(ps.length?'<div class="bs-sub">Passes</div><div class="bs-packs">'+ps.map(card).join('')+'</div>':'');
+    const chip=x=>'<button type="button" class="bs-pack'+(String(x.id)===String(sel)?' sel':'')+'" data-pack="'+esc(x.id)+'">'+esc(x.label)+'</button>';
+    $('bsPacks').innerHTML=packs.length?'<div class="bs-packs">'+packs.map(chip).join('')+'</div>':'<p class="field-help">Aucun pack disponible</p>';
   }
 
   function paint(){
     if(!$('bsPacks'))return;
     const p=curPack();
     $('bsDot').className='bsdot '+(vstate==='unavail'?'':vstate);
+    const bd=$('bsBadge');
+    if(vstate==='ok'&&info&&info.player_name){bd.className='bs-badge ok';bd.textContent='✓ Compte vérifié';}
+    else if(vstate==='load'){bd.className='bs-badge load';bd.textContent='Vérification en cours…';}
+    else{bd.className='bs-badge';bd.textContent='Vérification requise';}
     const v=$('bsV');
     if(vstate==='load')v.innerHTML='<div class="bscard load">Vérification du compte en cours…</div>';
     else if(vstate==='ok'&&info&&info.player_name){
@@ -182,18 +165,17 @@
     if(vstate==='unavail'&&b&&a!==b)e.textContent='Les deux ID ne sont pas identiques.';
     else e.textContent='';
     if(conf&&!ready()){conf=false;const c2=$('bsConf2');if(c2)c2.checked=false;}
-    $('bsSumPack').textContent=p?p.label:'—';
-    const tot=p?fmt(p.price_htg)+' HTG':'—';
-    $('bsSumTotal').textContent=tot;$('bsBarTotal').textContent=tot;
+    // Prix : celui du pack choisi, sinon la fourchette de tous les packs.
+    if(p)$('bsPrice').textContent=fmt(p.price_htg)+' HTG';
+    else if(packs&&packs.length){const pr=packs.map(x=>Number(x.price_htg));$('bsPrice').textContent=fmt(Math.min(...pr))+' – '+fmt(Math.max(...pr))+' HTG';}
+    else $('bsPrice').textContent='—';
     $('bsBal').textContent='Solde : '+fmt(bal)+' HTG';
     const h=$('bsPayHint');
     if(p&&bal<Number(p.price_htg)){h.textContent='Solde insuffisant : il te manque '+fmt(Number(p.price_htg)-bal)+' HTG. Ajoute des fonds pour continuer.';h.classList.remove('hidden');}
     else h.classList.add('hidden');
-    const d1=!!p,d2=ready()&&phoneNorm().length>=11,dn=[d1,d2,false],act=dn.findIndex(x=>!x);
-    pg.querySelectorAll('#bsProgress .op-step').forEach((bt,i)=>{bt.classList.toggle('done',dn[i]);bt.classList.toggle('active',i===act);});
-    $('bsProgress').style.setProperty('--op',String((d1?1:0)+(d2?1:0)));
-    $('bsPay').disabled=busy;
-    $('bsPay').textContent=busy?'Paiement en cours…':'Payer avec mon solde';
+    // Bouton grisé tant qu'un pack n'est pas choisi et que le compte n'est pas vérifié et confirmé.
+    $('bsPay').disabled=busy||!p||!ready();
+    $('bsPay').textContent=busy?'Paiement en cours…':'Acheter maintenant';
   }
 
   // Vérifie l'ID chez le fournisseur (lecture seule, aucun débit).
@@ -221,19 +203,9 @@
     }
   }
 
-  function next(){
-    if(!curPack())return goTo('bsSecPack');
-    if(vstate==='err'||vstate==='load'||(vstate!=='ok'&&vstate!=='unavail'))return goTo('bsPid');
-    if(vstate==='unavail'&&!pid2Ok())return goTo('bsPid2');
-    if(!conf)return goTo(vstate==='ok'?'bsV':'bsConf2');
-    if(phoneNorm().length<11)return goTo('bsPhone');
-    pay();
-  }
-
   function done(){
-    $('bsProgress').style.display='none';
-    if(io)io.disconnect();
-    $('bsBar').classList.add('ob-hidden');
+    $('bsTop').style.display='none';
+    document.querySelectorAll('#page-bloodstrike .bs-sep').forEach(e=>e.style.display='none');
     $('bsCard').innerHTML='<div class="bs-done"><div class="sv-check">✓</div><h2>Commande enregistrée</h2><p>Ta recharge Blood Strike sera traitée automatiquement. Si le fournisseur refuse la commande, ton solde est remboursé automatiquement. Aucun remboursement si l’ID joueur est incorrect.</p><button type="button" id="bsOrders" class="primary-btn">Voir mes commandes</button><button type="button" id="bsAgain" class="secondary-btn" style="margin-top:10px">Commander à nouveau</button></div>';
     $('bsOrders').onclick=()=>{showPage('orders');try{loadMyOrders();}catch(_){}};
     $('bsAgain').onclick=()=>open();
