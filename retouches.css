@@ -49,11 +49,10 @@ body.landing-active,
 body:not(.landing-active){
   padding-bottom:calc(var(--nav-h,64px) + 32px + env(safe-area-inset-bottom,0px)) !important;
 }
+/* La barre fixe « Total à payer / Confirmer » est masquée (animations.js) : plus besoin de lui réserver de la place. */
 #page-service{
-  padding-bottom:calc(var(--cb-fixed-total-clearance) + env(safe-area-inset-bottom,0px)) !important;
+  padding-bottom:16px !important;
 }
-@media(max-width:540px){:root{--cb-fixed-total-clearance:184px;}}
-@media(max-width:360px){:root{--cb-fixed-total-clearance:192px;}}
 
 
 /* Accueil connecté : laisser un vrai espace de fin avant la navigation flottante. */
@@ -68,12 +67,9 @@ body:not(.landing-active){
 }
 
 
-/* Réglage final : espace normal sur les pages courantes, réserve élargie uniquement sur Services avec sa barre de commande fixe. */
+/* Réglage final : espace normal sur toutes les pages, y compris la page de commande d'un service (plus de barre fixe à contourner). */
 body:not(.landing-active){
   padding-bottom:calc(var(--nav-h,64px) + 24px + env(safe-area-inset-bottom,0px)) !important;
-}
-body:has(#page-service:not(.hidden)){
-  padding-bottom:calc(var(--nav-h,64px) + var(--cb-fixed-total-clearance,238px) + env(safe-area-inset-bottom,0px)) !important;
 }
 #page-home{
   padding-bottom:24px !important;
