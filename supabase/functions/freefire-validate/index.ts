@@ -37,14 +37,14 @@ Deno.serve(async (req: Request) => {
   let pid = "";
   let reachedProvider = false;
   try {
-    const token = (req.headers.get("authorization") || "").replace(/^Bearer\\s+/i, "");
+    const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
     if (!token) return json({ ok: false, error: "unauthorized" }, 401);
     const { data: au, error: ae } = await sb.auth.getUser(token);
     if (ae || !au?.user) return json({ ok: false, error: "unauthorized" }, 401);
     uid = au.user.id;
 
     const body = await req.json().catch(() => ({}));
-    pid = String(body.player_id || "").replace(/\\s/g, "");
+    pid = String(body.player_id || "").replace(/\s/g, "");
     if (!/^[0-9]{5,15}$/.test(pid)) return json({ ok: false, error: "invalid_id" }, 400);
 
     const { data: allowed, error: rlError } = await sb.rpc("freefire_validate_allow_request", { p_user_id: uid });
@@ -53,7 +53,7 @@ Deno.serve(async (req: Request) => {
 
     reachedProvider = true;
     const list = await fz("GET", "/topups/validate-id");
-    const items: any[] = (list.items || []).filter((i: any) => /free\\s*fire/i.test(i.name || ""));
+    const items: any[] = (list.items || []).filter((i: any) => /free\s*fire/i.test(i.name || ""));
     // Ordre volontaire : LATAM en priorité, puis premier produit Free Fire disponible.
     const item = items.find((i) => /latam/i.test(i.name || "")) || items[0];
     if (!item) {
@@ -69,7 +69,7 @@ Deno.serve(async (req: Request) => {
     const valid = result.valid === true;
     const region = result.region ? String(result.region) : null;
     const name = typeof result.player_name === "string"
-      ? result.player_name.replace(/[\\r\\n]+/g, " ").trim().slice(0, 40)
+      ? result.player_name.replace(/[\r\n]+/g, " ").trim().slice(0, 40)
       : null;
     const status = !valid ? "invalid" : (String(region || "").toUpperCase() === "NA" ? "valid" : "wrong_region");
     await trace(uid, pid, status, region, name);
