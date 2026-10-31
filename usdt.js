@@ -1,9 +1,7 @@
 /* Cash Boost : adresse USDT en direct, statut des envois, bannière de mise à jour */
 (function(){
   'use strict';
-  // Plasma One Auto envoie maintenant les USDT sur BNB Smart Chain (BEP20), plus sur Plasma.
-  // On corrige ici le réseau annoncé au client (avertissement sous le champ + case de confirmation).
-  try{ ADDR_SERVICES['Plasma One Auto']={net:'BNB Smart Chain (BEP20)',others:'Tron, Ethereum, Plasma…'}; }catch(_){}
+  // Le réseau annoncé au client (BNB Smart Chain) est défini à la source dans base.js (ADDR_SERVICES).
   function addrMsg(v){
     v=(v||'').trim(); if(v.length<3) return '';
     if(/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(v)) return "C'est une adresse TRON. Utilise ton adresse BNB Smart Chain (elle commence par 0x).";
@@ -93,12 +91,14 @@
     }catch(_){}
   }
   document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') checkVersion(); });
+  // Minuteries : rien ne tourne quand l'onglet est en arrière-plan (la vérification de version et le statut
+  // se relancent au retour sur la page). Les champs étant dans le HTML, l'écouteur d'adresse n'est posé qu'une fois.
+  function whenVisible(fn){ return function(){ if(document.visibilityState==='visible') fn(); }; }
   window.addEventListener('load',function(){
     bindAddr(); watchOrders(); refreshStatus(); checkVersion();
-    setInterval(checkVersion,300000);
-    setInterval(refreshStatus,120000);
-    setInterval(bindAddr,3000);
-    setInterval(watchOrders,3000);
+    setInterval(whenVisible(checkVersion),300000);
+    setInterval(whenVisible(refreshStatus),120000);
+    setInterval(whenVisible(watchOrders),15000);
   });
 })();
 
